@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
+import { ToastProvider } from "@/hooks/useToast";
+import { OnlineStatusBanner } from "@/components/ui/OnlineStatusBanner";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -19,9 +21,7 @@ export const metadata: Metadata = {
   title: "Aurevia Premium Camera Rentals | Professional Cameras & Lenses for Rent",
   description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
   metadataBase: new URL("http://localhost:3000"),
-  alternates: {
-    canonical: "/",
-  },
+  alternates: { canonical: "/" },
   openGraph: {
     title: "Aurevia Premium Camera Rentals",
     description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
@@ -45,27 +45,23 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${playfair.variable} ${inter.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${playfair.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-obsidian text-ivory font-sans selection:bg-gold-champagne/20 selection:text-ivory">
         {/* Cinematic noise film grain */}
         <div className="film-grain" />
-        
-        {/* Primary layout content */}
-        <CartProvider>
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-        </CartProvider>
+
+        {/* Global providers: Toast → Cart → Page */}
+        <ToastProvider>
+          <CartProvider>
+            <OnlineStatusBanner />
+            <div className="flex-1 flex flex-col">
+              {children}
+            </div>
+          </CartProvider>
+        </ToastProvider>
       </body>
     </html>
   );
 }
-
-

@@ -3,30 +3,37 @@
 import React, { useState } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
-import { Lock, Mail, CheckCircle } from "lucide-react";
+import { Lock, Mail, CheckCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { signInAction } from "@/lib/actions/auth";
 
 export default function LoginPage() {
   const { cart } = useCart();
+  const toast = useToast();
   const router = useRouter();
-  const [email, setEmail] = useState("contact@prem.dev");
-  const [password, setPassword] = useState("password123");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
-    if (email === "contact@prem.dev" && password === "password123") {
+    const result = await signInAction(email, password);
+
+    if (result.success) {
       setSuccess(true);
+      toast.success("Signed in successfully.");
       setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
+        router.push(result.role === "admin" || result.role === "staff" ? "/admin" : "/dashboard");
+      }, 800);
     } else {
-      setError("Invalid credential combination. Check email and password.");
+      toast.error(result.error ?? "Sign-in failed. Check your credentials.");
     }
+    setLoading(false);
   };
 
   return (
@@ -35,7 +42,7 @@ export default function LoginPage() {
 
       <div className="flex-1 flex items-center justify-center px-6 pt-36 pb-12">
         <div className="glass-panel-gold border-gold-border rounded-lg max-w-sm w-full p-6 md:p-8 space-y-6 shadow-2xl relative">
-          
+
           <div className="text-center space-y-1">
             <span className="text-[9px] uppercase tracking-widest text-gold-champagne font-mono block">Vault Access</span>
             <h2 className="serif-heading text-2xl font-light text-ivory">Sign In to AUREVIA</h2>
@@ -48,56 +55,54 @@ export default function LoginPage() {
             </div>
           )}
 
-          {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono rounded text-center">
-              ⚠️ {error}
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4 text-xs font-sans">
+          <form onSubmit={handleLogin} className="space-y-4 text-xs">
             <div className="space-y-2">
-              <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Email Address</label>
+              <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Email Address</label>
               <div className="relative">
+                <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/40"
+                  placeholder="your@email.com"
+                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/40 transition"
                 />
-                <Mail size={13} className="absolute left-2.5 top-3.5 text-muted-gray" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Password</label>
-                <a href="#" className="text-[9px] text-gold-champagne hover:underline">Forgot?</a>
-              </div>
+              <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Password</label>
               <div className="relative">
+                <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/40"
+                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/40 transition"
                 />
-                <Lock size={13} className="absolute left-2.5 top-3.5 text-muted-gray" />
               </div>
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider rounded transition cursor-pointer"
+              disabled={loading || success}
+              className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded transition cursor-pointer flex items-center justify-center gap-2"
             >
-              Access Vault
+              {loading ? <><Loader2 size={13} className="animate-spin" /> Signing In...</> : "Sign In"}
             </button>
           </form>
 
-          <p className="text-[10px] text-center text-muted-gray">
-            Don&apos;t have a club account?{" "}
-            <Link href="/register" className="text-gold-champagne hover:underline">Register now</Link>
-          </p>
+          <div className="text-center text-[11px] text-muted-gray space-y-1">
+            <p>
+              New to AUREVIA?{" "}
+              <Link href="/register" className="text-gold-champagne hover:underline">
+                Create account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
