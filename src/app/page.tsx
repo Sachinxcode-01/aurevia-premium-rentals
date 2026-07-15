@@ -759,51 +759,87 @@ export default function Home() {
 
       {/* 16. Luxury Footer */}
       <footer className="bg-black border-t border-white/5 py-16 px-6 md:px-12 relative z-20">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 pb-12 border-b border-white/5">
-          <div className="space-y-4">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 pb-12 border-b border-white/5">
+
+          {/* Brand & owner contact */}
+          <div className="space-y-5 lg:col-span-1">
             <h3 className="serif-heading text-xl font-bold tracking-widest text-ivory">AUREVIA</h3>
-            <p className="text-xs text-muted-gray font-light">
-              Premium Camera Rentals by Prem. Frame the Extraordinary.
+            <p className="text-xs text-muted-gray font-light leading-relaxed">
+              Premium Camera Rentals by Prem Mundargi.<br />Frame the Extraordinary.
             </p>
-            <div className="text-[10px] font-mono text-muted-gray uppercase space-y-1">
-              <p>Hotline: 9686909048</p>
-              <p>Studio: Bangalore, India</p>
+            <div className="space-y-1.5 text-[11px] font-mono">
+              <p className="text-gold-champagne uppercase tracking-wider text-[10px] mb-2">Rental Enquiries</p>
+              <a href="tel:+919686909048" className="flex items-center gap-2 text-muted-gray hover:text-gold-champagne transition">
+                <span className="text-gold-champagne/60">📞</span> +91 96869 09048
+              </a>
+              <a
+                href="https://wa.me/919686909048"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-muted-gray hover:text-[#25D366] transition"
+              >
+                <span>💬</span> WhatsApp Prem
+              </a>
+              <a href="mailto:premmundargi135@gmail.com" className="flex items-center gap-2 text-muted-gray hover:text-gold-champagne transition break-all">
+                <span className="text-gold-champagne/60">✉</span> premmundargi135@gmail.com
+              </a>
             </div>
           </div>
 
+          {/* Vault Gear links */}
           <div className="space-y-3 text-xs">
             <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Vault Gear</h4>
             <div className="flex flex-col gap-2 font-light text-muted-gray">
-              <Link href="/explore?category=dslr-cameras" className="hover:text-gold-champagne">DSLR Cameras</Link>
-              <Link href="/explore?category=mirrorless-cameras" className="hover:text-gold-champagne">Mirrorless Cameras</Link>
-              <Link href="/explore?category=cinema-cameras" className="hover:text-gold-champagne">Cinema Systems</Link>
-              <Link href="/explore?category=professional-lenses" className="hover:text-gold-champagne">L-Series Glass</Link>
+              <Link href="/explore?category=dslr-cameras" className="hover:text-gold-champagne transition">DSLR Cameras</Link>
+              <Link href="/explore?category=mirrorless-cameras" className="hover:text-gold-champagne transition">Mirrorless Cameras</Link>
+              <Link href="/explore?category=cinema-cameras" className="hover:text-gold-champagne transition">Cinema Systems</Link>
+              <Link href="/explore?category=professional-lenses" className="hover:text-gold-champagne transition">L-Series Glass</Link>
+              <Link href="/explore?category=gimbals" className="hover:text-gold-champagne transition">Gimbals</Link>
+              <Link href="/explore?category=lighting" className="hover:text-gold-champagne transition">Lighting</Link>
             </div>
           </div>
 
+          {/* Client care links */}
           <div className="space-y-3 text-xs">
             <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Client Care</h4>
             <div className="flex flex-col gap-2 font-light text-muted-gray">
-              <Link href="/faq" className="hover:text-gold-champagne">FAQ Help</Link>
-              <Link href="/rental-process" className="hover:text-gold-champagne">Rental Guidelines</Link>
-              <Link href="/terms" className="hover:text-gold-champagne">Terms of Use</Link>
-              <Link href="/privacy" className="hover:text-gold-champagne">Privacy Policy</Link>
+              <Link href="/contact" className="hover:text-gold-champagne transition">Contact Us</Link>
+              <Link href="/faq" className="hover:text-gold-champagne transition">FAQ Help</Link>
+              <Link href="/rental-process" className="hover:text-gold-champagne transition">Rental Guidelines</Link>
+              <Link href="/about" className="hover:text-gold-champagne transition">About AUREVIA</Link>
+              <Link href="/terms" className="hover:text-gold-champagne transition">Terms of Use</Link>
+              <Link href="/privacy" className="hover:text-gold-champagne transition">Privacy Policy</Link>
             </div>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Staff Terminal</h4>
-            <div className="flex flex-col gap-2 font-light text-muted-gray">
-              <Link href="/login" className="hover:text-gold-champagne">Admin Login</Link>
-              <Link href="/admin" className="hover:text-gold-champagne">Operations Center</Link>
-              <Link href="/dashboard" className="hover:text-gold-champagne">Customer Cockpit</Link>
+          {/* Staff terminal & tech support */}
+          <div className="space-y-4 text-xs">
+            <div className="space-y-3">
+              <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Staff Terminal</h4>
+              <div className="flex flex-col gap-2 font-light text-muted-gray">
+                <Link href="/login" className="hover:text-gold-champagne transition">Admin Login</Link>
+                <Link href="/admin" className="hover:text-gold-champagne transition">Operations Centre</Link>
+                <Link href="/dashboard" className="hover:text-gold-champagne transition">Customer Dashboard</Link>
+              </div>
+            </div>
+
+            {/* Technical support attribution */}
+            <div className="pt-3 border-t border-white/5 space-y-1.5">
+              <p className="text-[10px] uppercase font-mono tracking-wider text-muted-gray/60">Technical Support</p>
+              <a href="mailto:sachiii8827@gmail.com" className="text-[11px] font-mono text-muted-gray hover:text-ivory/70 transition break-all">
+                sachiii8827@gmail.com
+              </a>
+              <p className="text-[10px] text-muted-gray/50 font-light">Website issues &amp; maintenance only</p>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center font-mono text-[9px] text-muted-gray uppercase tracking-widest">
-          <span>© 2026 AUREVIA CAMERA RENTALS. ALL RIGHTS RESERVED.</span>
-          <span>CURATED BY PREM (9686909048)</span>
+        {/* Footer bottom bar */}
+        <div className="max-w-7xl mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-center font-mono text-[9px] text-muted-gray uppercase tracking-widest">
+          <span>© 2026 AUREVIA Camera Rentals. All Rights Reserved.</span>
+          <span className="text-muted-gray/50">
+            Business: Prem Mundargi · Website: Sachin
+          </span>
         </div>
       </footer>
     </main>
