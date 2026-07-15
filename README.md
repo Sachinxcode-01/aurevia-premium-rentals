@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/readme/aurevia-banner.png" alt="AUREVIA — Premium Camera Rentals" width="860" />
+<img src="public/readme/aurevia-banner.png" alt="AUREVIA — Premium Camera Rentals" width="100%" />
 
 <br/>
 
