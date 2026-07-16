@@ -6,10 +6,20 @@
 export type BookingStatus =
   | "pending"
   | "confirmed"
+  | "pending_payment"
+  | "paid"
+  | "approval_pending"
+  | "approved"
+  | "ready_for_pickup"
   | "picked_up"
+  | "rented"
   | "returned"
+  | "completed"
+  | "rejected"
   | "cancelled"
-  | "rejected";
+  | "payment_failed"
+  | "overdue"
+  | "maintenance";
 
 export type PaymentStatus = "unpaid" | "paid" | "refunded";
 export type DeliveryMethod = "pickup" | "delivery";
