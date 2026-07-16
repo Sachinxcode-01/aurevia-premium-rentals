@@ -1,39 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
-import { useAdminRealtime } from "@/hooks/useAdminRealtime";
-import { updateBookingStatusAction } from "@/lib/actions/bookings";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { SkeletonDashboard } from "@/components/ui/SkeletonLoader";
 import { NotificationBell } from "@/components/ui/NotificationBell";
-type BookingStatus =
-  | "pending_payment"
-  | "paid"
-  | "approval_pending"
-  | "approved"
-  | "ready_for_pickup"
-  | "rented"
-  | "returned"
-  | "completed"
-  | "rejected"
-  | "cancelled"
-  | "payment_failed"
-  | "overdue"
-  | "maintenance";
+import { updateBookingStatusAction } from "@/lib/actions/bookings";
+import { getCurrentUserAction, signOutAction } from "@/lib/actions/auth";
 import {
-  ShieldAlert, Coins, FileSpreadsheet, FileDown, RefreshCw,
-  Search, Check, X, ArrowUpRight, ClipboardList, Package, Loader2,
-  Camera, User, Clock, Key, AlertTriangle, Trash2, History, Sparkles,
-  Calendar, CheckSquare, Eye
+  ShieldAlert, Coins, FileSpreadsheet, FileDown, RefreshCw, Search,
+  Check, X, ArrowUpRight, Loader2, Camera, User, Clock, Key, AlertTriangle,
+  History, Sparkles, Calendar, CheckSquare, Eye, Menu, Tag, Users,
+  BarChart2, Settings, LogOut, Package, ChevronRight, Lock, ShieldCheck,
+  TrendingUp, XCircle, CheckCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
-  PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area,
 } from "recharts";
 import { animate, stagger } from "animejs";
 import { db } from "@/lib/db/store";
+import type { Booking, InventoryUnit } from "@/lib/db/store";
+import { MOCK_COUPONS } from "@/lib/db/mockData";
+import type { Coupon } from "@/lib/db/mockData";
 
+/* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
   pending_payment:  "bg-amber-500/10 border-amber-500/30 text-amber-400",
   paid:             "bg-blue-500/10 border-blue-500/30 text-blue-400",
@@ -50,1064 +43,845 @@ const STATUS_STYLES: Record<string, string> = {
   maintenance:      "bg-amber-600/15 border-amber-500/30 text-amber-400",
 };
 
-const COLORS = ["#D8B36A", "#B98A43", "#F5F1E8", "#9A9995"];
+const CHART_COLORS = ["#D8B36A", "#B98A43", "#F5F1E8", "#9A9995", "#6B7280"];
 
 type AdminTab =
-  | "overview"
-  | "pickups_today"
-  | "returns_today"
-  | "approval_queue"
-  | "ready_pickup"
-  | "active_rentals"
-  | "overdue"
-  | "maintenance"
-  | "audit_logs";
+  | "overview" | "approval_queue" | "pickups_today" | "returns_today"
+  | "active_rentals" | "overdue" | "inventory" | "coupons" | "customers" | "audit_logs";
 
+type BookingStatus = Booking["status"];
+
+/* ─── Main Admin Component ──────────────────────────────────── */
 export default function AdminDashboard() {
   const { cart } = useCart();
   const toast = useToast();
-  const { bookings: rawBookings, loading, alerts, unreadCount, markAllRead, dismissAlert, refresh } = useAdminRealtime();
-  const bookings = rawBookings as any[];
 
-  // Sidebar & Search filters
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [adminProfile, setAdminProfile]       = useState<Record<string, unknown> | null>(null);
+  const [adminRole, setAdminRole]             = useState<string>("customer");
+  const [profileLoading, setProfileLoading]   = useState(true);
+  const [bookings, setBookings]               = useState<Booking[]>([]);
+  const [inventoryUnits, setInventoryUnits]   = useState<InventoryUnit[]>([]);
+  const [loading, setLoading]                 = useState(true);
+  const [activeTab, setActiveTab]             = useState<AdminTab>("overview");
+  const [sidebarOpen, setSidebarOpen]         = useState(false);
+  const [searchQuery, setSearchQuery]         = useState("");
+  const [updatingId, setUpdatingId]           = useState<string | null>(null);
 
-  // Upgrade admin states
-  const [inventoryUnits, setInventoryUnits] = useState<any[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  
-  // Handover (OTP Checklist) modal states
-  const [handoverBooking, setHandoverBooking] = useState<any | null>(null);
-  const [enteredOtp, setEnteredOtp] = useState("");
-  const [checkIdVerified, setCheckIdVerified] = useState(false);
-  const [checkSerialMatched, setCheckSerialMatched] = useState(false);
-  const [checkAccessories, setCheckAccessories] = useState({
-    lensCap: false,
-    strap: false,
-    battery: false,
-    charger: false,
-    sdCard: false,
-  });
-  const [handoverNotes, setHandoverNotes] = useState("");
+  // Coupon manager state
+  const [coupons, setCoupons]   = useState<Coupon[]>([...MOCK_COUPONS]);
+  const [newCoupon, setNewCoupon] = useState({ code: "", discountFlat: 199, activeUntil: "", usageLimit: 100, perUserLimit: 1 });
+  const [addingCoupon, setAddingCoupon] = useState(false);
 
-  // Return Inspection modal states
-  const [returnModalBooking, setReturnModalBooking] = useState<any | null>(null);
+  // Reject reason modal
+  const [rejectingId, setRejectingId]     = useState<string | null>(null);
+  const [rejectReason, setRejectReason]   = useState("");
+
+  // Return modal
+  const [returningId, setReturningId]     = useState<string | null>(null);
   const [returnCondition, setReturnCondition] = useState<"good" | "damaged">("good");
-  const [damageDescription, setDamageDescription] = useState("");
-  const [damageCost, setDamageCost] = useState(0);
-  const [calculatedLateFee, setCalculatedLateFee] = useState(0);
-  const [returnAccessoriesChecked, setReturnAccessoriesChecked] = useState({
-    lensCap: false,
-    strap: false,
-    battery: false,
-    charger: false,
-    sdCard: false,
-  });
+  const [damageDesc, setDamageDesc]       = useState("");
+  const [damageCost, setDamageCost]       = useState(0);
+  const [returnRemarks, setReturnRemarks] = useState("");
 
-  const refreshInventoryUnits = () => {
-    const units = db.getInventoryUnits();
-    setInventoryUnits(units);
-  };
+  // OTP generation
+  const [generatingOTP, setGeneratingOTP] = useState<string | null>(null);
 
-  const refreshAuditLogs = () => {
-    // Collect all audit logs from mock database
-    const logs: any[] = [];
-    bookings.forEach((b) => {
-      if (b.auditLogs) {
-        b.auditLogs.forEach((log: any) => {
-          logs.push({
-            ...log,
-            bookingRef: b.reference_code || b.referenceCode,
-            bookingId: b.id,
-            renter: b.contact_name || b.contactName
-          });
-        });
-      }
-    });
-    // Sort chronologically reverse
-    logs.sort((x, y) => new Date(y.timestamp).getTime() - new Date(x.timestamp).getTime());
-    setAuditLogs(logs);
-  };
+  const isOwner   = adminRole === "admin";
+  const isAllowed = adminRole === "admin" || adminRole === "staff";
 
-  useEffect(() => {
-    refreshInventoryUnits();
-    refreshAuditLogs();
-  }, [bookings]);
-
-  // Audio notifier triggers on new booking alerts
-  useEffect(() => {
-    if (unreadCount > 0) {
-      try {
-        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-200.wav");
-        audio.volume = 0.15;
-        audio.play().catch(() => {});
-      } catch {}
+  /* ─── Load data ──────────────────────────────────── */
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [bks, inv] = await Promise.all([
+        db.getBookings(),
+        Promise.resolve(db.getInventoryUnits()),
+      ]);
+      setBookings(bks);
+      setInventoryUnits(inv);
+    } catch {
+      toast.error("Failed to load data.");
+    } finally {
+      setLoading(false);
     }
-  }, [unreadCount]);
+  }, [toast]);
+
+  useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    const isSupabase = supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
+    if (isSupabase) {
+      getCurrentUserAction().then((p) => {
+        setAdminProfile(p);
+        setAdminRole(String(p?.role ?? "customer"));
+        setProfileLoading(false);
+      });
+    } else {
+      db.getProfile().then((p) => {
+        setAdminProfile({ full_name: p.fullName, email: p.email, role: p.role } as Record<string, unknown>);
+        setAdminRole(p.role);
+        setProfileLoading(false);
+      });
+    }
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     setTimeout(() => {
-      animate(".admin-item", {
+      animate(".admin-card", {
         opacity: [0, 1],
-        translateY: [15, 0],
+        translateY: [10, 0],
         delay: stagger(40),
-        duration: 500,
+        duration: 450,
         easing: "easeOutQuad",
       });
     }, 50);
-  }, [bookings.length, activeTab]);
+  }, [activeTab]);
 
-  // Computed stats from LIVE data (excluding deposits)
+  /* ─── Derived stats ──────────────────────────────── */
+  const today = new Date().toISOString().split("T")[0];
   const stats = {
-    // Exclude security deposit from rental revenue!
-    revenueTotal: bookings
-      .filter((b) => b.payment_status === "paid" || b.paymentStatus === "paid")
-      .reduce((s, b) => s + ((b.totalPayable || b.total_payable || 0) - (b.securityDeposit || b.security_deposit || 0)), 0),
-    revenueMonth: bookings
-      .filter((b) => (b.payment_status === "paid" || b.paymentStatus === "paid") && new Date(b.created_at || b.createdAt).getMonth() === new Date().getMonth())
-      .reduce((s, b) => s + ((b.totalPayable || b.total_payable || 0) - (b.securityDeposit || b.security_deposit || 0)), 0),
-    depositHeldTotal: bookings
-      .filter((b) => ["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "overdue"].includes(b.status) && b.depositStatus === "Collected")
-      .reduce((s, b) => s + (b.securityDeposit || 0), 0),
-    bookingsTotalCount: bookings.length,
-    bookingsPendingCount: bookings.filter((b) => b.status === "approval_pending").length,
-    bookingsConfirmedCount: bookings.filter((b) => b.status === "approved" || b.status === "ready_for_pickup").length,
-    utilizationRate: inventoryUnits.length > 0 ? Math.round((inventoryUnits.filter((u) => u.status === "rented").length / inventoryUnits.length) * 100) : 0,
+    total:       bookings.length,
+    pending:     bookings.filter((b) => b.status === "pending_payment").length,
+    approvalQ:   bookings.filter((b) => b.status === "approval_pending").length,
+    active:      bookings.filter((b) => b.status === "rented").length,
+    completed:   bookings.filter((b) => ["completed", "returned"].includes(b.status)).length,
+    cancelled:   bookings.filter((b) => ["cancelled", "rejected"].includes(b.status)).length,
+    overdue:     bookings.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.endDate))).length,
+    pickupsToday: bookings.filter((b) => b.status === "ready_for_pickup" && b.startDate === today).length,
+    returnsToday: bookings.filter((b) => b.status === "rented" && b.endDate === today).length,
+    revenue:     bookings.filter((b) => b.paymentStatus === "paid" && !["cancelled","rejected"].includes(b.status))
+                         .reduce((s, b) => s + b.totalPayable, 0),
+    discounts:   bookings.reduce((s, b) => s + (b.discountAmount || 0), 0),
   };
 
-  // Revenue trend by month (excluding deposits)
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const revenueTrend = months.map((m, i) => ({
-    date: m,
-    amount: bookings
-      .filter((b) => new Date(b.created_at || b.createdAt).getMonth() === i && (b.payment_status === "paid" || b.paymentStatus === "paid"))
-      .reduce((s, b) => s + ((b.totalPayable || b.total_payable || 0) - (b.securityDeposit || b.security_deposit || 0)), 0),
-  }));
-
-  // Direct status transition helper
-  const handleUpdateStatus = async (bookingId: string, newStatus: BookingStatus, notes = "") => {
-    const label = newStatus.replace("_", " ").toUpperCase();
-    if (!confirm(`Transition this booking status to ${label}?`)) return;
-
-    setUpdatingId(bookingId);
-    
-    // In local dev fallback mode, call mock store directly
-    const isSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
-    if (!isSupabase) {
-      await db.updateBookingStatus(bookingId, newStatus, notes || `Status updated by Admin to ${newStatus}.`, "admin");
-      toast.success(`Booking transitioned to ${label}.`);
-      refresh();
-      refreshInventoryUnits();
-      setUpdatingId(null);
-      return;
+  // 7-day revenue trend
+  const revenueTrend = (() => {
+    const map: Record<string, number> = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      map[d.toLocaleDateString("en-US", { month: "short", day: "numeric" })] = 0;
     }
-
-    const result = await updateBookingStatusAction(bookingId, newStatus as any);
-    if (result.success) {
-      toast.success(`Booking transitioned to ${label}.`);
-      refresh();
-    } else {
-      toast.error(result.error ?? "Failed to update booking status.");
-    }
-    setUpdatingId(null);
-  };
-
-  // Enable/Disable maintenance state
-  const handleToggleMaintenance = async (unitId: string, currentStatus: string) => {
-    const nextStatus = currentStatus === "maintenance" ? "available" : "maintenance";
-    await db.updateInventoryUnitStatus(unitId, nextStatus);
-    toast.success(`Camera unit marked as ${nextStatus}.`);
-    refreshInventoryUnits();
-    refresh();
-  };
-
-  // Admin unit manual override reassignment
-  const handleReassignUnit = async (bookingId: string, productId: string, newUnitId: string) => {
-    const success = await db.reassignBookingUnit(bookingId, productId, newUnitId);
-    if (success) {
-      toast.success("Camera unit successfully reassigned.");
-      refreshInventoryUnits();
-      refresh();
-    } else {
-      toast.error("Reassignment failed. Overlapping booking conflict detected on this unit.");
-    }
-  };
-
-  // Launch Handover OTP Checklist modal
-  const openHandoverModal = (booking: any) => {
-    setHandoverBooking(booking);
-    setEnteredOtp("");
-    setCheckIdVerified(false);
-    setCheckSerialMatched(false);
-    setCheckAccessories({
-      lensCap: false,
-      strap: false,
-      battery: false,
-      charger: false,
-      sdCard: false,
+    bookings.filter((b) => b.paymentStatus === "paid").forEach((b) => {
+      const key = new Date(b.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (key in map) map[key] += b.totalPayable;
     });
-    setHandoverNotes("");
-  };
+    return Object.entries(map).map(([date, amount]) => ({ date, amount }));
+  })();
 
-  // Confirm secure physical handover
-  const handleConfirmHandover = async () => {
-    if (!handoverBooking) return;
-    
-    if (enteredOtp !== handoverBooking.pickupOTP) {
-      toast.error("Handover OTP code is invalid. Please double check customer dashboard.");
-      return;
-    }
-
-    if (!checkIdVerified) {
-      toast.error("You must physically verify customer's identification documents first.");
-      return;
-    }
-
-    if (!checkSerialMatched) {
-      toast.error("You must verify camera unit serial matches assigned booking serial.");
-      return;
-    }
-
-    const unchecked = Object.values(checkAccessories).some(v => !v);
-    if (unchecked) {
-      if (!confirm("Some standard accessories are not checked. Proceed with handover?")) return;
-    }
-
-    setUpdatingId(handoverBooking.id);
-    try {
-      const accessoryChecklist = Object.keys(checkAccessories).filter(k => (checkAccessories as any)[k]);
-      const remarks = `Verified ID physically. Checked accessories: ${accessoryChecklist.join(", ")}. Notes: ${handoverNotes}`;
-      
-      await db.confirmHandover(handoverBooking.id, enteredOtp, remarks, true);
-      toast.success(`Equipment handover confirmed. Status transitioned to Rented!`);
-      
-      // Send mock messaging notification
-      toast.info("Aurevia WhatsApp Trigger: 'Gear collected successfully. Late fee ₹999/day for delays.'");
-      
-      setHandoverBooking(null);
-      refreshInventoryUnits();
-      refresh();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to confirm handover.");
-    } finally {
-      setUpdatingId(null);
-    }
-  };
-
-  // Launch return inspection modal
-  const openReturnModal = (booking: any) => {
-    setReturnModalBooking(booking);
-    setReturnCondition("good");
-    setDamageDescription("");
-    setDamageCost(0);
-    setReturnAccessoriesChecked({
-      lensCap: true,
-      strap: true,
-      battery: true,
-      charger: true,
-      sdCard: true,
+  // Revenue by camera model
+  const revenueByCamera = (() => {
+    const map: Record<string, number> = {};
+    bookings.filter((b) => b.paymentStatus === "paid").forEach((b) => {
+      b.items.forEach((item) => {
+        const unit = inventoryUnits.find((u) => u.id === item.inventoryUnitId);
+        const name = unit?.name || (item.productId.includes("000000000001") ? "Canon Camera" : "Nikon Camera");
+        map[name] = (map[name] || 0) + item.unitPrice * item.quantity;
+      });
     });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  })();
 
-    // Overdue late return fee calculation: ₹999/day
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const expectedReturn = new Date(booking.end_date || booking.endDate);
-    expectedReturn.setHours(0,0,0,0);
-
-    let lateFee = 0;
-    if (today > expectedReturn) {
-      const diffTime = today.getTime() - expectedReturn.getTime();
-      const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      lateFee = overdueDays * 999;
-    }
-    setCalculatedLateFee(lateFee);
-  };
-
-  // Complete return inspection checklist
-  const handleConfirmReturn = async () => {
-    if (!returnModalBooking) return;
-    setUpdatingId(returnModalBooking.id);
-
-    try {
-      const returnedAccessoriesList = Object.keys(returnAccessoriesChecked).filter(k => (returnAccessoriesChecked as any)[k]);
-      
-      await db.processReturn(
-        returnModalBooking.id,
-        returnCondition,
-        damageDescription,
-        damageCost,
-        returnedAccessoriesList.join(", ")
+  /* ─── Filtered bookings ──────────────────────────── */
+  const getTabBookings = () => {
+    let base = bookings;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      base = base.filter((b) =>
+        b.referenceCode.toLowerCase().includes(q) ||
+        b.contactName.toLowerCase().includes(q) ||
+        b.contactPhone.includes(q) ||
+        b.contactEmail?.toLowerCase().includes(q)
       );
-      
-      toast.success("Equipment return processed. Inventory unit updated!");
-      
-      // Refund message alert
-      if (returnCondition === "good" && calculatedLateFee === 0) {
-        toast.info("Security Deposit Action: Refund status moved to Fully Refunded.");
-      } else {
-        toast.info("Security Deposit Action: Deposit held pending damage/late fee deductions.");
-      }
-
-      setReturnModalBooking(null);
-      refreshInventoryUnits();
-      refresh();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to process return.");
-    } finally {
-      setUpdatingId(null);
     }
-  };
-
-  // Process deposit actions manually
-  const handleProcessDepositStatus = async (bookingId: string, action: "refund_full" | "refund_partial" | "deduct_full") => {
-    const booking = bookings.find(b => b.id === bookingId);
-    if (!booking) return;
-
-    let nextStatus: any = "fully_refunded";
-    let message = "Refunded entire security deposit to customer bank account.";
-    if (action === "refund_partial") {
-      const deduct = prompt("Enter deduction amount (INR):", "1000");
-      if (deduct === null) return;
-      nextStatus = "partially_refunded";
-      message = `Refunded deposit after deducting damage/late charges of ₹${deduct}.`;
-    } else if (action === "deduct_full") {
-      if (!confirm("Forfeit/deduct the entire security deposit?")) return;
-      nextStatus = "deducted";
-      message = `Forfeited entire security deposit of ₹${booking.securityDeposit} due to severe loss or damage.`;
-    }
-
-    setUpdatingId(bookingId);
-    await db.updateDepositStatus(bookingId, nextStatus, message);
-    toast.success(`Deposit status updated to: ${nextStatus.replace("_", " ")}`);
-    refresh();
-    setUpdatingId(null);
-  };
-
-  // Filter bookings based on active sidebar tab
-  const getFilteredBookings = () => {
-    const q = searchQuery.toLowerCase();
-    
-    // Base search matches
-    const baseList = bookings.filter((b) => {
-      return (
-        (b.reference_code || b.referenceCode || "").toLowerCase().includes(q) ||
-        (b.contact_name || b.contactName || "").toLowerCase().includes(q) ||
-        (b.contact_phone || b.contactPhone || "").includes(q)
-      );
-    });
-
-    const todayStr = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-
     switch (activeTab) {
-      case "pickups_today":
-        return baseList.filter((b) => (b.status === "ready_for_pickup" || b.status === "approved") && (b.start_date || b.startDate) === todayStr);
-      case "returns_today":
-        return baseList.filter((b) => (b.status === "rented" || b.status === "overdue") && (b.end_date || b.endDate) === todayStr);
-      case "approval_queue":
-        return baseList.filter((b) => b.status === "approval_pending");
-      case "ready_pickup":
-        return baseList.filter((b) => b.status === "ready_for_pickup");
-      case "active_rentals":
-        return baseList.filter((b) => b.status === "rented" || b.status === "overdue");
-      case "overdue":
-        return baseList.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.end_date || b.endDate)));
-      default:
-        return baseList;
+      case "approval_queue":  return base.filter((b) => b.status === "approval_pending");
+      case "pickups_today":   return base.filter((b) => b.status === "ready_for_pickup" && b.startDate <= today);
+      case "returns_today":   return base.filter((b) => b.status === "rented" && b.endDate <= today);
+      case "active_rentals":  return base.filter((b) => b.status === "rented");
+      case "overdue":         return base.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.endDate)));
+      default: return base;
     }
   };
 
-  const filteredBookings = getFilteredBookings();
-
-  // Calendar helpers
-  const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-  const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
-  const daysCount = getDaysInMonth(currentYear, currentMonth);
-  const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
-
-  const getMonthName = (monthIdx: number) => {
-    return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][monthIdx];
+  /* ─── Actions ────────────────────────────────────── */
+  const handleStatus = async (id: string, status: BookingStatus, note = "") => {
+    setUpdatingId(id);
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+      const isSupabase = supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
+      if (isSupabase) {
+        await updateBookingStatusAction(id, status as any);
+      } else {
+        await db.updateBookingStatus(id, status, note, String(adminProfile?.full_name ?? "admin"));
+        if (status === "approved") await db.assignAvailableUnit(id);
+      }
+      toast.success(`Booking ${status.replace(/_/g, " ")}.`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update status.");
+    }
+    setUpdatingId(null);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-obsidian flex items-center justify-center">
-        <div className="flex items-center gap-3 text-xs font-mono text-muted-gray">
-          <Loader2 size={16} className="animate-spin text-gold-champagne" />
-          INITIALIZING SECURE VAULT METRICS...
-        </div>
-      </div>
-    );
-  }
+  const handleApprove = (id: string) => handleStatus(id, "approved", "Booking approved by admin.");
+  const handleReject  = async (id: string) => {
+    await handleStatus(id, "rejected", rejectReason || "Rejected by admin.");
+    setRejectingId(null); setRejectReason("");
+  };
 
+  const handleGenerateOTP = async (id: string) => {
+    setGeneratingOTP(id);
+    try {
+      const booking = await db.acceptAgreement(id, "admin");
+      if (booking?.pickupOTP) toast.success(`OTP generated: ${booking.pickupOTP}`);
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to generate OTP.");
+    }
+    setGeneratingOTP(null);
+  };
+
+  const handleConfirmPickup = async (id: string) => {
+    try {
+      const otp = bookings.find((b) => b.id === id)?.pickupOTP ?? "000000";
+      await db.confirmHandover(id, otp, "Admin confirmed handover.", true);
+      toast.success("Rental started — camera marked as rented.");
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to confirm pickup.");
+    }
+  };
+
+  const handleReturn = async (id: string) => {
+    setUpdatingId(id);
+    try {
+      await db.processReturn(id, returnCondition, damageDesc, damageCost, returnRemarks);
+      toast.success("Return processed and booking completed.");
+      setReturningId(null); setReturnCondition("good"); setDamageDesc(""); setDamageCost(0); setReturnRemarks("");
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to process return.");
+    }
+    setUpdatingId(null);
+  };
+
+  const handleInventoryStatus = async (unitId: string, status: InventoryUnit["status"]) => {
+    await db.updateInventoryUnitStatus(unitId, status);
+    toast.success(`Camera ${status}.`);
+    setInventoryUnits(db.getInventoryUnits());
+  };
+
+  const handleToggleCoupon = (id: string) => {
+    setCoupons((prev) => prev.map((c) => c.id === id ? { ...c, isActive: !c.isActive } : c));
+    toast.success("Coupon status updated.");
+  };
+
+  const handleAddCoupon = () => {
+    if (!newCoupon.code || !newCoupon.activeUntil) { toast.error("Code and expiry are required."); return; }
+    const newC: Coupon = {
+      id: `c_${Date.now()}`,
+      code: newCoupon.code.toUpperCase(),
+      discountPercent: 0,
+      discountFlat: newCoupon.discountFlat,
+      activeUntil: newCoupon.activeUntil,
+      isActive: true,
+      activationDate: new Date().toISOString().split("T")[0],
+      usageLimit: newCoupon.usageLimit,
+      perUserLimit: newCoupon.perUserLimit,
+    };
+    setCoupons((prev) => [...prev, newC]);
+    setNewCoupon({ code: "", discountFlat: 199, activeUntil: "", usageLimit: 100, perUserLimit: 1 });
+    setAddingCoupon(false);
+    toast.success(`Coupon ${newC.code} created.`);
+  };
+
+  const handleLogout = async () => {
+    await signOutAction();
+    window.location.href = "/login";
+  };
+
+  /* ─── Nav items ──────────────────────────────────── */
+  const navItems: { id: AdminTab; label: string; icon: React.ReactNode; badge?: number; ownerOnly?: boolean }[] = [
+    { id: "overview",       label: "Overview",         icon: <BarChart2 size={14} /> },
+    { id: "approval_queue", label: "Approval Queue",   icon: <CheckSquare size={14} />, badge: stats.approvalQ },
+    { id: "pickups_today",  label: "Pickups Today",    icon: <Calendar size={14} />,    badge: stats.pickupsToday },
+    { id: "returns_today",  label: "Returns Today",    icon: <Clock size={14} />,       badge: stats.returnsToday },
+    { id: "active_rentals", label: "Active Rentals",   icon: <Camera size={14} />,      badge: stats.active },
+    { id: "overdue",        label: "Overdue Alerts",   icon: <AlertTriangle size={14} />, badge: stats.overdue },
+    { id: "inventory",      label: "Camera Inventory", icon: <Package size={14} /> },
+    { id: "coupons",        label: "Coupon Manager",   icon: <Tag size={14} />,         ownerOnly: true },
+    { id: "customers",      label: "Customers",        icon: <Users size={14} /> },
+    { id: "audit_logs",     label: "Audit Logs",       icon: <History size={14} /> },
+  ];
+
+  /* ─── Render ─────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-obsidian text-ivory pb-20">
-      <Navbar cartItemCount={cart.length} />
+    <AuthGuard requiredRole="admin">
+      <div className="min-h-screen bg-obsidian text-ivory">
+        <Navbar cartItemCount={cart.length} />
 
-      {/* Admin header */}
-      <div className="pt-32 pb-10 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div className="space-y-1">
-          <span className="text-[9px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">
-            Aurevia Administration Panel
-          </span>
-          <h1 className="serif-heading text-3xl md:text-4xl font-light text-ivory">
-            Enterprise Operations <span className="text-gold">Analytics Dashboard</span>
-          </h1>
-          <div className="flex items-center gap-2 pt-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider">
-              Real-time connected · {bookings.length} total bookings
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <NotificationBell
-            alerts={alerts}
-            unreadCount={unreadCount}
-            onMarkAllRead={markAllRead}
-            onDismiss={dismissAlert}
-          />
-
-          <button
-            onClick={refresh}
-            className="p-2 border border-white/10 rounded hover:bg-white/5 hover:border-gold-champagne text-gold-champagne transition flex items-center gap-1.5 text-xs cursor-pointer"
-          >
-            <RefreshCw size={13} />
-          </button>
-
-          <button
-            onClick={() => toast.info("Excel CSV generated for accounting dashboard.")}
-            className="p-2 border border-white/10 rounded hover:bg-white/5 text-ivory transition flex items-center gap-1.5 text-xs cursor-pointer"
-          >
-            <FileSpreadsheet size={13} />
-            CSV
-          </button>
-
-          <button
-            onClick={() => toast.info("PDF document format exported.")}
-            className="p-2 border border-white/10 rounded hover:bg-white/5 text-ivory transition flex items-center gap-1.5 text-xs cursor-pointer"
-          >
-            <FileDown size={13} />
-            PDF
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 space-y-10">
-
-        {/* Core Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            {
-              label: "Net Rental Revenue",
-              value: `₹${stats.revenueTotal.toLocaleString("en-IN")}`,
-              sub: `This month: ₹${stats.revenueMonth.toLocaleString("en-IN")}`,
-              icon: <Coins size={14} className="text-gold-champagne" />,
-              gold: true,
-            },
-            {
-              label: "Net Discounts Availed",
-              value: `₹${bookings.reduce((sum, b) => sum + (b.discountAmount || b.discount_amount || 0), 0).toLocaleString("en-IN")}`,
-              sub: "Promotional campaigns impact",
-              icon: <Sparkles size={14} className="text-[#D8B36A]" />,
-            },
-            {
-              label: "Utilization Rate",
-              value: `${stats.utilizationRate}%`,
-              sub: "Physical units out in field",
-              icon: <ArrowUpRight size={14} className="text-gold-champagne" />,
-            },
-            {
-              label: "Pending Approvals",
-              value: bookings.filter((b) => b.status === "approval_pending").length || "—",
-              sub: "Awaiting customer vetting",
-              icon: <ShieldAlert size={14} className="text-gold-champagne" />,
-            },
-          ].map((m) => (
-            <div key={m.label} className="admin-item opacity-0 glass-panel border-white/5 rounded-lg p-5 space-y-3">
-              <div className="flex justify-between items-center text-muted-gray">
-                <span className="text-[9px] uppercase tracking-wider font-mono">{m.label}</span>
-                {m.icon}
-              </div>
-              <div className={`text-2xl font-light ${m.gold ? "text-gold-champagne" : ""}`}>{m.value}</div>
-              <p className="text-[8px] text-muted-gray uppercase tracking-widest font-mono">{m.sub}</p>
+        {/* Access denied for non-admin/staff */}
+        {!profileLoading && !isAllowed && (
+          <div className="flex-1 flex flex-col items-center justify-center min-h-screen gap-4 text-center px-6 pt-32">
+            <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <Lock size={24} className="text-rose-400" />
             </div>
-          ))}
-        </div>
-
-        {/* Navigation Sidebar & Operational Grids */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-          
-          {/* Operations sidebar selector */}
-          <div className="lg:col-span-1 glass-panel border-white/5 rounded-lg p-4 space-y-2">
-            <span className="text-[9px] text-muted-gray uppercase font-mono tracking-widest block mb-2 px-2">Operational Grids</span>
-            {[
-              { id: "overview",        label: "Metrics & Calendar", count: null },
-              { id: "pickups_today",    label: "Today's Pickups",    count: bookings.filter((b) => (b.status === "ready_for_pickup" || b.status === "approved") && (b.start_date || b.startDate) === new Date().toISOString().split("T")[0]).length },
-              { id: "returns_today",    label: "Today's Returns",    count: bookings.filter((b) => (b.status === "rented" || b.status === "overdue") && (b.end_date || b.endDate) === new Date().toISOString().split("T")[0]).length },
-              { id: "approval_queue",   label: "Approval Queue",     count: bookings.filter((b) => b.status === "approval_pending").length },
-              { id: "ready_pickup",     label: "Ready for Pickup",   count: bookings.filter((b) => b.status === "ready_for_pickup").length },
-              { id: "active_rentals",   label: "Active Rentals",     count: bookings.filter((b) => b.status === "rented" || b.status === "overdue").length },
-              { id: "overdue",          label: "Overdue Alerts",     count: bookings.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.end_date || b.endDate))).length },
-              { id: "maintenance",      label: "Maintenance Log",    count: inventoryUnits.filter((u) => u.status === "maintenance").length },
-              { id: "audit_logs",       label: "Operational Audit",  count: null },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as AdminTab)}
-                className={`w-full text-left px-3 py-2.5 rounded text-xs font-semibold uppercase tracking-wider flex justify-between items-center transition cursor-pointer ${
-                  activeTab === tab.id
-                    ? "bg-gold-champagne text-obsidian"
-                    : "text-muted-gray hover:bg-white/5 hover:text-ivory"
-                }`}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== null && tab.count > 0 && (
-                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono font-bold ${
-                    activeTab === tab.id ? "bg-obsidian text-gold-champagne" : "bg-gold-champagne/10 text-gold-champagne"
-                  }`}>
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            <h2 className="serif-heading text-2xl font-light text-ivory">Access Restricted</h2>
+            <p className="text-sm text-muted-gray max-w-sm">You do not have permission to access the admin panel. Contact the system administrator.</p>
+            <a href="/dashboard" className="px-5 py-2.5 bg-gold-champagne text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg mt-2">Go to Dashboard</a>
           </div>
+        )}
 
-          <div className="lg:col-span-3 space-y-8">
-            
-            {/* OVERVIEW CONTENT */}
-            {activeTab === "overview" && (
-              <>
-                {/* Revenue Growth chart & status breakdown */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="admin-item opacity-0 md:col-span-2 glass-panel border-white/5 rounded-lg p-5 space-y-4">
-                    <h3 className="serif-heading text-sm font-light text-ivory border-b border-white/5 pb-2">Revenue Growth (Rentals Only)</h3>
-                    <div className="h-48 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={revenueTrend}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2c" vertical={false} />
-                          <XAxis dataKey="date" stroke="#9A9995" fontSize={9} tickLine={false} axisLine={false} />
-                          <YAxis stroke="#9A9995" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
-                          <Tooltip contentStyle={{ backgroundColor: "#171719", borderColor: "rgba(216,179,106,0.35)", borderRadius: 4, fontSize: 10 }} />
-                          <Line type="monotone" dataKey="amount" stroke="#D8B36A" strokeWidth={2} dot={{ r: 2 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <div className="admin-item opacity-0 glass-panel border-white/5 rounded-lg p-5 flex flex-col justify-between">
-                    <h3 className="serif-heading text-sm font-light text-ivory border-b border-white/5 pb-2">Status Distribution</h3>
-                    <div className="h-28 w-full flex items-center justify-center">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={["approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed"].map(s => ({
-                              name: s,
-                              value: bookings.filter(b => b.status === s).length
-                            })).filter(d => d.value > 0)}
-                            cx="50%" cy="50%" innerRadius={25} outerRadius={40} dataKey="value"
-                          >
-                            {COLORS.map((c, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="text-[8px] font-mono text-muted-gray uppercase space-y-1">
-                      {["approval_pending", "ready_for_pickup", "rented", "returned"].map((s, i) => (
-                        <div key={s} className="flex justify-between">
-                          <span>{s.replace("_"," ")}</span>
-                          <span className="text-ivory font-bold">{bookings.filter(b => b.status === s).length}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Calendar Availability Grid */}
-                <div className="admin-item opacity-0 glass-panel border-white/5 rounded-lg p-6 space-y-4">
-                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                    <h3 className="serif-heading text-base font-light text-ivory">Monthly Availability Grid — {getMonthName(currentMonth)} {currentYear}</h3>
-                    <span className="text-[9px] font-mono text-muted-gray uppercase">Active camera schedules</span>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-light font-mono min-w-[600px] border border-white/5">
-                      <thead>
-                        <tr className="bg-white/5 text-[9px] text-muted-gray uppercase">
-                          <th className="p-2 border-b border-white/10">Camera Unit</th>
-                          {daysArray.map((day) => (
-                            <th key={day} className="p-0.5 text-center border-b border-white/10 min-w-[18px]">{day}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {inventoryUnits.map((unit) => (
-                          <tr key={unit.id} className="hover:bg-white/[0.01] transition border-b border-white/5">
-                            <td className="p-2 font-semibold text-ivory text-[9px] bg-white/[0.02]">
-                              {unit.name} <span className="text-gold-champagne text-[8px] font-mono block">[{unit.serialNumber}]</span>
-                            </td>
-                            {daysArray.map((day) => {
-                              const date = new Date(currentYear, currentMonth, day);
-                              const bookedBooking = bookings.find((b) => {
-                                if (!["approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(b.status)) return false;
-                                const start = new Date(b.start_date || b.startDate);
-                                const end = new Date(b.end_date || b.endDate);
-                                start.setHours(0,0,0,0);
-                                end.setHours(23,59,59,999);
-                                return date >= start && date <= end && b.items.some((item: any) => item.inventoryUnitId === unit.id);
-                              });
-
-                              const isMaintenance = unit.status === "maintenance";
-
-                              return (
-                                <td
-                                  key={day}
-                                  className={`p-0.5 text-center border-r border-white/5 text-[8px] ${
-                                    bookedBooking
-                                      ? "bg-gold-champagne/80 text-obsidian font-bold"
-                                      : isMaintenance
-                                      ? "bg-rose-500/20 text-rose-400"
-                                      : "bg-white/[0.02] text-muted-gray/30"
-                                  }`}
-                                  title={
-                                    bookedBooking
-                                      ? `Booked: ${bookedBooking.reference_code || bookedBooking.referenceCode} (${bookedBooking.contact_name || bookedBooking.contactName})`
-                                      : isMaintenance
-                                      ? "Maintenance"
-                                      : "Available"
-                                  }
-                                >
-                                  {bookedBooking ? "B" : isMaintenance ? "M" : "•"}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </>
+        {isAllowed && (
+          <>
+            {/* Mobile sidebar backdrop */}
+            {sidebarOpen && (
+              <div className="fixed inset-0 bg-black/70 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
             )}
 
-            {/* MAINTENANCE GRID */}
-            {activeTab === "maintenance" && (
-              <div className="glass-panel border-white/5 rounded-lg p-6 space-y-4">
-                <h3 className="serif-heading text-lg font-light text-ivory border-b border-white/5 pb-2">Physical Camera Inventory & Maintenance Toggles</h3>
-                <div className="space-y-3">
-                  {inventoryUnits.map((unit) => (
-                    <div key={unit.id} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-lg">
-                      <div>
-                        <h4 className="text-xs font-semibold text-ivory">{unit.name}</h4>
-                        <p className="text-[10px] text-muted-gray font-mono">
-                          Serial: <span className="text-gold-champagne font-bold">{unit.serialNumber}</span> · Current Condition: <span className="text-gold-champagne capitalize">{unit.condition}</span>
-                        </p>
+            <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-28 pb-16 flex gap-6">
+
+              {/* Sidebar */}
+              <aside className={`fixed lg:relative top-0 left-0 h-full lg:h-auto z-50 lg:z-auto w-60 bg-obsidian lg:bg-transparent border-r border-white/5 lg:border-none pt-20 lg:pt-0 px-3 lg:px-0 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} shrink-0`}>
+                <div className="glass-panel border-white/5 rounded-xl p-3 space-y-0.5 sticky top-28">
+                  {/* Profile mini */}
+                  <div className="px-2 py-3 border-b border-white/5 mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gold-champagne/15 border border-gold-border flex items-center justify-center shrink-0">
+                        <User size={13} className="text-gold-champagne" />
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono tracking-wider font-bold border ${
-                          unit.status === "available"
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                            : unit.status === "rented"
-                            ? "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                            : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                        }`}>
-                          {unit.status.toUpperCase()}
-                        </span>
-                        {unit.status !== "rented" && (
-                          <button
-                            onClick={() => handleToggleMaintenance(unit.id, unit.status)}
-                            className="px-2.5 py-1 bg-white/10 hover:bg-white/15 text-ivory rounded text-[9px] font-mono uppercase tracking-wider transition cursor-pointer"
-                          >
-                            {unit.status === "maintenance" ? "Mark Available" : "Send to Maintenance"}
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-ivory truncate">{String(adminProfile?.full_name ?? "Admin")}</p>
+                        <div className="flex items-center gap-1">
+                          <ShieldCheck size={9} className="text-gold-champagne" />
+                          <span className="text-[9px] text-gold-champagne font-mono uppercase">{isOwner ? "Owner" : "Technical Manager"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {navItems.filter((n) => !n.ownerOnly || isOwner).map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
+                      className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-[11px] transition cursor-pointer ${activeTab === item.id ? "bg-gold-champagne/10 text-gold-champagne border border-gold-border/30" : "text-muted-gray hover:text-ivory hover:bg-white/5"}`}
+                    >
+                      <span className="flex items-center gap-2">{item.icon}{item.label}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded-full ${item.id === "overdue" ? "bg-rose-500/20 text-rose-400" : "bg-gold-champagne/20 text-gold-champagne"}`}>{item.badge}</span>
+                      )}
+                    </button>
+                  ))}
+
+                  <div className="pt-2 mt-2 border-t border-white/5">
+                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] text-rose-400/60 hover:text-rose-400 hover:bg-rose-500/5 transition cursor-pointer">
+                      <LogOut size={13} /> Sign Out
+                    </button>
+                  </div>
+                </div>
+              </aside>
+
+              {/* Main */}
+              <main className="flex-1 min-w-0">
+                {/* Top bar */}
+                <div className="flex items-center justify-between mb-6 gap-3">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setSidebarOpen(true)} className="p-2 border border-white/10 rounded-lg text-muted-gray lg:hidden cursor-pointer">
+                      <Menu size={15} />
+                    </button>
+                    <div>
+                      <span className="text-[8px] text-gold-champagne uppercase font-mono tracking-widest hidden lg:block">AUREVIA Operations</span>
+                      <h1 className="serif-heading text-xl font-light text-ivory">
+                        {navItems.find((n) => n.id === activeTab)?.label ?? "Admin"}
+                      </h1>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {activeTab !== "overview" && activeTab !== "inventory" && activeTab !== "coupons" && activeTab !== "customers" && activeTab !== "audit_logs" && (
+                      <div className="relative hidden sm:block">
+                        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder="Search bookings..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="bg-white/5 border border-white/10 text-[11px] rounded-lg pl-7 pr-3 py-2 focus:outline-none focus:border-gold-champagne/40 w-44 transition"
+                        />
+                      </div>
+                    )}
+                    <button onClick={loadData} disabled={loading} className="p-2 border border-white/10 rounded-lg text-muted-gray hover:text-ivory transition cursor-pointer disabled:opacity-40">
+                      <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+                    </button>
+                    <NotificationBell
+                      alerts={[]}
+                      unreadCount={stats.approvalQ}
+                      onMarkAllRead={() => {}}
+                      onDismiss={() => {}}
+                    />
+                  </div>
+                </div>
+
+                {loading && activeTab === "overview" ? (
+                  <SkeletonDashboard />
+                ) : (
+                  <>
+                    {/* ── OVERVIEW ── */}
+                    {activeTab === "overview" && (
+                      <div className="space-y-5">
+                        {/* Stats cards */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                          {[
+                            { label: "Revenue",   value: `₹${stats.revenue.toLocaleString("en-IN")}`, icon: <Coins size={13} />,       color: "text-gold-champagne", gold: true },
+                            { label: "Total",     value: stats.total,    icon: <FileSpreadsheet size={13} />, color: "text-ivory" },
+                            { label: "Pending",   value: stats.approvalQ,icon: <Clock size={13} />,           color: "text-orange-400" },
+                            { label: "Active",    value: stats.active,   icon: <Camera size={13} />,          color: "text-indigo-400" },
+                            { label: "Completed", value: stats.completed,icon: <CheckCircle size={13} />,     color: "text-emerald-400" },
+                            { label: "Overdue",   value: stats.overdue,  icon: <AlertTriangle size={13} />,   color: "text-rose-400" },
+                          ].map((s) => (
+                            <div key={s.label} className={`admin-card opacity-0 glass-panel rounded-xl p-4 space-y-2 ${s.gold ? "border-gold-border/30" : "border-white/5"}`}>
+                              <div className={`flex items-center gap-1.5 text-[8px] uppercase font-mono tracking-wider ${s.color}`}>{s.icon} {s.label}</div>
+                              <p className={`text-xl font-light serif-heading ${s.color}`}>{s.value}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Charts row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                          {/* Revenue trend */}
+                          <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 lg:col-span-2">
+                            <p className="text-[9px] uppercase font-mono tracking-widest text-muted-gray mb-4">7-Day Revenue Trend</p>
+                            <ResponsiveContainer width="100%" height={160}>
+                              <AreaChart data={revenueTrend} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+                                <defs>
+                                  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#D8B36A" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="#D8B36A" stopOpacity={0} />
+                                  </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" tick={{ fill: "#6B7280", fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fill: "#6B7280", fontSize: 9 }} axisLine={false} tickLine={false} />
+                                <Tooltip contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }} />
+                                <Area type="monotone" dataKey="amount" stroke="#D8B36A" strokeWidth={2} fill="url(#goldGrad)" />
+                              </AreaChart>
+                            </ResponsiveContainer>
+                          </div>
+
+                          {/* Revenue by camera */}
+                          <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5">
+                            <p className="text-[9px] uppercase font-mono tracking-widest text-muted-gray mb-4">Revenue by Camera</p>
+                            {revenueByCamera.length === 0 ? (
+                              <div className="h-40 flex items-center justify-center text-xs text-muted-gray/40">No data yet</div>
+                            ) : (
+                              <ResponsiveContainer width="100%" height={160}>
+                                <PieChart>
+                                  <Pie data={revenueByCamera} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={3}>
+                                    {revenueByCamera.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                  </Pie>
+                                  <Tooltip contentStyle={{ background: "#111", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 11 }} />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Camera availability */}
+                        <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5">
+                          <p className="text-[9px] uppercase font-mono tracking-widest text-muted-gray mb-4">Camera Fleet Status</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {inventoryUnits.map((unit) => (
+                              <div key={unit.id} className={`border rounded-xl p-4 space-y-2.5 transition ${unit.status === "available" ? "border-emerald-500/20 bg-emerald-500/5" : unit.status === "rented" ? "border-indigo-500/20 bg-indigo-500/5" : unit.status === "maintenance" ? "border-amber-500/20 bg-amber-500/5" : "border-white/10 bg-white/3"}`}>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-xs font-semibold text-ivory">{unit.name}</p>
+                                  <span className={`text-[8px] font-mono uppercase px-2 py-0.5 rounded-full border ${STATUS_STYLES[unit.status === "decommissioned" ? "cancelled" : unit.status === "available" ? "approved" : unit.status] ?? ""}`}>
+                                    {unit.status}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-gray font-mono">{unit.serialNumber}</p>
+                                <p className="text-[9px] text-muted-gray/60">Condition: {unit.condition}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Today's schedule */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { label: "Today's Pickups", items: bookings.filter((b) => b.status === "ready_for_pickup" && b.startDate <= today), color: "text-emerald-400" },
+                            { label: "Today's Returns", items: bookings.filter((b) => b.status === "rented" && b.endDate <= today),           color: "text-purple-400" },
+                          ].map(({ label, items, color }) => (
+                            <div key={label} className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5">
+                              <p className={`text-[9px] uppercase font-mono tracking-widest mb-4 ${color}`}>{label}</p>
+                              {items.length === 0 ? (
+                                <p className="text-xs text-muted-gray/40 text-center py-4">None scheduled</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {items.map((b) => (
+                                    <div key={b.id} className="flex items-center justify-between p-2.5 bg-white/3 rounded-lg">
+                                      <div>
+                                        <p className="text-[11px] font-semibold text-ivory">{b.contactName}</p>
+                                        <p className="text-[9px] text-muted-gray font-mono">{b.referenceCode}</p>
+                                      </div>
+                                      <span className={`text-[8px] font-mono px-2 py-0.5 rounded border ${STATUS_STYLES[b.status] ?? ""}`}>
+                                        {b.status.replace(/_/g, " ")}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── BOOKING TABS (approval queue, pickups, returns, active, overdue) ── */}
+                    {["approval_queue","pickups_today","returns_today","active_rentals","overdue"].includes(activeTab) && (
+                      <div className="space-y-3">
+                        {getTabBookings().length === 0 ? (
+                          <div className="glass-panel border-white/5 rounded-xl p-12 text-center">
+                            <Camera size={28} className="text-muted-gray/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-gray">No bookings in this category.</p>
+                          </div>
+                        ) : getTabBookings().map((b) => (
+                          <div key={b.id} className="admin-card opacity-0 glass-panel border-white/5 hover:border-white/10 rounded-xl p-5 space-y-3 transition">
+                            {/* Header row */}
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-xs font-mono font-semibold text-ivory">{b.referenceCode}</p>
+                                <p className="text-[11px] font-semibold text-ivory mt-0.5">{b.contactName}</p>
+                                <p className="text-[10px] text-muted-gray">{b.contactPhone} · {b.contactEmail}</p>
+                              </div>
+                              <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border ${STATUS_STYLES[b.status] ?? ""}`}>
+                                {b.status.replace(/_/g, " ")}
+                              </span>
+                            </div>
+
+                            {/* Details row */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                              <div className="bg-white/3 rounded-lg p-2.5">
+                                <p className="text-muted-gray/60 uppercase font-mono text-[8px] mb-0.5">Dates</p>
+                                <p className="text-ivory font-mono">{b.startDate} → {b.endDate}</p>
+                              </div>
+                              <div className="bg-white/3 rounded-lg p-2.5">
+                                <p className="text-muted-gray/60 uppercase font-mono text-[8px] mb-0.5">Total</p>
+                                <p className="text-gold-champagne font-semibold">₹{b.totalPayable.toLocaleString("en-IN")}</p>
+                              </div>
+                              <div className="bg-white/3 rounded-lg p-2.5">
+                                <p className="text-muted-gray/60 uppercase font-mono text-[8px] mb-0.5">Payment</p>
+                                <p className={b.paymentStatus === "paid" ? "text-emerald-400" : "text-amber-400"}>{b.paymentStatus.toUpperCase()}</p>
+                              </div>
+                              <div className="bg-white/3 rounded-lg p-2.5">
+                                <p className="text-muted-gray/60 uppercase font-mono text-[8px] mb-0.5">Coupon</p>
+                                <p className="text-ivory">{b.couponApplied || "—"}</p>
+                              </div>
+                            </div>
+
+                            {/* OTP display if ready */}
+                            {b.pickupOTP && b.status === "ready_for_pickup" && (
+                              <div className="flex items-center gap-2 bg-emerald-500/8 border border-emerald-500/20 rounded-lg p-3">
+                                <Key size={13} className="text-emerald-400 shrink-0" />
+                                <span className="text-[10px] text-emerald-400/70 font-mono">Pickup OTP:</span>
+                                <span className="text-lg font-mono font-bold tracking-[0.3em] text-emerald-400">{b.pickupOTP}</span>
+                              </div>
+                            )}
+
+                            {/* Emergency contact */}
+                            {b.emergencyContact && (
+                              <p className="text-[9px] text-muted-gray/50 font-mono">Emergency: {b.emergencyContact}</p>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {updatingId === b.id ? (
+                                <Loader2 size={14} className="animate-spin text-gold-champagne" />
+                              ) : (
+                                <>
+                                  {/* Approval queue actions */}
+                                  {b.status === "approval_pending" && (
+                                    <>
+                                      <button onClick={() => handleApprove(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/15 border border-teal-500/30 text-teal-400 hover:bg-teal-500/25 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                        <Check size={11} /> Approve
+                                      </button>
+                                      <button onClick={() => setRejectingId(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                        <X size={11} /> Reject
+                                      </button>
+                                    </>
+                                  )}
+                                  {/* Approved: generate OTP */}
+                                  {b.status === "approved" && !b.pickupOTP && (
+                                    <button onClick={() => handleGenerateOTP(b.id)} disabled={generatingOTP === b.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer disabled:opacity-50">
+                                      {generatingOTP === b.id ? <Loader2 size={11} className="animate-spin" /> : <Key size={11} />} Generate OTP
+                                    </button>
+                                  )}
+                                  {/* Ready for pickup: confirm pickup */}
+                                  {b.status === "ready_for_pickup" && (
+                                    <button onClick={() => handleConfirmPickup(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                      <Camera size={11} /> Mark Rented
+                                    </button>
+                                  )}
+                                  {/* Active/overdue: process return */}
+                                  {(b.status === "rented" || b.status === "overdue") && (
+                                    <button onClick={() => setReturningId(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                      <ArrowUpRight size={11} /> Process Return
+                                    </button>
+                                  )}
+                                  {/* Mark overdue */}
+                                  {b.status === "rented" && new Date() > new Date(b.endDate) && (
+                                    <button onClick={() => handleStatus(b.id, "overdue", "Marked overdue — return date passed.")} className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                      <AlertTriangle size={11} /> Mark Overdue
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ── INVENTORY ── */}
+                    {activeTab === "inventory" && (
+                      <div className="space-y-4">
+                        {inventoryUnits.map((unit) => (
+                          <div key={unit.id} className={`admin-card opacity-0 glass-panel rounded-xl p-5 border transition ${unit.status === "maintenance" ? "border-amber-500/20" : "border-white/5"}`}>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h3 className="text-sm font-semibold text-ivory">{unit.name}</h3>
+                                <p className="text-[10px] text-muted-gray font-mono">{unit.serialNumber}</p>
+                                <p className="text-[9px] text-muted-gray/60 mt-0.5">Condition: <span className="capitalize">{unit.condition}</span></p>
+                                {unit.notes && <p className="text-[10px] text-amber-400/70 mt-1">{unit.notes}</p>}
+                              </div>
+                              <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg border ${STATUS_STYLES[unit.status === "available" ? "approved" : unit.status === "rented" ? "rented" : unit.status === "maintenance" ? "maintenance" : "cancelled"] ?? ""}`}>
+                                {unit.status}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              {unit.status !== "available" && (
+                                <button onClick={() => handleInventoryStatus(unit.id, "available")} className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 text-teal-400 hover:bg-teal-500/20 text-[10px] font-mono uppercase rounded-lg transition cursor-pointer">
+                                  <CheckCircle size={11} /> Mark Available
+                                </button>
+                              )}
+                              {unit.status !== "maintenance" && (
+                                <button onClick={() => handleInventoryStatus(unit.id, "maintenance")} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 text-[10px] font-mono uppercase rounded-lg transition cursor-pointer">
+                                  <AlertTriangle size={11} /> Send to Maintenance
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ── COUPON MANAGER (owner only) ── */}
+                    {activeTab === "coupons" && isOwner && (
+                      <div className="space-y-4">
+                        {coupons.map((c) => (
+                          <div key={c.id} className={`admin-card opacity-0 glass-panel rounded-xl p-5 border transition ${c.isActive ? "border-white/5" : "border-white/3 opacity-60"}`}>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-mono font-bold text-ivory">{c.code}</p>
+                                <p className="text-[10px] text-muted-gray mt-0.5">
+                                  {c.discountFlat ? `₹${c.discountFlat} flat` : `${c.discountPercent}% off`}
+                                  {c.usageLimit ? ` · Max ${c.usageLimit} uses` : ""}
+                                  {c.perUserLimit ? ` · ${c.perUserLimit}/user` : ""}
+                                </p>
+                                <p className="text-[9px] text-muted-gray/60 font-mono mt-0.5">Valid until {c.activeUntil}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[8px] font-mono uppercase px-2 py-0.5 rounded-full border ${c.isActive ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-white/10 text-muted-gray/50"}`}>
+                                  {c.isActive ? "Active" : "Inactive"}
+                                </span>
+                                <button onClick={() => handleToggleCoupon(c.id)} className="px-3 py-1.5 border border-white/10 text-muted-gray hover:text-ivory text-[10px] font-mono uppercase rounded-lg transition cursor-pointer">
+                                  {c.isActive ? "Disable" : "Enable"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Add coupon */}
+                        {addingCoupon ? (
+                          <div className="glass-panel border-gold-border/20 rounded-xl p-5 space-y-4">
+                            <p className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne">New Coupon</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {[
+                                { label: "Coupon Code", key: "code",         type: "text",   ph: "e.g. SUMMER2026" },
+                                { label: "Flat Discount (₹)", key: "discountFlat", type: "number", ph: "199" },
+                                { label: "Expiry Date",  key: "activeUntil", type: "date",   ph: "" },
+                                { label: "Usage Limit",  key: "usageLimit",  type: "number", ph: "100" },
+                                { label: "Per-User Limit", key: "perUserLimit", type: "number", ph: "1" },
+                              ].map(({ label, key, type, ph }) => (
+                                <div key={key} className="space-y-1.5">
+                                  <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">{label}</label>
+                                  <input
+                                    type={type} placeholder={ph}
+                                    value={(newCoupon as any)[key]}
+                                    onChange={(e) => setNewCoupon((prev) => ({ ...prev, [key]: type === "number" ? Number(e.target.value) : e.target.value }))}
+                                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-gold-champagne/50 transition"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={handleAddCoupon} className="px-4 py-2 bg-gold-champagne text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg cursor-pointer">Create</button>
+                              <button onClick={() => setAddingCoupon(false)} className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono uppercase rounded-lg cursor-pointer hover:text-ivory transition">Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button onClick={() => setAddingCoupon(true)} className="w-full border border-dashed border-white/15 text-muted-gray hover:text-ivory hover:border-gold-border/30 text-xs py-3 rounded-xl transition cursor-pointer">
+                            + Add New Coupon
                           </button>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    )}
 
-            {/* AUDIT LOGS / HISTORY GRID */}
-            {activeTab === "audit_logs" && (
-              <div className="glass-panel border-white/5 rounded-lg p-6 space-y-4">
-                <h3 className="serif-heading text-lg font-light text-ivory border-b border-white/5 pb-2">Operations Audit & Transition Logs</h3>
-                <div className="space-y-2.5 max-h-96 overflow-y-auto pr-2">
-                  {auditLogs.length === 0 ? (
-                    <p className="text-xs text-muted-gray italic">No audit records log found.</p>
-                  ) : (
-                    auditLogs.map((log, idx) => (
-                      <div key={idx} className="p-3 bg-white/5 border border-white/5 rounded text-[10px] space-y-1">
-                        <div className="flex justify-between items-center text-muted-gray">
-                          <span className="font-mono">Ref: <span className="text-gold-champagne font-semibold">{log.bookingRef}</span> ({log.renter})</span>
-                          <span className="font-mono text-[9px]">{new Date(log.timestamp).toLocaleString("en-IN")}</span>
-                        </div>
-                        <div className="text-ivory font-light font-mono leading-relaxed">
-                          Action: <span className="text-gold capitalize">{log.action || "Status Change"}</span> · Notes: <span className="text-muted-gray">{log.notes || "—"}</span>
-                        </div>
-                        <div className="text-[8px] text-muted-gray uppercase tracking-widest font-mono">Operator: {log.userType || "System"}</div>
+                    {/* ── CUSTOMERS ── */}
+                    {activeTab === "customers" && (
+                      <div className="space-y-3">
+                        {(() => {
+                          const customerMap: Record<string, { name: string; phone: string; email: string; count: number; total: number }> = {};
+                          bookings.forEach((b) => {
+                            const key = b.contactEmail || b.contactPhone;
+                            if (!customerMap[key]) {
+                              customerMap[key] = { name: b.contactName, phone: b.contactPhone, email: b.contactEmail, count: 0, total: 0 };
+                            }
+                            customerMap[key].count++;
+                            customerMap[key].total += b.totalPayable;
+                          });
+                          return Object.entries(customerMap).map(([key, cust]) => (
+                            <div key={key} className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center shrink-0">
+                                  <User size={14} className="text-muted-gray" />
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold text-ivory">{cust.name}</p>
+                                  <p className="text-[10px] text-muted-gray">{cust.email} · {cust.phone}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 text-right">
+                                <div>
+                                  <p className="text-[8px] uppercase font-mono text-muted-gray/60">Bookings</p>
+                                  <p className="text-sm font-semibold text-ivory">{cust.count}</p>
+                                </div>
+                                <div>
+                                  <p className="text-[8px] uppercase font-mono text-muted-gray/60">Total Spent</p>
+                                  <p className="text-sm font-semibold text-gold-champagne">₹{cust.total.toLocaleString("en-IN")}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                        {bookings.length === 0 && (
+                          <div className="glass-panel border-white/5 rounded-xl p-12 text-center">
+                            <Users size={28} className="text-muted-gray/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-gray">No customers yet.</p>
+                          </div>
+                        )}
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
+                    )}
 
-            {/* BOOKINGS TABLES (FILTERS APPLIED) */}
-            {activeTab !== "overview" && activeTab !== "maintenance" && activeTab !== "audit_logs" && (
-              <div className="admin-item opacity-0 glass-panel border-white/5 rounded-lg p-6 space-y-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
-                  <h3 className="serif-heading text-lg font-light text-ivory capitalize">
-                    {activeTab.replace("_", " ")} ({filteredBookings.length})
-                  </h3>
-                  <div className="relative w-full sm:w-64">
-                    <input
-                      type="text"
-                      placeholder="Search renter, phone, code..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 text-xs rounded px-3 py-2 pr-8 focus:outline-none focus:border-gold-champagne/30 transition"
-                    />
-                    <Search size={13} className="absolute right-3 top-2.5 text-muted-gray pointer-events-none" />
+                    {/* ── AUDIT LOGS ── */}
+                    {activeTab === "audit_logs" && (
+                      <div className="glass-panel border-white/5 rounded-xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-[10px] font-mono">
+                            <thead>
+                              <tr className="border-b border-white/5">
+                                <th className="py-3 px-4 text-left text-muted-gray/60 uppercase tracking-wider">Booking</th>
+                                <th className="py-3 px-4 text-left text-muted-gray/60 uppercase tracking-wider">Action</th>
+                                <th className="py-3 px-4 text-left text-muted-gray/60 uppercase tracking-wider hidden sm:table-cell">Performed By</th>
+                                <th className="py-3 px-4 text-left text-muted-gray/60 uppercase tracking-wider hidden md:table-cell">Details</th>
+                                <th className="py-3 px-4 text-left text-muted-gray/60 uppercase tracking-wider">Timestamp</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {bookings.flatMap((b) =>
+                                (b.auditLogs || []).map((log, i) => (
+                                  <tr key={`${b.id}-${i}`} className="border-b border-white/5 hover:bg-white/2 transition">
+                                    <td className="py-2.5 px-4 text-gold-champagne/70">{b.referenceCode}</td>
+                                    <td className="py-2.5 px-4 text-ivory">{log.action.replace(/_/g, " ")}</td>
+                                    <td className="py-2.5 px-4 text-muted-gray hidden sm:table-cell">{log.performedBy}</td>
+                                    <td className="py-2.5 px-4 text-muted-gray/60 hidden md:table-cell max-w-xs truncate">{log.details}</td>
+                                    <td className="py-2.5 px-4 text-muted-gray/50">{new Date(log.timestamp).toLocaleString("en-IN")}</td>
+                                  </tr>
+                                ))
+                              )}
+                              {bookings.flatMap((b) => b.auditLogs || []).length === 0 && (
+                                <tr>
+                                  <td colSpan={5} className="py-12 text-center text-muted-gray/40">No audit logs yet.</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </main>
+            </div>
+
+            {/* ── Reject Reason Modal ── */}
+            {rejectingId && (
+              <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-6" onClick={() => setRejectingId(null)}>
+                <div className="glass-panel border-rose-500/20 rounded-2xl p-6 max-w-sm w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="text-sm font-semibold text-ivory">Reject Booking</h3>
+                  <p className="text-[11px] text-muted-gray">Provide a reason for rejection (optional).</p>
+                  <textarea
+                    rows={3} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="E.g. Camera unavailable on requested dates."
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-3 focus:outline-none focus:border-rose-500/40 resize-none transition"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => rejectingId && handleReject(rejectingId)} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer">Confirm Reject</button>
+                    <button onClick={() => { setRejectingId(null); setRejectReason(""); }} className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono rounded-lg cursor-pointer hover:text-ivory transition">Cancel</button>
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-light font-sans min-w-[650px]">
-                    <thead>
-                      <tr className="border-b border-white/10 font-mono text-[9px] text-muted-gray uppercase tracking-wider">
-                        <th className="py-2.5 pr-3">Ref Code</th>
-                        <th className="py-2.5 px-3">Renter & Contacts</th>
-                        <th className="py-2.5 px-3">Schedule Window</th>
-                        <th className="py-2.5 px-3">Financials</th>
-                        <th className="py-2.5 px-3">Operational Status</th>
-                        <th className="py-2.5 pl-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {filteredBookings.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-10 text-center text-muted-gray font-mono text-[10px]">
-                            NO CURRENT RESERVATION LOGS MATCHING FILTER
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredBookings.map((b) => (
-                          <tr key={b.id} className="hover:bg-white/[0.01] transition">
-                            <td className="py-3 pr-3 font-mono font-semibold text-gold-champagne text-[11px]">
-                              {b.reference_code || b.referenceCode}
-                            </td>
-                            <td className="py-3 px-3">
-                              <div className="font-semibold text-ivory">{b.contact_name || b.contactName}</div>
-                              <div className="text-[10px] text-muted-gray font-mono">{b.contact_phone || b.contactPhone}</div>
-                              {b.emergencyContact && <div className="text-[9px] text-rose-400 font-mono">Emerg: {b.emergencyContact}</div>}
-                            </td>
-                            <td className="py-3 px-3 font-mono text-[10px] text-muted-gray">
-                              <div>{b.start_date || b.startDate} → {b.end_date || b.endDate}</div>
-                              <div className="text-[9px] text-muted-gray/70">Slot: Pickup {b.pickupTime || "10:00 AM"} · Return {b.returnTime || "04:00 PM"}</div>
-                            </td>
-                            <td className="py-3 px-3 font-mono text-[10px]">
-                              <div className="font-semibold text-ivory">Total: ₹{b.totalPayable?.toLocaleString("en-IN")}</div>
-                            </td>
-                            <td className="py-3 px-3">
-                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${STATUS_STYLES[b.status] ?? ""}`}>
-                                {b.status.replace("_", " ")}
-                              </span>
-                            </td>
-                            <td className="py-3 pl-3 text-right">
-                              <div className="flex gap-1.5 justify-end">
-                                {updatingId === b.id ? (
-                                  <Loader2 size={12} className="animate-spin text-gold-champagne" />
-                                ) : (
-                                  <>
-                                    {/* Approval Queue actions */}
-                                    {b.status === "approval_pending" && (
-                                      <>
-                                        <button
-                                          onClick={() => handleUpdateStatus(b.id, "approved", "Vetted and approved by Admin.")}
-                                          className="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded text-[9px] font-bold uppercase tracking-wider border border-emerald-500/20 cursor-pointer transition"
-                                        >
-                                          Approve
-                                        </button>
-                                        <button
-                                          onClick={() => handleUpdateStatus(b.id, "rejected", "Vetting failed, customer rejected.")}
-                                          className="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded text-[9px] font-bold uppercase tracking-wider border border-rose-500/20 cursor-pointer transition"
-                                        >
-                                          Reject
-                                        </button>
-                                      </>
-                                    )}
-
-                                    {/* Unit Reassignment & OTP Handover checkout */}
-                                    {b.status === "ready_for_pickup" && (
-                                      <div className="flex gap-2 items-center justify-end">
-                                        <select
-                                          value={b.items[0]?.inventoryUnitId || ""}
-                                          onChange={(e) => handleReassignUnit(b.id, b.items[0].productId, e.target.value)}
-                                          className="bg-black border border-white/10 text-[9px] font-mono rounded px-1.5 py-0.5 text-gold-champagne focus:outline-none"
-                                        >
-                                          {inventoryUnits.filter(u => u.productId === b.items[0]?.productId).map(u => (
-                                            <option key={u.id} value={u.id}>{u.serialNumber} ({u.status})</option>
-                                          ))}
-                                        </select>
-                                        <button
-                                          onClick={() => openHandoverModal(b)}
-                                          className="px-2.5 py-1 rounded bg-gold-champagne text-obsidian text-[9px] font-bold uppercase tracking-wider cursor-pointer transition hover:bg-gold-warm"
-                                        >
-                                          Handover Gear
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    {/* Return Inspection checkout */}
-                                    {(b.status === "rented" || b.status === "overdue") && (
-                                      <button
-                                        onClick={() => openReturnModal(b)}
-                                        className="px-2.5 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[9px] font-bold uppercase tracking-wider border border-teal-500/20 cursor-pointer transition"
-                                      >
-                                        Inspect Return
-                                      </button>
-                                    )}
-
-                                    {/* Completed status mark */}
-                                    {b.status === "returned" && (
-                                      <button
-                                        onClick={() => handleUpdateStatus(b.id, "completed", "Return completed and finalized.")}
-                                        className="px-2 py-1 bg-white/10 hover:bg-white/15 text-ivory rounded text-[9px] font-bold uppercase tracking-wider border border-white/10 cursor-pointer transition"
-                                      >
-                                        Finalize Completed
-                                      </button>
-                                    )}
-
-                                    {/* Security deposits removed */}
-                                  </>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+            {/* ── Return Processing Modal ── */}
+            {returningId && (
+              <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-6" onClick={() => setReturningId(null)}>
+                <div className="glass-panel border-purple-500/20 rounded-2xl p-6 max-w-sm w-full space-y-4" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="text-sm font-semibold text-ivory">Process Return</h3>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Camera Condition</label>
+                    <div className="flex gap-2">
+                      {(["good","damaged"] as const).map((c) => (
+                        <button key={c} onClick={() => setReturnCondition(c)} className={`flex-1 py-2 border text-[10px] font-mono uppercase rounded-lg transition cursor-pointer ${returnCondition === c ? (c === "good" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400") : "border-white/10 text-muted-gray"}`}>{c}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {returnCondition === "damaged" && (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Damage Description</label>
+                        <textarea rows={2} value={damageDesc} onChange={(e) => setDamageDesc(e.target.value)} className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-rose-500/30 resize-none transition" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Damage Cost (₹)</label>
+                        <input type="number" value={damageCost} onChange={(e) => setDamageCost(Number(e.target.value))} className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-rose-500/30 transition" />
+                      </div>
+                    </>
+                  )}
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Return Remarks</label>
+                    <textarea rows={2} value={returnRemarks} onChange={(e) => setReturnRemarks(e.target.value)} placeholder="Optional notes..." className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-gold-champagne/30 resize-none transition" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => returningId && handleReturn(returningId)} disabled={updatingId !== null} className="px-4 py-2 bg-purple-500/70 hover:bg-purple-500 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer disabled:opacity-50">
+                      {updatingId ? <Loader2 size={13} className="animate-spin" /> : "Complete Return"}
+                    </button>
+                    <button onClick={() => setReturningId(null)} className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono rounded-lg cursor-pointer hover:text-ivory transition">Cancel</button>
+                  </div>
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
-
-      {/* Handover OTP Checklist Modal */}
-      {handoverBooking && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
-          <div className="glass-panel border-gold-champagne/30 bg-[#0e0e0f] rounded-lg p-6 max-w-md w-full space-y-4 text-ivory">
-            <h3 className="serif-heading text-lg font-light text-ivory border-b border-white/5 pb-2">Handover Verification Checklist</h3>
-            <p className="text-xs text-muted-gray">
-              Releasing gear for booking <strong>{handoverBooking.reference_code || handoverBooking.referenceCode}</strong>.
-            </p>
-
-            <div className="space-y-3 text-xs">
-              {/* ID physical vetting check */}
-              <label className="flex items-start gap-2.5 cursor-pointer p-2 bg-white/5 border border-white/5 rounded">
-                <input
-                  type="checkbox"
-                  checked={checkIdVerified}
-                  onChange={(e) => setCheckIdVerified(e.target.checked)}
-                  className="mt-0.5 accent-gold-champagne"
-                />
-                <div>
-                  <span className="font-semibold block text-gold-champagne">Vetted Government ID Physically</span>
-                  <span className="text-[10px] text-muted-gray">Verified that the physical ID matches {handoverBooking.contactName || handoverBooking.contact_name}. DO NOT photograph or scan the document.</span>
-                </div>
-              </label>
-
-              {/* Serial number checkout */}
-              <label className="flex items-start gap-2.5 cursor-pointer p-2 bg-white/5 border border-white/5 rounded">
-                <input
-                  type="checkbox"
-                  checked={checkSerialMatched}
-                  onChange={(e) => setCheckSerialMatched(e.target.checked)}
-                  className="mt-0.5 accent-gold-champagne"
-                />
-                <div>
-                  <span className="font-semibold block text-gold-champagne">Assigned Serial Match</span>
-                  <span className="text-[10px] text-muted-gray">Verified that the physical camera serial number matches the assigned unit.</span>
-                </div>
-              </label>
-
-              {/* Accessories count */}
-              <div className="p-3.5 bg-white/5 border border-white/5 rounded space-y-2">
-                <span className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Standard Accessories Count</span>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                  {Object.keys(checkAccessories).map((key) => (
-                    <label key={key} className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={(checkAccessories as any)[key]}
-                        onChange={(e) => setCheckAccessories(prev => ({ ...prev, [key]: e.target.checked }))}
-                        className="accent-gold-champagne"
-                      />
-                      <span className="capitalize">{key.replace("sd", "SD ").replace("Cap", " Cap")}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Handover OTP */}
-              <div className="space-y-1">
-                <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Renter Pickup OTP Code</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="Enter 6-digit OTP code"
-                  value={enteredOtp}
-                  onChange={(e) => setEnteredOtp(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-center font-mono font-bold tracking-widest text-lg rounded p-2 focus:outline-none focus:border-gold-champagne/40 text-gold-champagne"
-                />
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-1">
-                <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Handover Notes (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="Add accessories condition remarks..."
-                  value={handoverNotes}
-                  onChange={(e) => setHandoverNotes(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none text-ivory"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-3 border-t border-white/5">
-              <button
-                onClick={() => setHandoverBooking(null)}
-                className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-[10px] font-semibold uppercase tracking-wider transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmHandover}
-                className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian rounded text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
-              >
-                Confirm Pickup Handover
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Return Details Modal */}
-      {returnModalBooking && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
-          <div className="glass-panel border-gold-champagne/30 bg-[#0e0e0f] rounded-lg p-6 max-w-md w-full space-y-4 text-ivory">
-            <h3 className="serif-heading text-lg font-light text-ivory border-b border-white/5 pb-2">Process Return Checklist</h3>
-            <p className="text-xs text-muted-gray">
-              Registering return for order <strong>{returnModalBooking.reference_code || returnModalBooking.referenceCode}</strong>.
-            </p>
-
-            {/* Overdue details */}
-            <div className="p-3 bg-white/5 border border-white/5 rounded space-y-1 text-xs">
-              <p className="text-[9px] text-muted-gray uppercase font-mono tracking-wider">Logistical Window Check</p>
-              <p>Expected return: <strong>{returnModalBooking.end_date || returnModalBooking.endDate}</strong></p>
-              <p>Today's Return Date: <strong>{new Date().toLocaleDateString("en-IN")}</strong></p>
-              {calculatedLateFee > 0 ? (
-                <p className="text-rose-400 font-semibold font-mono mt-1.5">LATE RETURN FEE (+₹999/day): +₹{calculatedLateFee.toLocaleString("en-IN")}</p>
-              ) : (
-                <p className="text-emerald-400 font-semibold font-mono mt-1.5">ON-TIME RETURN APPROVED</p>
-              )}
-            </div>
-
-            {/* Returned accessories checklist */}
-            <div className="p-3 bg-white/5 border border-white/5 rounded space-y-2 text-xs">
-              <span className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Verify Accessories Returned</span>
-              <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                {Object.keys(returnAccessoriesChecked).map((key) => (
-                  <label key={key} className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={(returnAccessoriesChecked as any)[key]}
-                      onChange={(e) => setReturnAccessoriesChecked(prev => ({ ...prev, [key]: e.target.checked }))}
-                      className="accent-gold-champagne"
-                    />
-                    <span className="capitalize">{key.replace("sd", "SD ").replace("Cap", " Cap")}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Condition check */}
-            <div className="space-y-2 text-xs">
-              <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Equipment Quality Assessment</label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="returnCondition"
-                    checked={returnCondition === "good"}
-                    onChange={() => setReturnCondition("good")}
-                    className="accent-gold-champagne"
-                  />
-                  Good Condition (Available for Rent)
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="returnCondition"
-                    checked={returnCondition === "damaged"}
-                    onChange={() => setReturnCondition("damaged")}
-                    className="accent-gold-champagne"
-                  />
-                  Damaged Equipment (Maintenance Required)
-                </label>
-              </div>
-            </div>
-
-            {/* Damage descriptions */}
-            {returnCondition === "damaged" && (
-              <div className="space-y-3 pt-3 border-t border-white/5 text-xs animate-fade-in">
-                <div className="space-y-1">
-                  <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Damage / Failure Description</label>
-                  <textarea
-                    placeholder="Describe scratches, screen crack, lens sensor dust, or battery locks damage..."
-                    value={damageDescription}
-                    onChange={(e) => setDamageDescription(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40 h-16 text-ivory"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Estimated Damage Repair Cost (INR)</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 2500"
-                    value={damageCost}
-                    onChange={(e) => setDamageCost(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40 text-ivory font-mono"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Modal actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-              <button
-                onClick={() => setReturnModalBooking(null)}
-                className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-[10px] font-semibold uppercase tracking-wider transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmReturn}
-                className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian rounded text-[10px] font-bold uppercase tracking-wider transition cursor-pointer"
-              >
-                Save Return Record
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </AuthGuard>
   );
 }
