@@ -178,10 +178,20 @@ CREATE POLICY "profiles_insert_self" ON profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- Admin can read all profiles
+CREATE OR REPLACE FUNCTION public.is_admin_or_staff(user_id text)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE id = user_id AND role IN ('admin', 'staff')
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 DROP POLICY IF EXISTS "profiles_admin_all" ON profiles;
 CREATE POLICY "profiles_admin_all" ON profiles
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+    public.is_admin_or_staff(auth.uid()::text)
   );
 
 -- Bookings: customers see only their own
