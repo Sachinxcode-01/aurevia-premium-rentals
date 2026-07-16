@@ -4,6 +4,9 @@ import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
 import { ToastProvider } from "@/hooks/useToast";
 import { OnlineStatusBanner } from "@/components/ui/OnlineStatusBanner";
+import { ChatbotProvider } from "@/components/chatbot/ChatbotProvider";
+import FloatingChatLauncher from "@/components/chatbot/FloatingChatLauncher";
+import ChatWindow from "@/components/chatbot/ChatWindow";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -52,13 +55,18 @@ export default function RootLayout({
         {/* Cinematic noise film grain */}
         <div className="film-grain" />
 
-        {/* Global providers: Toast → Cart → Page */}
+        {/* Global providers: Toast → Cart → Chatbot → Page */}
         <ToastProvider>
           <CartProvider>
-            <OnlineStatusBanner />
-            <div className="flex-1 flex flex-col">
-              {children}
-            </div>
+            <ChatbotProvider>
+              <OnlineStatusBanner />
+              <div className="flex-1 flex flex-col">
+                {children}
+              </div>
+              {/* Floating AI Chatbot overlay */}
+              <FloatingChatLauncher />
+              <ChatWindow />
+            </ChatbotProvider>
           </CartProvider>
         </ToastProvider>
       </body>
