@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
@@ -14,7 +14,7 @@ import { signInAction, resendVerificationAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { cart } = useCart();
   const toast = useToast();
   const router = useRouter();
@@ -209,5 +209,20 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-obsidian text-ivory flex flex-col justify-center items-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gold-champagne mx-auto"></div>
+          <p className="text-xs uppercase tracking-widest text-gold-champagne font-mono">Verifying secure connection...</p>
+        </div>
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   );
 }
