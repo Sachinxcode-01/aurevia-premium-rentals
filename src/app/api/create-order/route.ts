@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { db } from "@/lib/db/store";
 import { MOCK_PRODUCTS } from "@/lib/db/mockData";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
@@ -72,8 +73,33 @@ export async function POST(request: Request) {
           }
 
           // Per-user limit
+          let currentUserId = "usr-prem";
+          let currentUserEmail = body.contactEmail || "";
+          let currentUserPhone = body.contactPhone || "";
+          try {
+            const supabase = await createServerSupabaseClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              currentUserId = user.id;
+              currentUserEmail = user.email || currentUserEmail;
+              currentUserPhone = user.phone || currentUserPhone;
+            }
+          } catch (e) {
+            const localProfile = await db.getProfile().catch(() => null);
+            if (localProfile) {
+              currentUserId = localProfile.id;
+              currentUserEmail = localProfile.email;
+              currentUserPhone = localProfile.phone;
+            }
+          }
+
           const userHasUsed = paidBookingsWithCoupon.some(
-            (b) => b.profileId === "usr-prem" || b.contactPhone === "9686909048"
+            (b) =>
+              b.profileId === currentUserId ||
+              b.contactPhone === currentUserPhone ||
+              b.contactEmail === currentUserEmail ||
+              b.contactPhone === body.contactPhone ||
+              b.contactEmail === body.contactEmail
           );
           if (userHasUsed) {
             return NextResponse.json({ error: "Coupon per-user usage limit reached." }, { status: 400 });

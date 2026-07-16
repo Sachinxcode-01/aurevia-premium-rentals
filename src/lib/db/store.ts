@@ -343,7 +343,7 @@ export const db = {
     );
     const bookings = getLocalBookings().filter(
       (b) =>
-        (["approved", "ready_for_pickup", "rented", "overdue"].includes(b.status)) &&
+        (["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(b.status)) &&
         new Date(b.startDate) <= end &&
         new Date(b.endDate) >= start
     );
@@ -597,7 +597,7 @@ export const db = {
       const overlappingBookings = bookings.filter(
         (ob) =>
           ob.id !== bookingId &&
-          (["approved", "ready_for_pickup", "rented", "overdue"].includes(ob.status)) &&
+          (["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(ob.status)) &&
           new Date(ob.startDate) <= end &&
           new Date(ob.endDate) >= start
       );
@@ -650,7 +650,7 @@ export const db = {
     const overlapping = bookings.filter(
       (ob) =>
         ob.id !== bookingId &&
-        (["approved", "ready_for_pickup", "rented", "overdue"].includes(ob.status)) &&
+        (["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(ob.status)) &&
         new Date(ob.startDate) <= end &&
         new Date(ob.endDate) >= start
     );

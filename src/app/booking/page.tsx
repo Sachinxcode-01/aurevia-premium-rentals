@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Script from "next/script";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
@@ -24,6 +24,7 @@ import {
 import Link from "next/link";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
+import { getCurrentUserAction } from "@/lib/actions/auth";
 
 type CheckoutStep = "cart" | "details" | "confirmation";
 
@@ -44,9 +45,10 @@ export default function BookingPage() {
   const [couponError, setCouponError] = useState("");
   
   // Checkout Form Details
-  const [fullName, setFullName] = useState("Prem Kumar");
-  const [email, setEmail] = useState("contact@prem.dev");
-  const [phone, setPhone] = useState("9686909048");
+  const [profileId, setProfileId] = useState("usr-prem");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
@@ -57,6 +59,26 @@ export default function BookingPage() {
   const [createdBooking, setCreatedBooking] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
+
+  useEffect(() => {
+    getCurrentUserAction().then((p) => {
+      if (p) {
+        setProfileId(String(p.id ?? "usr-prem"));
+        setFullName(String(p.full_name ?? ""));
+        setEmail(String(p.email ?? ""));
+        setPhone(String(p.phone ?? ""));
+      } else {
+        db.getProfile().then((localProfile) => {
+          if (localProfile) {
+            setProfileId(localProfile.id);
+            setFullName(localProfile.fullName);
+            setEmail(localProfile.email);
+            setPhone(localProfile.phone);
+          }
+        });
+      }
+    });
+  }, []);
 
   // Logistics Upgrades
   const [pickupTime, setPickupTime] = useState("10:00 AM");
@@ -87,7 +109,7 @@ export default function BookingPage() {
       
       const payableAmount = cartTotals.totalPayable;
       const bookingPayload = {
-        profileId: "usr-prem", // Simulated login user
+        profileId: profileId, // Real authenticated profile ID
         referenceCode: refCode,
         startDate: cart[0].startDate,
         endDate: cart[0].endDate,
