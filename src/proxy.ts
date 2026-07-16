@@ -6,7 +6,7 @@ const PROTECTED_CUSTOMER = ["/dashboard"];
 const PROTECTED_ADMIN    = ["/admin"];
 const AUTH_PAGES         = ["/login", "/register", "/forgot-password", "/reset-password"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     const nikonStatus = await db.checkAvailability(nikonId, startDate, endDate);
 
     // Filter units manually to give granular status
-    const units = db.getInventoryUnits();
+    const units = await db.getInventoryUnits();
     const canonUnits = units.filter((u) => u.productId === canonId && u.status !== "decommissioned" && u.status !== "maintenance");
     const nikonUnits = units.filter((u) => u.productId === nikonId && u.status !== "decommissioned" && u.status !== "maintenance");
 

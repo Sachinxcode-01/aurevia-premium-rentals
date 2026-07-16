@@ -96,7 +96,7 @@ export default function AdminDashboard() {
     try {
       const [bks, inv] = await Promise.all([
         db.getBookings(),
-        Promise.resolve(db.getInventoryUnits()),
+        db.getInventoryUnits(),
       ]);
       setBookings(bks);
       setInventoryUnits(inv);
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
   const handleInventoryStatus = async (unitId: string, status: InventoryUnit["status"]) => {
     await db.updateInventoryUnitStatus(unitId, status);
     toast.success(`Camera ${status}.`);
-    setInventoryUnits(db.getInventoryUnits());
+    setInventoryUnits(await db.getInventoryUnits());
   };
 
   const handleToggleCoupon = (id: string) => {
