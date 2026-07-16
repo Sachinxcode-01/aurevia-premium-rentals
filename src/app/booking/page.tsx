@@ -237,7 +237,7 @@ export default function BookingPage() {
         },
         image: "/readme/aurevia-logo.png",
         theme: {
-          color: "#09a275",
+          color: "#D8B36A",
         },
         modal: {
           ondismiss: function () {
