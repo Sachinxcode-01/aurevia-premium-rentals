@@ -75,6 +75,7 @@ export interface Booking {
   lateFee?: number;
   damageDescription?: string;
   damageCost?: number;
+  penaltyPaymentStatus?: "none" | "unpaid" | "paid";
   statusHistory: { status: string; timestamp: string; note: string }[];
   auditLogs: { action: string; timestamp: string; performedBy: string; details: string }[];
 }
@@ -87,6 +88,61 @@ export interface UserProfile {
   role: "customer" | "staff" | "admin";
   avatarUrl?: string;
 }
+
+export interface WaitlistEntry {
+  id: string;
+  productId: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: "pending" | "notified" | "cancelled";
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  authorName: string;
+  rating: number;
+  quote: string;
+  isApproved: boolean;
+  createdAt: string;
+}
+
+// In-Memory state for Server Side reviews & waitlists
+let serverReviews: Review[] = [
+  {
+    id: "rev-1",
+    productId: "p1000000-0000-0000-0000-000000000001",
+    authorName: "Aravind Sen",
+    rating: 5,
+    quote: "AUREVIA provides pristine equipment that meets exact set standards. Their service is truly elite, matching the quality of the glass they rent.",
+    isApproved: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "rev-2",
+    productId: "p1000000-0000-0000-0000-000000000001",
+    authorName: "Rhea Kapoor",
+    rating: 5,
+    quote: "The Canon EOS R5 sequence was flawless. Renting from Aurevia feels like a bespoke luxury experience, from reservation to concierge pickup.",
+    isApproved: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "rev-3",
+    productId: "p1000000-0000-0000-0000-000000000003",
+    authorName: "Vikram Mehta",
+    rating: 5,
+    quote: "Having high-quality cinema gear ready on demand has simplified our production pipeline. Zero issues with custom booking setups.",
+    isApproved: true,
+    createdAt: new Date().toISOString()
+  }
+];
+
+let serverWaitlist: WaitlistEntry[] = [];
 
 // In-Memory state for Server Side rendering, initialized with seed data
 let serverBookings: Booking[] = [
@@ -245,10 +301,44 @@ function saveLocalProfile(profile: UserProfile) {
   }
 }
 
+function getLocalReviews(): Review[] {
+  if (!isClient) return serverReviews;
+  const stored = localStorage.getItem("aurevia_reviews");
+  if (!stored) {
+    localStorage.setItem("aurevia_reviews", JSON.stringify(serverReviews));
+    return serverReviews;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalReviews(reviews: Review[]) {
+  serverReviews = reviews;
+  if (isClient) {
+    localStorage.setItem("aurevia_reviews", JSON.stringify(reviews));
+  }
+}
+
+function getLocalWaitlist(): WaitlistEntry[] {
+  if (!isClient) return serverWaitlist;
+  const stored = localStorage.getItem("aurevia_waitlist");
+  if (!stored) {
+    localStorage.setItem("aurevia_waitlist", JSON.stringify(serverWaitlist));
+    return serverWaitlist;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalWaitlist(waitlist: WaitlistEntry[]) {
+  serverWaitlist = waitlist;
+  if (isClient) {
+    localStorage.setItem("aurevia_waitlist", JSON.stringify(waitlist));
+  }
+}
+
 // ----------------------------------------------------
 // SUPABASE CLIENT SELECTOR & DUAL-MODE LOGIC
 // ----------------------------------------------------
-const isSupabaseConfigured = () => {
+export const isSupabaseConfigured = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return false;
@@ -260,7 +350,7 @@ const isSupabaseConfigured = () => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function getSupabase(): Promise<any> {
+export async function getSupabase(): Promise<any> {
   if (typeof window !== "undefined") {
     const { getClient } = await import("@/lib/supabase/client");
     return getClient() as any;
@@ -330,6 +420,7 @@ function mapDbBookingToApp(b: any): Booking {
     lateFee: Number(b.late_fee || 0),
     damageDescription: b.damage_description || "",
     damageCost: Number(b.damage_cost || 0),
+    penaltyPaymentStatus: b.penalty_payment_status || "none",
     statusHistory: Array.isArray(b.status_history) ? b.status_history : [],
     auditLogs: Array.isArray(b.audit_logs) ? b.audit_logs : [],
     items: Array.isArray(b.booking_items)
@@ -748,6 +839,12 @@ export const db = {
 
         if (status === "cancelled" || status === "rejected") {
           await supabase.rpc("release_inventory_for_booking", { p_booking_id: bookingId });
+          const { data: items } = await supabase.from("booking_items").select("product_id").eq("booking_id", bookingId);
+          if (items) {
+            for (const item of items) {
+              this.checkAndNotifyWaitlist(item.product_id, b.start_date, b.end_date).catch(e => console.error(e));
+            }
+          }
         }
 
         let paymentStatus = b.payment_status;
@@ -793,6 +890,9 @@ export const db = {
       bookings[idx].paymentStatus = "paid";
     } else if (status === "cancelled" || status === "rejected") {
       bookings[idx].items = bookings[idx].items.map(item => ({ ...item, inventoryUnitId: undefined }));
+      for (const item of bookings[idx].items) {
+        this.checkAndNotifyWaitlist(item.productId, bookings[idx].startDate, bookings[idx].endDate).catch(e => console.error(e));
+      }
     }
 
     bookings[idx].statusHistory.push({
@@ -1051,6 +1151,12 @@ export const db = {
           }
         }
 
+        if (condition !== "damaged") {
+          for (const item of booking.items) {
+            this.checkAndNotifyWaitlist(item.productId, booking.startDate, booking.endDate).catch(e => console.error(e));
+          }
+        }
+
         const statusHistory = booking.statusHistory || [];
         const auditLogs = booking.auditLogs || [];
 
@@ -1147,6 +1253,12 @@ export const db = {
         }
       }
     });
+
+    if (condition !== "damaged") {
+      for (const item of booking.items) {
+        this.checkAndNotifyWaitlist(item.productId, booking.startDate, booking.endDate).catch(e => console.error(e));
+      }
+    }
 
     bookings[idx].statusHistory.push({
       status: "completed",
@@ -1350,6 +1462,9 @@ export const db = {
     revenueByBrand: { brand: string; value: number }[];
     revenueTrend: { date: string; amount: number }[];
     utilizationRate: number;
+    revenuePerCamera: Record<string, number>;
+    couponPerformance: Record<string, number>;
+    waitlistCount: number;
   }> {
     const bookings = await this.getBookings();
     const paidBookings = bookings.filter((b) => b.paymentStatus === "paid" && b.status !== "cancelled" && b.status !== "rejected");
@@ -1420,6 +1535,28 @@ export const db = {
     const revenueTrend = Object.entries(trendMap).map(([date, amount]) => ({ date, amount }));
     const utilizationRate = Math.round((inventoryRented / inventoryTotal) * 100) || 0;
 
+    // Additional operations statistics
+    const revenuePerCamera: Record<string, number> = {
+      "p1000000-0000-0000-0000-000000000001": 0, // Canon
+      "p1000000-0000-0000-0000-000000000003": 0  // Nikon
+    };
+    paidBookings.forEach((b) => {
+      b.items.forEach((item) => {
+        const itemRev = item.unitPrice * item.quantity;
+        revenuePerCamera[item.productId] = (revenuePerCamera[item.productId] || 0) + itemRev;
+      });
+    });
+
+    const couponPerformance: Record<string, number> = {};
+    paidBookings.forEach((b) => {
+      if (b.couponApplied) {
+        couponPerformance[b.couponApplied] = (couponPerformance[b.couponApplied] || 0) + 1;
+      }
+    });
+
+    const waitlist = await this.getWaitlist();
+    const waitlistCount = waitlist.length;
+
     return {
       revenueTotal,
       revenueMonth,
@@ -1434,6 +1571,9 @@ export const db = {
       revenueByBrand,
       revenueTrend,
       utilizationRate,
+      revenuePerCamera,
+      couponPerformance,
+      waitlistCount,
     };
   },
 
@@ -1665,5 +1805,354 @@ export const db = {
 
     saveLocalBookings(bookings);
     return true;
+  },
+
+  // ─── WAITLIST METHODS ──────────────────────────────────────────────────
+  async addToWaitlist(entry: { productId: string; name: string; email: string; phone: string; startDate?: string; endDate?: string }): Promise<WaitlistEntry> {
+    const newEntry: WaitlistEntry = {
+      id: `wl-${Math.random().toString(36).substring(2, 11)}`,
+      productId: entry.productId,
+      name: entry.name,
+      email: entry.email,
+      phone: entry.phone,
+      status: "pending",
+      startDate: entry.startDate,
+      endDate: entry.endDate,
+      createdAt: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("waitlist")
+        .insert({
+          product_id: entry.productId,
+          name: entry.name,
+          email: entry.email,
+          phone: entry.phone,
+          status: "pending",
+          start_date: entry.startDate,
+          end_date: entry.endDate
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        return {
+          id: data.id,
+          productId: data.product_id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          status: data.status,
+          startDate: data.start_date,
+          endDate: data.end_date,
+          createdAt: data.created_at
+        };
+      }
+    }
+
+    const waitlist = getLocalWaitlist();
+    waitlist.push(newEntry);
+    saveLocalWaitlist(waitlist);
+    return newEntry;
+  },
+
+  async getWaitlist(productId?: string): Promise<WaitlistEntry[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      let query = supabase.from("waitlist").select("*");
+      if (productId) {
+        query = query.eq("product_id", productId);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data.map((d: any) => ({
+          id: d.id,
+          productId: d.product_id,
+          name: d.name,
+          email: d.email,
+          phone: d.phone,
+          status: d.status,
+          startDate: d.start_date,
+          endDate: d.end_date,
+          createdAt: d.created_at
+        }));
+      }
+    }
+
+    const waitlist = getLocalWaitlist();
+    if (productId) {
+      return waitlist.filter((w) => w.productId === productId);
+    }
+    return waitlist;
+  },
+
+  async resolveWaitlist(waitlistId: string, status: "notified" | "cancelled" = "notified"): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("waitlist")
+        .update({ status })
+        .eq("id", waitlistId);
+      return !error;
+    }
+
+    const waitlist = getLocalWaitlist();
+    const idx = waitlist.findIndex((w) => w.id === waitlistId);
+    if (idx !== -1) {
+      waitlist[idx].status = status;
+      saveLocalWaitlist(waitlist);
+      return true;
+    }
+    return false;
+  },
+
+  async purgeExpiredWaitlist(): Promise<void> {
+    const todayStr = new Date().toISOString().split("T")[0];
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      await supabase
+        .from("waitlist")
+        .delete()
+        .lt("end_date", todayStr);
+    }
+    const waitlist = getLocalWaitlist();
+    const active = waitlist.filter((w) => !w.endDate || w.endDate >= todayStr);
+    saveLocalWaitlist(active);
+  },
+
+  async checkAndNotifyWaitlist(productId: string, startDate: string, endDate: string): Promise<void> {
+    const list = await this.getWaitlist(productId);
+    const pendingList = list.filter((w) => w.status === "pending");
+    
+    for (const entry of pendingList) {
+      if (entry.startDate && entry.endDate) {
+        const overlap = (new Date(entry.startDate) <= new Date(endDate)) && (new Date(entry.endDate) >= new Date(startDate));
+        if (overlap) {
+          const { available } = await this.checkAvailability(productId, entry.startDate, entry.endDate);
+          if (available) {
+            await this.resolveWaitlist(entry.id, "notified");
+            
+            if (typeof window === "undefined") {
+              const { sendEmail } = await import("@/lib/email/mailer");
+              const p = MOCK_PRODUCTS.find((x) => x.id === productId);
+              const name = p ? p.name : "Camera";
+              
+              const subject = `AUREVIA Gear Available: ${name}`;
+              const text = `Hello ${entry.name},\n\nGood news! The ${name} you were waitlisted for is now available for your requested dates: ${entry.startDate} to ${entry.endDate}.\n\nVisit our site and book it now before it gets reserved!\n\nBest regards,\nAUREVIA Concierge`;
+              const html = `<div style="background-color:#080808;color:#F5F1E8;font-family:Georgia,serif;padding:30px;border:1px solid #D8B36A;">
+                <h2 style="color:#D8B36A;text-transform:uppercase;letter-spacing:0.1em;">AUREVIA Gear Available</h2>
+                <p>Hello ${entry.name},</p>
+                <p>Good news! The <strong>${name}</strong> you were waitlisted for is now available for your requested dates: <strong>${entry.startDate} to ${entry.endDate}</strong>.</p>
+                <p>Reserve it now on our platform before it gets booked again.</p>
+                <p><a href="http://localhost:3000/gear/${p?.slug || ''}" style="color:#D8B36A;text-decoration:underline;">Book ${name} Now</a></p>
+                <p style="color:#9A9995;font-size:11px;margin-top:20px;">This is an automated alert based on your waitlist request.</p>
+              </div>`;
+              
+              await sendEmail({
+                to: entry.email,
+                subject,
+                text,
+                html,
+                bookingId: entry.id,
+                notificationType: "waitlist_alert"
+              }).catch(e => console.error("Waitlist email failed:", e));
+            }
+          }
+        }
+      }
+    }
+  },
+
+  // ─── REVIEWS METHODS ───────────────────────────────────────────────────
+  async getReviews(productId?: string, approvedOnly = true): Promise<Review[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      let query = supabase.from("reviews").select("*");
+      if (productId) {
+        query = query.eq("product_id", productId);
+      }
+      if (approvedOnly) {
+        query = query.eq("is_approved", true);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data.map((d: any) => ({
+          id: d.id,
+          productId: d.product_id,
+          authorName: d.author_name,
+          rating: d.rating,
+          quote: d.quote,
+          isApproved: d.is_approved,
+          createdAt: d.created_at
+        }));
+      }
+    }
+
+    const reviews = getLocalReviews();
+    let filtered = reviews;
+    if (productId) {
+      filtered = filtered.filter((r) => r.productId === productId);
+    }
+    if (approvedOnly) {
+      filtered = filtered.filter((r) => r.isApproved);
+    }
+    return filtered;
+  },
+
+  async submitReview(entry: { productId: string; authorName: string; rating: number; quote: string }): Promise<Review> {
+    const newReview: Review = {
+      id: `rev-${Math.random().toString(36).substring(2, 11)}`,
+      productId: entry.productId,
+      authorName: entry.authorName,
+      rating: entry.rating,
+      quote: entry.quote,
+      isApproved: false, // Moderated by default
+      createdAt: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("reviews")
+        .insert({
+          product_id: entry.productId,
+          author_name: entry.authorName,
+          rating: entry.rating,
+          quote: entry.quote,
+          is_approved: false
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        return {
+          id: data.id,
+          productId: data.product_id,
+          authorName: data.author_name,
+          rating: data.rating,
+          quote: data.quote,
+          isApproved: data.is_approved,
+          createdAt: data.created_at
+        };
+      }
+    }
+
+    const reviews = getLocalReviews();
+    reviews.push(newReview);
+    saveLocalReviews(reviews);
+    return newReview;
+  },
+
+  async approveReview(reviewId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("reviews")
+        .update({ is_approved: true })
+        .eq("id", reviewId);
+      return !error;
+    }
+
+    const reviews = getLocalReviews();
+    const idx = reviews.findIndex((r) => r.id === reviewId);
+    if (idx !== -1) {
+      reviews[idx].isApproved = true;
+      saveLocalReviews(reviews);
+      return true;
+    }
+    return false;
+  },
+
+  async deleteReview(reviewId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("reviews")
+        .delete()
+        .eq("id", reviewId);
+      return !error;
+    }
+
+    const reviews = getLocalReviews();
+    const filtered = reviews.filter((r) => r.id !== reviewId);
+    saveLocalReviews(filtered);
+    return true;
+  },
+
+  // ─── BOOKED DATES INQUIRY ──────────────────────────────────────────────
+  async getBookedDates(productId: string): Promise<{ startDate: string; endDate: string }[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await (supabase
+        .from("bookings")
+        .select("start_date, end_date, booking_items!inner(product_id)") as any)
+        .eq("booking_items.product_id", productId)
+        .in("status", ["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"]);
+      
+      if (!error && data) {
+        return data.map((d: any) => ({
+          startDate: d.start_date,
+          endDate: d.end_date
+        }));
+      }
+    }
+
+    const bookings = getLocalBookings();
+    return bookings
+      .filter(
+        (b) =>
+          ["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(b.status) &&
+          b.items.some((item) => item.productId === productId)
+      )
+      .map((b) => ({
+        startDate: b.startDate,
+        endDate: b.endDate
+      }));
+  },
+
+  async payPenalty(bookingId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("bookings")
+        .update({ penalty_payment_status: "paid" })
+        .eq("id", bookingId);
+      return !error;
+    }
+    const bookings = getLocalBookings();
+    const idx = bookings.findIndex((b) => b.id === bookingId);
+    if (idx !== -1) {
+      bookings[idx].penaltyPaymentStatus = "paid";
+      saveLocalBookings(bookings);
+      return true;
+    }
+    return false;
+  },
+
+  async assessPenalty(bookingId: string, payload: { damageCost: number; lateFee: number; damageDescription: string }): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          damage_cost: payload.damageCost,
+          late_fee: payload.lateFee,
+          damage_description: payload.damageDescription,
+          penalty_payment_status: (payload.damageCost > 0 || payload.lateFee > 0) ? "unpaid" : "none"
+        })
+        .eq("id", bookingId);
+      return !error;
+    }
+    const bookings = getLocalBookings();
+    const idx = bookings.findIndex((b) => b.id === bookingId);
+    if (idx !== -1) {
+      bookings[idx].damageCost = payload.damageCost;
+      bookings[idx].lateFee = payload.lateFee;
+      bookings[idx].damageDescription = payload.damageDescription;
+      bookings[idx].penaltyPaymentStatus = (payload.damageCost > 0 || payload.lateFee > 0) ? "unpaid" : "none";
+      saveLocalBookings(bookings);
+      return true;
+    }
+    return false;
   },
 };

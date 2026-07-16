@@ -1,11 +1,11 @@
 "use client";
-
 import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navigation/Navbar";
 import { db } from "@/lib/db/store";
 import { Product, ProductAddon, MOCK_PRODUCTS } from "@/lib/db/mockData";
 import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/useToast";
 import {
   Calendar,
   ShieldAlert,
@@ -17,6 +17,7 @@ import {
   Cpu,
   Bookmark,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import Link from "next/link";
 import { animate } from "animejs";
@@ -30,9 +31,11 @@ export default function GearDetailsPage({ params }: GearPageProps) {
   const { slug } = use(params);
 
   const { addToCart, cart } = useCart();
+  const toast = useToast();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // Gallery Active Image
   const [activeImage, setActiveImage] = useState("");
@@ -52,7 +55,27 @@ export default function GearDetailsPage({ params }: GearPageProps) {
   const [rentalDays, setRentalDays] = useState(3);
   const [estimatedCost, setEstimatedCost] = useState(0);
 
-  // Load product details
+  // Smart Availability calendar state & suggestion
+  const [bookedDates, setBookedDates] = useState<{ startDate: string; endDate: string }[]>([]);
+  const [nearestRange, setNearestRange] = useState<{ startDate: string; endDate: string } | null>(null);
+
+  // Waitlist form state
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [wlName, setWlName] = useState("");
+  const [wlEmail, setWlEmail] = useState("");
+  const [wlPhone, setWlPhone] = useState("");
+  const [wlSubmitting, setWlSubmitting] = useState(false);
+  const [wlSuccess, setWlSuccess] = useState(false);
+
+  // Reviews submission state
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [revName, setRevName] = useState("");
+  const [revRating, setRevRating] = useState(5);
+  const [revQuote, setRevQuote] = useState("");
+  const [revSubmitting, setRevSubmitting] = useState(false);
+  const [revSuccess, setRevSuccess] = useState(false);
+
+  // Load product details, booked dates, and reviews
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
@@ -60,12 +83,49 @@ export default function GearDetailsPage({ params }: GearPageProps) {
       if (item) {
         setProduct(item);
         setActiveImage(item.imagePrimary);
+        
+        // Track recently viewed in localStorage
+        if (typeof window !== "undefined") {
+          const viewed = JSON.parse(localStorage.getItem("recently_viewed") || "[]") as string[];
+          const updated = [item.id, ...viewed.filter(id => id !== item.id)].slice(0, 5);
+          localStorage.setItem("recently_viewed", JSON.stringify(updated));
+        }
+
+        // Fetch booked dates and reviews
+        const dates = await db.getBookedDates(item.id);
+        setBookedDates(dates);
+
+        const revs = await db.getReviews(item.id, true);
+        setReviewsList(revs);
       }
       setLoading(false);
     };
 
     fetchProduct();
   }, [slug]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && product) {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]") as string[];
+      setIsFavorite(favorites.includes(product.id));
+    }
+  }, [product]);
+
+  const toggleFavorite = () => {
+    if (!product) return;
+    const favorites = JSON.parse(localStorage.getItem("favorites") || "[]") as string[];
+    let updated: string[];
+    if (favorites.includes(product.id)) {
+      updated = favorites.filter(id => id !== product.id);
+      setIsFavorite(false);
+      toast.success("Removed from favorites");
+    } else {
+      updated = [...favorites, product.id];
+      setIsFavorite(true);
+      toast.success("Added to favorites!");
+    }
+    localStorage.setItem("favorites", JSON.stringify(updated));
+  };
 
   // Recalculate days and check real database availability
   useEffect(() => {
@@ -93,6 +153,29 @@ export default function GearDetailsPage({ params }: GearPageProps) {
       );
       setIsAvailable(available);
       setStockRemaining(remainingQty);
+
+      // Suggest nearest available dates if current dates are overlapping or not available
+      if (!available) {
+        let found = false;
+        const checkDate = new Date();
+        for (let i = 0; i < 90; i++) {
+          const startStr = checkDate.toISOString().split("T")[0];
+          const checkEndDate = new Date(checkDate.getTime() + (days - 1) * 86400000);
+          const endStr = checkEndDate.toISOString().split("T")[0];
+
+          const check = await db.checkAvailability(product.id, startStr, endStr);
+          if (check.available) {
+            setNearestRange({ startDate: startStr, endDate: endStr });
+            found = true;
+            break;
+          }
+          checkDate.setDate(checkDate.getDate() + 1);
+        }
+        if (!found) setNearestRange(null);
+      } else {
+        setNearestRange(null);
+      }
+      
       setCheckingStock(false);
     };
 
@@ -283,6 +366,131 @@ Please confirm availability and let me know the next steps. Thank you!`;
             </div>
           </div>
 
+          {/* Trusted Rental Safeguards Section */}
+          <div className="glass-panel border-white/5 rounded-lg p-6 space-y-6">
+            <h3 className="serif-heading text-lg font-light text-ivory border-b border-white/5 pb-3">AUREVIA Trust Protocols</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-light">
+              <div className="flex gap-3">
+                <span className="text-gold-champagne font-bold text-sm shrink-0">✓</span>
+                <div>
+                  <h4 className="font-semibold text-ivory">Pre-Rental Inspection</h4>
+                  <p className="text-[10px] text-muted-gray mt-0.5">Sensors are professionally swabbed and lenses checked on collimators before every pickup.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-gold-champagne font-bold text-sm shrink-0">✓</span>
+                <div>
+                  <h4 className="font-semibold text-ivory">Zero Hidden Fees</h4>
+                  <p className="text-[10px] text-muted-gray mt-0.5">The price you see is final. No security deposits, GST add-ons, or surprise handling fees.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-gold-champagne font-bold text-sm shrink-0">✓</span>
+                <div>
+                  <h4 className="font-semibold text-ivory">Direct Concierge Support</h4>
+                  <p className="text-[10px] text-muted-gray mt-0.5">Direct chat access to Prem for troubleshooting or accessories adjustment.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-gold-champagne font-bold text-sm shrink-0">✓</span>
+                <div>
+                  <h4 className="font-semibold text-ivory">Transparent Damage Policy</h4>
+                  <p className="text-[10px] text-muted-gray mt-0.5">Accidents happen. We evaluate repairs fairly using manufacturer quotes. No arbitrary penalties.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Verified Customer Feedback */}
+          <div className="space-y-6 pt-6">
+            <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Customer Experiences</h3>
+            
+            {reviewsList.length === 0 ? (
+              <p className="text-xs text-muted-gray italic">No verified reviews submitted yet for this model. Be the first to share your experience!</p>
+            ) : (
+              <div className="space-y-4">
+                {reviewsList.map((rev) => (
+                  <div key={rev.id} className="glass-panel border-white/5 rounded p-4 space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-ivory">{rev.authorName}</span>
+                      <span className="text-gold-champagne">{"★".repeat(rev.rating)}</span>
+                    </div>
+                    <p className="text-xs text-muted-gray font-light italic">"{rev.quote}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Leave a Review Form */}
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!revName || !revQuote) return;
+              setRevSubmitting(true);
+              await db.submitReview({
+                productId: product.id,
+                authorName: revName,
+                rating: revRating,
+                quote: revQuote
+              });
+              setRevSubmitting(false);
+              setRevSuccess(true);
+              setRevName("");
+              setRevQuote("");
+            }} className="glass-panel border-white/5 rounded p-5 space-y-4">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-gold-champagne font-mono block">Share Your Experience</span>
+              {revSuccess ? (
+                <div className="text-xs text-emerald-400 font-mono bg-emerald-500/10 p-3 border border-emerald-500/20 rounded">
+                  Thank you! Your feedback has been submitted for admin approval.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] text-muted-gray uppercase font-mono">Your Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={revName}
+                        onChange={(e) => setRevName(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] text-muted-gray uppercase font-mono">Rating</label>
+                      <select
+                        value={revRating}
+                        onChange={(e) => setRevRating(Number(e.target.value))}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40 text-ivory"
+                      >
+                        {[5, 4, 3, 2, 1].map(r => (
+                          <option key={r} value={r} className="bg-obsidian text-ivory">{r} Stars</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-muted-gray uppercase font-mono">Review Comments</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={revQuote}
+                      onChange={(e) => setRevQuote(e.target.value)}
+                      placeholder="Share your shooting experience with this camera..."
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40 resize-none"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={revSubmitting}
+                    className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian text-[10px] font-bold uppercase tracking-wider rounded transition cursor-pointer disabled:opacity-50"
+                  >
+                    {revSubmitting ? "Submitting..." : "Submit Review"}
+                  </button>
+                </div>
+              )}
+            </form>
+          </div>
+
           {/* Related Gear */}
           <div className="space-y-6 pt-6">
             <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">
@@ -307,16 +515,24 @@ Please confirm availability and let me know the next steps. Thank you!`;
             </div>
           </div>
         </div>
-
         {/* Right Side: Sticky Checkout / Booking Panel */}
         <div className="lg:col-span-5">
           <div className="sticky top-28 glass-panel-gold rounded-lg p-6 md:p-8 border-gold-border space-y-6 shadow-2xl backdrop-blur-md">
             
-            <div className="border-b border-white/10 pb-4">
-              <span className="text-[10px] uppercase text-gold-champagne tracking-widest block font-mono mb-1">
-                Luxury Optics Concierge
-              </span>
-              <h1 className="serif-heading text-3xl font-light text-ivory">{product.name}</h1>
+            <div className="border-b border-white/10 pb-4 flex justify-between items-start gap-4">
+              <div>
+                <span className="text-[10px] uppercase text-gold-champagne tracking-widest block font-mono mb-1">
+                  Luxury Optics Concierge
+                </span>
+                <h1 className="serif-heading text-3xl font-light text-ivory">{product.name}</h1>
+              </div>
+              <button
+                onClick={toggleFavorite}
+                className="p-2.5 rounded-full border border-white/10 bg-white/5 hover:border-gold-border hover:bg-gold-champagne/10 text-gold-champagne transition duration-350 cursor-pointer"
+                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+              >
+                <Heart size={18} fill={isFavorite ? "#D8B36A" : "transparent"} />
+              </button>
             </div>
 
             {/* Rates Table */}
@@ -333,7 +549,14 @@ Please confirm availability and let me know the next steps. Thank you!`;
 
             {/* Date Pickers */}
             <div className="space-y-4">
-              <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Select Booking Schedule</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Select Booking Schedule</label>
+                {product.inventoryQty === 1 && (
+                  <span className="text-[8px] text-amber-400 font-mono uppercase bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                    Only 1 Model Available
+                  </span>
+                )}
+              </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -342,6 +565,7 @@ Please confirm availability and let me know the next steps. Thank you!`;
                     <input
                       type="date"
                       value={startDate}
+                      min={new Date().toISOString().split("T")[0]}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40"
                     />
@@ -354,6 +578,7 @@ Please confirm availability and let me know the next steps. Thank you!`;
                     <input
                       type="date"
                       value={endDate}
+                      min={startDate || new Date().toISOString().split("T")[0]}
                       onChange={(e) => setEndDate(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40"
                     />
@@ -373,7 +598,7 @@ Please confirm availability and let me know the next steps. Thank you!`;
                   </button>
                   <span className="text-sm font-semibold">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(prev => Math.min(stockRemaining, prev + 1))}
+                    onClick={() => setQuantity(prev => Math.min(product.inventoryQty, prev + 1))}
                     className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer"
                   >
                     +
@@ -381,6 +606,26 @@ Please confirm availability and let me know the next steps. Thank you!`;
                 </div>
               </div>
             </div>
+
+            {/* Smart Availability Suggestions */}
+            {nearestRange && (
+              <div className="bg-gold-champagne/5 border border-gold-border/30 rounded p-4 space-y-2">
+                <span className="text-[9px] text-gold-champagne uppercase font-mono block">Overlap Detected</span>
+                <p className="text-[10px] text-muted-gray">This camera is booked for selected dates. Try the nearest available window:</p>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <span className="text-[10px] font-mono text-ivory">{nearestRange.startDate} to {nearestRange.endDate}</span>
+                  <button
+                    onClick={() => {
+                      setStartDate(nearestRange.startDate);
+                      setEndDate(nearestRange.endDate);
+                    }}
+                    className="px-2.5 py-1 bg-gold-champagne text-obsidian text-[9px] font-bold uppercase rounded hover:bg-gold-warm transition cursor-pointer"
+                  >
+                    Select Window
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Addons Selection */}
             <div className="space-y-3 pt-3 border-t border-white/5">
@@ -405,7 +650,7 @@ Please confirm availability and let me know the next steps. Thank you!`;
                     <div className="flex-1">
                       <div className="flex justify-between text-xs font-semibold">
                         <span>{addon.name}</span>
-                        <span className="text-gold-champagne">₹{addon.price}/day</span>
+                        <span className="text-gold-champagne">₹0/day <span className="text-[8px] text-muted-gray line-through">₹{addon.price}</span></span>
                       </div>
                       <p className="text-[10px] text-muted-gray mt-0.5 font-light">{addon.description}</p>
                     </div>
@@ -414,27 +659,90 @@ Please confirm availability and let me know the next steps. Thank you!`;
               </div>
             </div>
 
-            {/* Availability Indicator */}
+            {/* Availability Indicator & Waitlist System */}
             <div className="border-t border-white/5 pt-4">
               {checkingStock ? (
                 <div className="text-[11px] font-mono text-muted-gray animate-pulse uppercase">
                   Checking inventory vault availability...
                 </div>
               ) : isAvailable ? (
-                <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono uppercase bg-emerald-400/5 border border-emerald-400/20 p-3 rounded">
-                  <CheckCircle size={14} />
-                  Gear Available • {stockRemaining} In Stock
+                <div className="flex items-center justify-between text-xs text-emerald-400 font-mono uppercase bg-emerald-400/5 border border-emerald-400/20 p-3 rounded">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle size={14} />
+                    <span>Gear Available</span>
+                  </div>
+                  <span>{stockRemaining} in Gadag</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-xs text-rose-400 font-mono uppercase bg-rose-400/5 border border-rose-400/20 p-3 rounded">
-                  <ShieldAlert size={14} />
-                  Fully Booked For Chosen Dates
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-rose-400 font-mono uppercase bg-rose-400/5 border border-rose-400/20 p-3 rounded">
+                    <ShieldAlert size={14} />
+                    Fully Booked For Chosen Dates
+                  </div>
+                  
+                  {/* Waitlist Box */}
+                  <div className="glass-panel border-white/5 rounded p-4 space-y-3">
+                    <span className="text-[10px] uppercase font-semibold text-gold-champagne font-mono block">Join Availability Waitlist</span>
+                    {wlSuccess ? (
+                      <p className="text-[10px] text-emerald-400 font-mono">You're on the waitlist! We will alert you immediately if dates open.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="Your Name"
+                          value={wlName}
+                          onChange={(e) => setWlName(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="email"
+                            required
+                            placeholder="Email Address"
+                            value={wlEmail}
+                            onChange={(e) => setWlEmail(e.target.value)}
+                            className="bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                          />
+                          <input
+                            type="tel"
+                            required
+                            placeholder="Phone Number"
+                            value={wlPhone}
+                            onChange={(e) => setWlPhone(e.target.value)}
+                            className="bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!wlName || !wlEmail || !wlPhone) return;
+                            setWlSubmitting(true);
+                            await db.addToWaitlist({
+                              productId: product.id,
+                              name: wlName,
+                              email: wlEmail,
+                              phone: wlPhone,
+                              startDate,
+                              endDate
+                            });
+                            setWlSubmitting(false);
+                            setWlSuccess(true);
+                          }}
+                          disabled={wlSubmitting}
+                          className="w-full py-2 bg-white/10 hover:bg-white/15 text-gold-champagne text-[10px] font-bold uppercase rounded transition cursor-pointer"
+                        >
+                          {wlSubmitting ? "Joining..." : "Join Waitlist"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Calculations and CTA Booking */}
-            {rentalDays > 0 && (
+            {rentalDays > 0 && isAvailable && (
               <div className="space-y-4 bg-black/45 rounded-lg p-5 border border-white/5">
                 <div className="flex justify-between text-xs text-muted-gray">
                   <span>Duration:</span>
@@ -460,13 +768,8 @@ Please confirm availability and let me know the next steps. Thank you!`;
                   
                   {/* Cart checkout */}
                   <button
-                    disabled={!isAvailable}
                     onClick={handleBookNow}
-                    className={`py-3 text-[10px] font-bold uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                      isAvailable
-                        ? "bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10"
-                        : "bg-white/5 text-muted-gray cursor-not-allowed border border-white/5"
-                    }`}
+                    className="py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-[10px] font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-gold-champagne/10"
                   >
                     <ShoppingCart size={13} />
                     Book Online
@@ -474,7 +777,6 @@ Please confirm availability and let me know the next steps. Thank you!`;
                 </div>
                 
                 <button
-                  disabled={!isAvailable}
                   onClick={handleAddToCart}
                   className="add-cart-btn w-full py-2.5 bg-transparent border border-white/20 hover:border-gold-champagne text-ivory hover:text-gold-champagne text-[9px] font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center justify-center gap-1"
                 >
@@ -484,7 +786,6 @@ Please confirm availability and let me know the next steps. Thank you!`;
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

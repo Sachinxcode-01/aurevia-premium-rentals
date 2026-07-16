@@ -8,6 +8,7 @@ import Navbar from "@/components/navigation/Navbar";
 import HeroScrollSequence from "@/components/hero/HeroScrollSequence";
 import { useCart } from "@/hooks/useCart";
 import { MOCK_PRODUCTS, MOCK_TESTIMONIALS, MOCK_FAQS, MOCK_BRANDS } from "@/lib/db/mockData";
+import { db } from "@/lib/db/store";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import {
@@ -33,6 +34,16 @@ const CameraShowroom = dynamic(
 export default function Home() {
   const router = useRouter();
   const { cart, addToCart } = useCart();
+
+  const [reviewsList, setReviewsList] = React.useState<any[]>([]);
+  const [revName, setRevName] = React.useState("");
+  const [revQuote, setRevQuote] = React.useState("");
+  const [revRating, setRevRating] = React.useState(5);
+  const [revSuccess, setRevSuccess] = React.useState(false);
+
+  React.useEffect(() => {
+    db.getReviews(undefined, true).then(setReviewsList);
+  }, []);
 
   const featuredGear = MOCK_PRODUCTS.filter((p) => p.isFeatured).slice(0, 3);
   const mostRented = MOCK_PRODUCTS.slice(0, 4);
@@ -666,29 +677,126 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 12. Testimonials */}
-      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-20">
-        <div className="text-center space-y-2 mb-12">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">
-            Renter Reviews
-          </span>
-          <h2 className="serif-heading text-3xl md:text-4xl font-light text-ivory">
-            Trusted by <span className="text-gold">Visual Creators</span>
-          </h2>
+      {/* 12. Trust Safeguards & Verified Reviews */}
+      <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-20 space-y-16">
+        
+        {/* Trust Badges */}
+        <div className="glass-panel border-white/5 rounded-lg p-8 md:p-10 space-y-8 bg-black/40">
+          <div className="text-center space-y-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">Our Guarantee</span>
+            <h3 className="serif-heading text-2xl md:text-3xl font-light text-ivory">Professional Renter Safeguards</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-xs font-light">
+            <div className="space-y-2 text-center p-4">
+              <span className="text-2xl text-gold-champagne">✓</span>
+              <h4 className="font-semibold text-ivory">Pre-Rental Inspection</h4>
+              <p className="text-[11px] text-muted-gray leading-relaxed">Sensors are swabbed and systems calibrated before every pickup.</p>
+            </div>
+            <div className="space-y-2 text-center p-4">
+              <span className="text-2xl text-gold-champagne">✓</span>
+              <h4 className="font-semibold text-ivory">Zero Security Deposit</h4>
+              <p className="text-[11px] text-muted-gray leading-relaxed">Absolute trust. Rent without locking capital on security deposits.</p>
+            </div>
+            <div className="space-y-2 text-center p-4">
+              <span className="text-2xl text-gold-champagne">✓</span>
+              <h4 className="font-semibold text-ivory">Secure Payments</h4>
+              <p className="text-[11px] text-muted-gray leading-relaxed">Processed safely through SSL-secured Razorpay payment gateway channels.</p>
+            </div>
+            <div className="space-y-2 text-center p-4">
+              <span className="text-2xl text-gold-champagne">✓</span>
+              <h4 className="font-semibold text-ivory">Transparent Damage Rules</h4>
+              <p className="text-[11px] text-muted-gray leading-relaxed">We evaluate repair costs honestly using official manufacturer quotes.</p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {MOCK_TESTIMONIALS.map((t) => (
-            <div key={t.id} className="glass-panel border-white/5 p-6 rounded-lg flex flex-col justify-between space-y-6">
-              <p className="text-xs text-muted-gray italic leading-relaxed font-light">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-              <div className="border-t border-white/5 pt-4">
-                <h4 className="serif-heading text-sm text-ivory">{t.authorName}</h4>
-                <span className="text-[9px] uppercase tracking-wider text-gold-champagne font-mono font-medium block mt-0.5">{t.authorTitle}</span>
+        {/* Reviews List */}
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">Renter Reviews</span>
+            <h2 className="serif-heading text-3xl md:text-4xl font-light text-ivory">Trusted by Visual Creators</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {reviewsList.map((t) => (
+              <div key={t.id} className="glass-panel border-white/5 p-6 rounded-lg flex flex-col justify-between space-y-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="serif-heading font-medium text-ivory">{t.authorName}</span>
+                  <span className="text-gold-champagne">{"★".repeat(t.rating)}</span>
+                </div>
+                <p className="text-xs text-muted-gray italic leading-relaxed font-light">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="text-[8px] font-mono text-muted-gray/50 uppercase">Verified Renter</div>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Submit Review */}
+        <div className="max-w-xl mx-auto glass-panel border-white/5 rounded-lg p-6 space-y-4">
+          <h4 className="serif-heading text-lg font-light text-ivory text-center">Share Your Feedback</h4>
+          {revSuccess ? (
+            <div className="text-xs text-emerald-400 font-mono text-center bg-emerald-500/10 p-3 border border-emerald-500/20 rounded">
+              Review submitted! It will appear on the homepage once approved by Prem.
             </div>
-          ))}
+          ) : (
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!revName || !revQuote) return;
+              await db.submitReview({
+                productId: "p1000000-0000-0000-0000-000000000001", // Default to Canon
+                authorName: revName,
+                rating: revRating,
+                quote: revQuote
+              });
+              setRevSuccess(true);
+              setRevName("");
+              setRevQuote("");
+            }} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-mono text-muted-gray uppercase">Your Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={revName}
+                    onChange={(e) => setRevName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-mono text-muted-gray uppercase">Rating</label>
+                  <select
+                    value={revRating}
+                    onChange={(e) => setRevRating(Number(e.target.value))}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none text-ivory"
+                  >
+                    {[5, 4, 3, 2, 1].map(r => (
+                      <option key={r} value={r} className="bg-obsidian text-ivory">{r} Stars</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono text-muted-gray uppercase">Review Comments</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={revQuote}
+                  onChange={(e) => setRevQuote(e.target.value)}
+                  placeholder="Tell us about the rental process, support, or camera performance..."
+                  className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40 resize-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-[10px] font-bold uppercase tracking-wider rounded transition cursor-pointer"
+              >
+                Submit Review
+              </button>
+            </form>
+          )}
         </div>
       </section>
 

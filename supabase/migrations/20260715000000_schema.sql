@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS coupons (
     code VARCHAR(50) UNIQUE NOT NULL,
     discount_percent NUMERIC(5, 2) NOT NULL CHECK (discount_percent >= 0 AND discount_percent <= 100),
     max_discount NUMERIC(10, 2),
-    active_until DATE NOT NULL,
+    active_until DATE,
     is_active BOOLEAN DEFAULT true
 );
 

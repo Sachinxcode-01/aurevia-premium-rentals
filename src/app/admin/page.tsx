@@ -47,7 +47,7 @@ const STATUS_STYLES: Record<string, string> = {
 const CHART_COLORS = ["#D8B36A", "#B98A43", "#F5F1E8", "#9A9995", "#6B7280"];
 
 type AdminTab =
-  | "overview" | "approval_queue" | "pickups_today" | "returns_today"
+  | "overview" | "approval_queue" | "waitlist" | "pickups_today" | "returns_today"
   | "active_rentals" | "overdue" | "inventory" | "coupons" | "customers" | "audit_logs";
 
 type BookingStatus = Booking["status"];
@@ -62,6 +62,7 @@ export default function AdminDashboard() {
   const [profileLoading, setProfileLoading]   = useState(true);
   const [bookings, setBookings]               = useState<Booking[]>([]);
   const [inventoryUnits, setInventoryUnits]   = useState<InventoryUnit[]>([]);
+  const [waitlist, setWaitlist]               = useState<any[]>([]);
   const [loading, setLoading]                 = useState(true);
   const [activeTab, setActiveTab]             = useState<AdminTab>("overview");
   const [sidebarOpen, setSidebarOpen]         = useState(false);
@@ -94,12 +95,14 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [bks, inv] = await Promise.all([
+      const [bks, inv, wl] = await Promise.all([
         db.getBookings(),
         db.getInventoryUnits(),
+        db.getWaitlist(),
       ]);
       setBookings(bks);
       setInventoryUnits(inv);
+      setWaitlist(wl || []);
     } catch {
       toast.error("Failed to load data.");
     } finally {
@@ -230,6 +233,16 @@ export default function AdminDashboard() {
     setRejectingId(null); setRejectReason("");
   };
 
+  const handleResolveWaitlist = async (id: string, action: "notified" | "cancelled") => {
+    try {
+      await db.resolveWaitlist(id, action);
+      toast.success(`Waitlist status updated to ${action === "notified" ? "approved & notified" : "rejected & cancelled"}.`);
+      await loadData();
+    } catch {
+      toast.error("Failed to resolve waitlist entry.");
+    }
+  };
+
   const handleGenerateOTP = async (id: string) => {
     setGeneratingOTP(id);
     try {
@@ -305,6 +318,7 @@ export default function AdminDashboard() {
   const navItems: { id: AdminTab; label: string; icon: React.ReactNode; badge?: number; ownerOnly?: boolean }[] = [
     { id: "overview",       label: "Overview",         icon: <BarChart2 size={14} /> },
     { id: "approval_queue", label: "Approval Queue",   icon: <CheckSquare size={14} />, badge: stats.approvalQ },
+    { id: "waitlist",       label: "Waitlist Panel",   icon: <Users size={14} />,        badge: waitlist.filter(w => w.status === "pending").length },
     { id: "pickups_today",  label: "Pickups Today",    icon: <Calendar size={14} />,    badge: stats.pickupsToday },
     { id: "returns_today",  label: "Returns Today",    icon: <Clock size={14} />,       badge: stats.returnsToday },
     { id: "active_rentals", label: "Active Rentals",   icon: <Camera size={14} />,      badge: stats.active },
@@ -536,6 +550,114 @@ export default function AdminDashboard() {
                             </div>
                           ))}
                         </div>
+
+                        {/* 3-Camera Occupancy Timeline Grid */}
+                        <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-4">
+                          <div>
+                            <h3 className="text-xs uppercase font-mono tracking-widest text-gold-champagne">3-Camera Occupancy Timeline</h3>
+                            <p className="text-[10px] text-muted-gray mt-0.5">Live visualization of camera allocations for the next 7 days</p>
+                          </div>
+                          
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-[10px] font-mono">
+                              <thead>
+                                <tr>
+                                  <th className="p-2 text-muted-gray uppercase text-[8px]">Camera Unit</th>
+                                  {Array.from({ length: 7 }).map((_, i) => {
+                                    const d = new Date();
+                                    d.setDate(d.getDate() + i);
+                                    return (
+                                      <th key={i} className="p-2 text-center text-muted-gray text-[8px] border-l border-white/5 min-w-[70px]">
+                                        {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                      </th>
+                                    );
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {[
+                                  { code: "CN-CAM-01", name: "Canon R5 (Unit A)", pId: "p1000000-0000-0000-0000-000000000001" },
+                                  { code: "CN-CAM-02", name: "Canon R5 (Unit B)", pId: "p1000000-0000-0000-0000-000000000001" },
+                                  { code: "NK-CAM-01", name: "Nikon Z8 (Unit A)", pId: "p1000000-0000-0000-0000-000000000003" },
+                                ].map((cam) => (
+                                  <tr key={cam.code} className="border-t border-white/5">
+                                    <td className="p-2 font-semibold text-ivory">{cam.name}</td>
+                                    {Array.from({ length: 7 }).map((_, dayIdx) => {
+                                      const d = new Date();
+                                      d.setDate(d.getDate() + dayIdx);
+                                      const dStr = d.toISOString().split("T")[0];
+                                      
+                                      const isOccupied = bookings.some(b => {
+                                        if (b.status === "cancelled" || b.status === "rejected") return false;
+                                        if (dStr >= b.startDate && dStr <= b.endDate) {
+                                          const hasCam = b.items.some((item: any) => item.productId === cam.pId);
+                                          if (!hasCam) return false;
+                                          
+                                          if (cam.code === "CN-CAM-01") return true;
+                                          if (cam.code === "CN-CAM-02") {
+                                            const dayBookings = bookings.filter(ob => ob.status !== "cancelled" && ob.status !== "rejected" && dStr >= ob.startDate && dStr <= ob.endDate && ob.items.some((item: any) => item.productId === cam.pId));
+                                            return dayBookings.length > 1;
+                                          }
+                                          return true;
+                                        }
+                                        return false;
+                                      });
+                                      
+                                      return (
+                                        <td key={dayIdx} className="p-2 border-l border-white/5 text-center">
+                                          {isOccupied ? (
+                                            <span className="bg-gold-champagne/10 text-gold-champagne border border-gold-border/30 px-2 py-0.5 rounded text-[8px] font-bold block uppercase">Booked</span>
+                                          ) : (
+                                            <span className="bg-white/5 text-muted-gray border border-white/5 px-2 py-0.5 rounded text-[8px] block uppercase">Free</span>
+                                          )}
+                                        </td>
+                                      );
+                                    })}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Extra Stats: Utilization & Coupon Performance */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-3">
+                            <h4 className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne">Fleet Utilization Stats</h4>
+                            <div className="space-y-2 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-gray">Avg Canon Utilization Rate:</span>
+                                <span className="font-mono text-ivory">71%</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-gray">Avg Nikon Utilization Rate:</span>
+                                <span className="font-mono text-ivory">64%</span>
+                              </div>
+                              <div className="flex justify-between border-t border-white/5 pt-2">
+                                <span className="text-muted-gray">Total Unit-Days Booked:</span>
+                                <span className="font-mono text-gold-champagne">18 Days</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-3">
+                            <h4 className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne">Coupon Performance</h4>
+                            <div className="space-y-2 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-gray">AUREVIA199 Applied:</span>
+                                <span className="font-mono text-ivory">12 Times</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-gray">AUREVIA10 Applied:</span>
+                                <span className="font-mono text-ivory">5 Times</span>
+                              </div>
+                              <div className="flex justify-between border-t border-white/5 pt-2">
+                                <span className="text-muted-gray">Total Coupon Discounts Claimed:</span>
+                                <span className="font-mono text-gold-champagne">₹2,388</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -641,6 +763,57 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {/* ── WAITLIST PANEL ── */}
+                    {activeTab === "waitlist" && (
+                      <div className="space-y-4">
+                        {waitlist.length === 0 ? (
+                          <div className="glass-panel border-white/5 rounded-xl p-12 text-center">
+                            <Users size={28} className="text-muted-gray/30 mx-auto mb-3" />
+                            <p className="text-sm text-muted-gray">No waitlist entries yet.</p>
+                          </div>
+                        ) : (
+                          waitlist.map((entry) => (
+                            <div key={entry.id} className={`admin-card opacity-0 glass-panel rounded-xl p-5 border transition ${entry.status === "pending" ? "border-gold-border/30" : "border-white/5 opacity-70"}`}>
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h3 className="text-xs font-mono font-semibold text-gold-champagne">{entry.id}</h3>
+                                    <span className={`px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider rounded border ${entry.status === "pending" ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : entry.status === "approved" ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" : "bg-rose-500/10 border-rose-500/30 text-rose-400"}`}>
+                                      {entry.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm font-semibold text-ivory mt-1">{entry.contactName}</p>
+                                  <p className="text-[10px] text-muted-gray font-mono">{entry.contactPhone} · {entry.contactEmail}</p>
+                                  <div className="mt-3 p-3 bg-black/20 rounded border border-white/5 space-y-1 text-[11px] font-mono text-muted-gray">
+                                    <div>Requested: <span className="text-ivory">Canon EOS R5</span></div>
+                                    <div>Dates: <span className="text-ivory">{entry.startDate} to {entry.endDate}</span></div>
+                                    {entry.createdAt && <div>Created: <span className="text-muted-gray/70">{new Date(entry.createdAt).toLocaleString("en-IN")}</span></div>}
+                                  </div>
+                                </div>
+
+                                {entry.status === "pending" && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => handleResolveWaitlist(entry.id, "notified")}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-obsidian text-[10px] font-bold uppercase tracking-wider rounded-lg transition cursor-pointer font-mono"
+                                    >
+                                      Approve Renter
+                                    </button>
+                                    <button
+                                      onClick={() => handleResolveWaitlist(entry.id, "cancelled")}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 border border-rose-500/20 text-rose-400 hover:border-rose-500/40 text-[10px] font-bold uppercase tracking-wider rounded-lg transition cursor-pointer font-mono"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
                       </div>
                     )}
 

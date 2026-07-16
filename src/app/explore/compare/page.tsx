@@ -6,8 +6,32 @@ import Link from "next/link";
 import Navbar from "@/components/navigation/Navbar";
 import { db } from "@/lib/db/store";
 import { Product } from "@/lib/db/mockData";
-import { ArrowLeft, Check, ShoppingCart, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, Check, ShoppingCart, RefreshCw, X, ShieldAlert } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+
+// Comprehensive details comparing Canon and Nikon systems
+const COMPARATIVE_SPECS: Record<string, Record<string, string>> = {
+  "p1000000-0000-0000-0000-000000000001": {
+    photo_quality: "Elite (45MP Dual Pixel RAW)",
+    video_quality: "High (8K DCI RAW up to 30fps)",
+    resolution: "45 Megapixels (Full-Frame CMOS)",
+    low_light: "Superb (Dual Native ISO up to 51200)",
+    battery: "LP-E6NH (~320 exposures per charge)",
+    weight: "738 grams (Including battery and card)",
+    best_use: "Studio Commercials, Weddings, High-end Fashion",
+    recommendation: "Best for Photography / Portraiture"
+  },
+  "p1000000-0000-0000-0000-000000000003": {
+    photo_quality: "Stunning (45.7MP Stacked CMOS RAW)",
+    video_quality: "Elite (8.3K N-RAW up to 60fps)",
+    resolution: "45.7 Megapixels (Stacked Sensor)",
+    low_light: "Exceptional (Zero Rolling Shutter)",
+    battery: "EN-EL15c (~340 exposures per charge)",
+    weight: "910 grams (Heavy-duty weather sealed)",
+    best_use: "Action Wildlife, Sports, High Frame Rate Cinema",
+    recommendation: "Best for Video & High-Speed Action"
+  }
+};
 
 function ComparePageContent() {
   const searchParams = useSearchParams();
@@ -17,6 +41,7 @@ function ComparePageContent() {
   const { addToCart, cart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [availability, setAvailability] = useState<Record<string, { available: boolean; qty: number }>>({});
 
   useEffect(() => {
     const fetchCompared = async () => {
@@ -24,11 +49,19 @@ function ComparePageContent() {
       if (idsParam) {
         const idList = idsParam.split(",");
         const fetched: Product[] = [];
+        const availMap: Record<string, { available: boolean; qty: number }> = {};
+        
         for (const id of idList) {
           const prod = await db.getProductById(id);
-          if (prod) fetched.push(prod);
+          if (prod) {
+            fetched.push(prod);
+            // Query live availability for default dates
+            const status = await db.checkAvailability(prod.id, "2026-07-20", "2026-07-23");
+            availMap[prod.id] = { available: status.available, qty: status.remainingQty };
+          }
         }
         setProducts(fetched);
+        setAvailability(availMap);
       }
       setLoading(false);
     };
@@ -50,10 +83,16 @@ function ComparePageContent() {
     router.push("/booking");
   };
 
-  // Compile a unique list of specification keys across compared products
-  const specKeys = Array.from(
-    new Set(products.flatMap((p) => Object.keys(p.specs)))
-  );
+  // Static list of specification comparisons
+  const specCompareKeys = [
+    { key: "photo_quality", label: "Photo Quality" },
+    { key: "video_quality", label: "Video Quality" },
+    { key: "resolution", label: "Sensor Resolution" },
+    { key: "low_light", label: "Low Light ISO Range" },
+    { key: "battery", label: "Battery Life" },
+    { key: "weight", label: "System Weight" },
+    { key: "best_use", label: "Best Use Case" },
+  ];
 
   return (
     <div className="min-h-screen bg-obsidian text-ivory pb-20">
@@ -71,6 +110,39 @@ function ComparePageContent() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+        
+        {/* Recommendation Cards */}
+        {!loading && products.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="glass-panel border-white/5 p-5 rounded-lg flex flex-col justify-between">
+              <div>
+                <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">AUREVIA CHOICE</span>
+                <h4 className="serif-heading text-base font-semibold text-ivory mt-1">Best for Photography</h4>
+                <p className="text-xs text-muted-gray mt-1 leading-normal font-light">The Canon EOS R5 provides dual pixel autofocus and high resolution 45MP RAW frames optimized for portraits & fashion.</p>
+              </div>
+              <span className="text-xs text-gold-champagne font-semibold mt-3">Featured Recommendation: Canon EOS R5</span>
+            </div>
+            <div className="glass-panel border-white/5 p-5 rounded-lg flex flex-col justify-between">
+              <div>
+                <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">AUREVIA CHOICE</span>
+                <h4 className="serif-heading text-base font-semibold text-ivory mt-1">Best for Video & Action</h4>
+                <p className="text-xs text-muted-gray mt-1 leading-normal font-light">The Nikon Z8 is a powerhouse of cinematic video, offering 8.3K raw and zero rolling shutter for high speed panning shots.</p>
+              </div>
+              <span className="text-xs text-gold-champagne font-semibold mt-3">Featured Recommendation: Nikon Z8</span>
+            </div>
+            <div className="glass-panel border-[#D8B36A]/20 p-5 rounded-lg flex flex-col justify-between bg-gold-champagne/5">
+              <div>
+                <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">LIVE INVENTORY STATUS</span>
+                <h4 className="serif-heading text-base font-semibold text-ivory mt-1">Best Available Option</h4>
+                <p className="text-xs text-muted-gray mt-1 leading-normal font-light">Check which systems are currently stocked in our Gadag studio database for immediate pickup.</p>
+              </div>
+              <span className="text-xs text-gold-champagne font-semibold mt-3">
+                {availability["p1000000-0000-0000-0000-000000000001"]?.available ? "Canon R5 Available" : availability["p1000000-0000-0000-0000-000000000003"]?.available ? "Nikon Z8 Available" : "All Cameras Currently Booked"}
+              </span>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-20 font-mono text-xs text-muted-gray">
             <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-gold-champagne" />
@@ -95,82 +167,98 @@ function ComparePageContent() {
                 Core Metrics
               </div>
               <div className="py-2.5">Daily Rental Price</div>
-              <div className="py-2.5">Weekly Rental Price</div>
+              <div className="py-2.5">Live Availability (Jul 20-23)</div>
 
-              
-              {specKeys.map((key) => (
-                <div key={key} className="py-2.5 border-b border-white/5 truncate">
-                  {key.replace("_", " ")}
+              {specCompareKeys.map((item) => (
+                <div key={item.key} className="py-2.5 border-b border-white/5 truncate">
+                  {item.label}
                 </div>
               ))}
             </div>
 
             {/* Compared Product Columns */}
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="glass-panel border-white/5 hover:border-gold-border/30 rounded-lg p-5 flex flex-col justify-between relative transition duration-300"
-              >
-                {/* Remove button */}
-                <button
-                  onClick={() => handleRemove(product.id)}
-                  className="absolute top-3 right-3 text-muted-gray hover:text-rose-400 transition cursor-pointer"
-                  title="Remove from comparison"
+            {products.map((product) => {
+              const compSpecs = COMPARATIVE_SPECS[product.id] || {};
+              const avail = availability[product.id] || { available: false, qty: 0 };
+              
+              return (
+                <div
+                  key={product.id}
+                  className="glass-panel border-white/5 hover:border-gold-border/30 rounded-lg p-5 flex flex-col justify-between relative transition duration-300"
                 >
-                  <X size={15} />
-                </button>
-
-                <div className="space-y-6">
-                  {/* Image and Header */}
-                  <div className="h-[280px] flex flex-col justify-between border-b border-white/5 pb-6">
-                    <div className="h-36 overflow-hidden rounded bg-black/30 border border-white/5 flex items-center justify-center mb-4">
-                      <img src={product.imagePrimary} className="w-full h-full object-cover" alt="" />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">★ {product.rating} Rating</span>
-                      <h3 className="serif-heading text-lg font-light text-ivory leading-tight truncate">{product.name}</h3>
-                    </div>
-                  </div>
-
-                  {/* Pricing Matrix */}
-                  <div className="space-y-4">
-                    <div className="py-1">
-                      <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Daily Price</span>
-                      <span className="text-sm font-semibold text-gold-champagne">₹{product.dailyPrice.toLocaleString("en-IN")}</span>
-                    </div>
-                    <div className="py-1">
-                      <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Weekly Price</span>
-                      <span className="text-xs text-ivory/80">₹{product.weeklyPrice.toLocaleString("en-IN")}</span>
-                    </div>
-
-                  </div>
-
-                  {/* Specs List */}
-                  <div className="space-y-4 font-sans text-xs">
-                    {specKeys.map((key) => {
-                      const value = product.specs[key] || "—";
-                      return (
-                        <div key={key} className="py-1 border-b border-white/5 flex flex-col md:block">
-                          <span className="md:hidden text-[8px] text-muted-gray uppercase font-mono block mb-0.5">{key.replace("_", " ")}</span>
-                          <span className="text-ivory font-light truncate block">{value}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Direct CTA */}
-                <div className="pt-8">
+                  {/* Remove button */}
                   <button
-                    onClick={() => handleBook(product)}
-                    className="w-full py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-gold-champagne/5"
+                    onClick={() => handleRemove(product.id)}
+                    className="absolute top-3 right-3 text-muted-gray hover:text-rose-400 transition cursor-pointer"
+                    title="Remove from comparison"
                   >
-                    <ShoppingCart size={13} />
-                    Rent This Model
+                    <X size={15} />
                   </button>
+
+                  <div className="space-y-6">
+                    {/* Image and Header */}
+                    <div className="h-[280px] flex flex-col justify-between border-b border-white/5 pb-6">
+                      <div className="h-36 overflow-hidden rounded bg-black/30 border border-white/5 flex items-center justify-center mb-4">
+                        <img src={product.imagePrimary} className="w-full h-full object-cover" alt="" />
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">★ {product.rating} Rating</span>
+                        <h3 className="serif-heading text-lg font-light text-ivory leading-tight truncate">{product.name}</h3>
+                      </div>
+                    </div>
+
+                    {/* Pricing Matrix */}
+                    <div className="space-y-4">
+                      <div className="py-1">
+                        <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Daily Price</span>
+                        <span className="text-sm font-semibold text-gold-champagne">₹{product.dailyPrice.toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="py-1">
+                        <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Availability</span>
+                        {avail.available ? (
+                          <span className="text-[10px] text-emerald-400 font-mono uppercase bg-emerald-400/5 px-2 py-0.5 border border-emerald-400/20 rounded">
+                            Available ({avail.qty} units)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-rose-400 font-mono uppercase bg-rose-400/5 px-2 py-0.5 border border-rose-400/20 rounded">
+                            Fully Booked
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Specs List */}
+                    <div className="space-y-4 font-sans text-xs">
+                      {specCompareKeys.map((item) => {
+                        const value = compSpecs[item.key] || product.specs[item.key] || "—";
+                        return (
+                          <div key={item.key} className="py-1 border-b border-white/5 flex flex-col md:block">
+                            <span className="md:hidden text-[8px] text-muted-gray uppercase font-mono block mb-0.5">{item.label}</span>
+                            <span className="text-ivory font-light block">{value}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Direct CTA */}
+                  <div className="pt-8">
+                    <button
+                      onClick={() => handleBook(product)}
+                      disabled={!avail.available}
+                      className={`w-full py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg ${
+                        avail.available
+                          ? "bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-gold-champagne/5"
+                          : "bg-white/5 text-muted-gray cursor-not-allowed border border-white/5"
+                      }`}
+                    >
+                      <ShoppingCart size={13} />
+                      {avail.available ? "Rent This Model" : "Unavailable"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

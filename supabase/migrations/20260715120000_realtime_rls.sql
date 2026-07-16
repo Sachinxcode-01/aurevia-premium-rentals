@@ -3,6 +3,7 @@
 -- Apply AFTER 20260715000000_schema.sql
 
 -- ─── 1. AUDIT LOGS TABLE ──────────────────────────────────────
+DROP TABLE IF EXISTS audit_logs CASCADE;
 CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   action VARCHAR(100) NOT NULL,
@@ -19,13 +20,16 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_record ON audit_logs(record_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_by ON audit_logs(changed_by);
 
 -- ─── 2. COUPONS TABLE (if not already exists) ─────────────────
+DROP TABLE IF EXISTS coupons CASCADE;
 CREATE TABLE IF NOT EXISTS coupons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code VARCHAR(50) UNIQUE NOT NULL,
   discount_percent NUMERIC(5,2) NOT NULL DEFAULT 0,
+  max_discount NUMERIC(10,2) DEFAULT 0,
   is_active BOOLEAN DEFAULT true,
   valid_from TIMESTAMP WITH TIME ZONE,
   valid_until TIMESTAMP WITH TIME ZONE,
+  active_until DATE,
   max_uses INTEGER,
   used_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

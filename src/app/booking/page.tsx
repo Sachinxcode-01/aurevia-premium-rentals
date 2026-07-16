@@ -26,7 +26,7 @@ import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import { getCurrentUserAction } from "@/lib/actions/auth";
 
-type CheckoutStep = "cart" | "details" | "confirmation";
+type CheckoutStep = "cart" | "details" | "logistics" | "terms" | "payment" | "confirmation";
 
 export default function BookingPage() {
   const {
@@ -38,6 +38,7 @@ export default function BookingPage() {
     removeFromCart,
     clearCart,
     cartTotals,
+    updateCartItemDates,
   } = useCart();
 
   const [step, setStep] = useState<CheckoutStep>("cart");
@@ -54,6 +55,7 @@ export default function BookingPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const [commOptIn, setCommOptIn] = useState(true);
   
   // Created Booking Ref
   const [createdBooking, setCreatedBooking] = useState<any | null>(null);
@@ -268,15 +270,32 @@ export default function BookingPage() {
       <Navbar cartItemCount={cart.length} />
 
       {/* Page Title Header */}
-      <div className="pt-32 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/5">
-        <h1 className="serif-heading text-4xl font-light">
-          {step === "confirmation" ? "Booking Complete" : "Rental Checkout"}
-        </h1>
-        <p className="text-xs text-muted-gray uppercase tracking-widest font-mono mt-1">
-          {step === "cart" && "Step 1: Review Selected Gear"}
-          {step === "details" && "Step 2: Guest Details & Verification"}
-          {step === "confirmation" && "Vault Reservation Confirmed"}
-        </p>
+      <div className="pt-32 pb-8 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="serif-heading text-4xl font-light">
+              {step === "confirmation" ? "Booking Complete" : "Rental Checkout"}
+            </h1>
+            <p className="text-[10px] text-gold-champagne uppercase tracking-widest font-mono mt-1">
+              Luxury Camera Rentals Concierge
+            </p>
+          </div>
+
+          {/* Stepper Timeline */}
+          {step !== "confirmation" && (
+            <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono tracking-wider uppercase bg-white/5 p-2 px-3.5 rounded border border-white/5 self-start md:self-auto overflow-x-auto max-w-full">
+              <span className={step === "cart" ? "text-gold-champagne font-bold" : "text-muted-gray"}>1. Review</span>
+              <span className="text-white/20">/</span>
+              <span className={step === "details" ? "text-gold-champagne font-bold" : "text-muted-gray"}>2. Details</span>
+              <span className="text-white/20">/</span>
+              <span className={step === "logistics" ? "text-gold-champagne font-bold" : "text-muted-gray"}>3. Logistics</span>
+              <span className="text-white/20">/</span>
+              <span className={step === "terms" ? "text-gold-champagne font-bold" : "text-muted-gray"}>4. Terms</span>
+              <span className="text-white/20">/</span>
+              <span className={step === "payment" ? "text-gold-champagne font-bold" : "text-muted-gray"}>5. Pay</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-10">
@@ -322,6 +341,30 @@ export default function BookingPage() {
                             + {item.selectedAddons.map(id => id === "a1000000-0000-0000-0000-000000000001" ? "CFexpress" : id === "a1000000-0000-0000-0000-000000000002" ? "Extra Battery" : "Monitor").join(", ")}
                           </p>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Inline Date Editors */}
+                    <div className="flex flex-row gap-2 items-center text-left bg-black/10 p-2 rounded border border-white/5">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-muted-gray uppercase font-mono mb-0.5">From</span>
+                        <input
+                          type="date"
+                          value={item.startDate}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={(e) => updateCartItemDates(item.product.id, e.target.value, item.endDate)}
+                          className="bg-white/5 border border-white/10 text-[10px] rounded p-1 text-ivory focus:outline-none focus:border-gold-champagne/40"
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-muted-gray uppercase font-mono mb-0.5">To</span>
+                        <input
+                          type="date"
+                          value={item.endDate}
+                          min={item.startDate || new Date().toISOString().split("T")[0]}
+                          onChange={(e) => updateCartItemDates(item.product.id, item.startDate, e.target.value)}
+                          className="bg-white/5 border border-white/10 text-[10px] rounded p-1 text-ivory focus:outline-none focus:border-gold-champagne/40"
+                        />
                       </div>
                     </div>
 
@@ -417,7 +460,6 @@ export default function BookingPage() {
             ---------------------------------------------------- */}
         {step === "details" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Guest Form */}
             <div className="lg:col-span-8 glass-panel border-white/5 rounded-lg p-6 md:p-8 space-y-6">
               <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Guest Contact Details</h3>
 
@@ -427,6 +469,7 @@ export default function BookingPage() {
                   <div className="relative">
                     <input
                       type="text"
+                      required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none"
@@ -440,6 +483,7 @@ export default function BookingPage() {
                   <div className="relative">
                     <input
                       type="email"
+                      required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none"
@@ -453,6 +497,7 @@ export default function BookingPage() {
                   <div className="relative">
                     <input
                       type="tel"
+                      required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 pl-8 focus:outline-none"
@@ -462,69 +507,71 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              {/* Pickup & Return Time Slots */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Pickup Time Slot</label>
-                  <select
-                    value={pickupTime}
-                    onChange={(e) => setPickupTime(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
-                  >
-                    <option value="09:00 AM">09:00 AM (Early Pickup)</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="01:00 PM">01:00 PM (Midday)</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="05:00 PM">05:00 PM (Late Pickup)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Return Time Slot</label>
-                  <select
-                    value={returnTime}
-                    onChange={(e) => setReturnTime(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
-                  >
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="06:00 PM">06:00 PM (End of Day)</option>
-                  </select>
-                </div>
+              {/* Communication Opt-In checkbox */}
+              <div className="pt-2">
+                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light select-none">
+                  <input
+                    type="checkbox"
+                    checked={commOptIn}
+                    onChange={(e) => setCommOptIn(e.target.checked)}
+                    className="mt-0.5 accent-gold-champagne cursor-pointer"
+                  />
+                  <span>
+                    I permit AUREVIA to send booking notifications and return reminders via Email and WhatsApp.
+                  </span>
+                </label>
               </div>
 
-              {/* Emergency Contact & College/Company Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Emergency Contact Name & Phone (Required)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Aswin Kumar - 9876543210"
-                    value={emergencyContact}
-                    onChange={(e) => setEmergencyContact(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
-                  />
-                </div>
+              <div className="flex gap-3 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setStep("cart")}
+                  className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  disabled={!fullName || !email || !phone}
+                  onClick={() => setStep("logistics")}
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer disabled:opacity-50"
+                >
+                  Proceed to Logistics
+                </button>
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Company / College Name (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Aurevia Studio or IIT Bangalore"
-                    value={companyOrCollege}
-                    onChange={(e) => setCompanyOrCollege(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
-                  />
+            {/* Sticky summary */}
+            <div className="lg:col-span-4">
+              <div className="glass-panel-gold border-gold-border rounded-lg p-6 space-y-4">
+                <h4 className="serif-heading text-sm text-ivory border-b border-white/10 pb-2">Booking Summary</h4>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Selected Duration:</span>
+                    <span>{cartTotals.totalDays} Days</span>
+                  </div>
+                  <div className="flex justify-between text-gold-champagne font-bold">
+                    <span>Payable Rent:</span>
+                    <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------------------------------------------
+            STEP 3: LOGISTICS
+            ---------------------------------------------------- */}
+        {step === "logistics" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 glass-panel border-white/5 rounded-lg p-6 md:p-8 space-y-6">
+              <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Logistics Schedule</h3>
 
               {/* Delivery method */}
-              <div className="space-y-3 pt-4 border-t border-white/5">
+              <div className="space-y-3">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Collection Method</label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     type="button"
                     onClick={() => setDeliveryMethod("pickup")}
@@ -538,7 +585,7 @@ export default function BookingPage() {
                       <Building size={14} />
                       Concierge Studio Pickup
                     </div>
-                    <p className="text-[10px] text-muted-gray font-light">Pick up directly from our luxury studio vault in Bangalore. Free of charge.</p>
+                    <p className="text-[10px] text-muted-gray font-light">Pick up directly from AUREVIA Gadag Studio. Free of charge.</p>
                   </button>
 
                   <button
@@ -552,9 +599,9 @@ export default function BookingPage() {
                   >
                     <div className="flex items-center gap-2 font-semibold text-xs">
                       <Truck size={14} />
-                      Secure Studio Delivery
+                      Studio Delivery (Gadag limits)
                     </div>
-                    <p className="text-[10px] text-muted-gray font-light">Delivered securely in heavy-duty Pelican flight cases to your set location. (₹500)</p>
+                    <p className="text-[10px] text-muted-gray font-light">Delivered securely in flight cases directly to your set location. Free promotion.</p>
                   </button>
                 </div>
               </div>
@@ -595,101 +642,274 @@ export default function BookingPage() {
                 </div>
               )}
 
-              {/* Payment selector */}
-              <div className="space-y-3 pt-4 border-t border-white/5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Secure Payment Method</label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === "card"}
-                      onChange={() => setPaymentMethod("card")}
-                      className="accent-gold-champagne"
-                    />
-                    Credit / Debit Card
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === "upi"}
-                      onChange={() => setPaymentMethod("upi")}
-                      className="accent-gold-champagne"
-                    />
-                    UPI (Google Pay, PhonePe)
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={paymentMethod === "netbanking"}
-                      onChange={() => setPaymentMethod("netbanking")}
-                      className="accent-gold-champagne"
-                    />
-                    Net Banking
-                  </label>
+              {/* Pickup & Return Time Slots */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Pickup Time Slot</label>
+                  <select
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
+                  >
+                    <option value="09:00 AM">09:00 AM (Early Pickup)</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="01:00 PM">01:00 PM (Midday)</option>
+                    <option value="03:00 PM">03:00 PM</option>
+                    <option value="05:00 PM">05:00 PM (Late Pickup)</option>
+                  </select>
                 </div>
-              </div>
-            </div>
 
-            {/* Cost Overview Side panel */}
-            <div className="lg:col-span-4 space-y-4">
-              <div className="glass-panel border-white/5 rounded-lg p-5 space-y-4">
-                <h3 className="serif-heading text-base font-light text-ivory border-b border-white/5 pb-2">Checkout Reservation</h3>
-                <div className="space-y-2 text-xs font-mono">
-                  <div className="flex justify-between text-muted-gray">
-                    <span>Camera Rent (₹799/day):</span>
-                    <span>₹{cartTotals.rentalFee.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-gray">
-                    <span>Rental Duration:</span>
-                    <span>{cartTotals.totalDays} Days</span>
-                  </div>
-                  {cartTotals.discountAmount > 0 && (
-                    <div className="flex justify-between text-rose-400">
-                      <span>Coupon Discount:</span>
-                      <span>-₹{cartTotals.discountAmount.toLocaleString("en-IN")}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-gold-champagne font-bold text-sm border-t border-white/5 pt-2">
-                    <span>Final Payable:</span>
-                    <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Return Time Slot</label>
+                  <select
+                    value={returnTime}
+                    onChange={(e) => setReturnTime(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
+                  >
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="02:00 PM">02:00 PM</option>
+                    <option value="04:00 PM">04:00 PM</option>
+                    <option value="06:00 PM">06:00 PM (End of Day)</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Action Button: Opens terms modal */}
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-3 pt-4 border-t border-white/5">
                 <button
-                  onClick={() => setStep("cart")}
-                  className="w-1/3 py-3 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
+                  type="button"
+                  onClick={() => setStep("details")}
+                  className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
                 >
                   Back
                 </button>
                 <button
-                  onClick={() => setShowTermsModal(true)}
+                  type="button"
+                  onClick={() => setStep("terms")}
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer"
+                >
+                  Proceed to Terms
+                </button>
+              </div>
+            </div>
+
+            {/* Sticky summary */}
+            <div className="lg:col-span-4">
+              <div className="glass-panel-gold border-gold-border rounded-lg p-6 space-y-4">
+                <h4 className="serif-heading text-sm text-ivory border-b border-white/10 pb-2">Booking Summary</h4>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Method:</span>
+                    <span className="uppercase text-[10px]">{deliveryMethod}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Selected Duration:</span>
+                    <span>{cartTotals.totalDays} Days</span>
+                  </div>
+                  <div className="flex justify-between text-gold-champagne font-bold">
+                    <span>Payable Rent:</span>
+                    <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------------------------------------------
+            STEP 4: TERMS AGREEMENT
+            ---------------------------------------------------- */}
+        {step === "terms" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 glass-panel border-white/5 rounded-lg p-6 md:p-8 space-y-6">
+              <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Rental Terms Agreement</h3>
+
+              {/* Emergency Contact & College/Company Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Emergency Contact Name & Phone (Required)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Aswin Kumar - 9876543210"
+                    value={emergencyContact}
+                    onChange={(e) => setEmergencyContact(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Company / College Name (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Aurevia Studio or IIT Bangalore"
+                    value={companyOrCollege}
+                    onChange={(e) => setCompanyOrCollege(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
+                  />
+                </div>
+              </div>
+
+              {/* Terms Body */}
+              <div className="space-y-3 font-sans">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Terms & Conditions</label>
+                <div className="text-xs text-muted-gray bg-black/30 p-4 border border-white/5 rounded leading-relaxed max-h-48 overflow-y-auto space-y-2 font-light">
+                  <p>AUREVIA premium photographic optical instrumentation rental rules:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Must return equipment in identical condition as handover inspect details.</li>
+                    <li>No security deposit is requested, but lost/broken gear is charged at replacement cost.</li>
+                    <li>Late returns accumulate penalties at ₹999/day rate.</li>
+                    <li>Cancellation is free up to 24 hours prior to booking start time.</li>
+                  </ul>
+                </div>
+
+                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light leading-normal select-none pt-2">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 accent-gold-champagne cursor-pointer"
+                  />
+                  <span>
+                    I have read and agree to all AUREVIA Camera Rentals terms and conditions.
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setStep("logistics")}
+                  className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  disabled={!termsAccepted || !emergencyContact}
+                  onClick={() => setStep("payment")}
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer disabled:opacity-50"
+                >
+                  Proceed to Payment
+                </button>
+              </div>
+            </div>
+
+            {/* Sticky summary */}
+            <div className="lg:col-span-4">
+              <div className="glass-panel-gold border-gold-border rounded-lg p-6 space-y-4">
+                <h4 className="serif-heading text-sm text-ivory border-b border-white/10 pb-2">Booking Summary</h4>
+                <div className="space-y-2 text-xs font-mono">
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Contact:</span>
+                    <span className="truncate max-w-[120px]">{fullName}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Selected Duration:</span>
+                    <span>{cartTotals.totalDays} Days</span>
+                  </div>
+                  <div className="flex justify-between text-gold-champagne font-bold">
+                    <span>Payable Rent:</span>
+                    <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ----------------------------------------------------
+            STEP 5: SECURE PAYMENT TRIGGER
+            ---------------------------------------------------- */}
+        {step === "payment" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-8 glass-panel border-white/5 rounded-lg p-6 md:p-8 space-y-6">
+              <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Secure Razorpay Payment</h3>
+
+              <div className="space-y-4 text-xs font-light text-muted-gray bg-white/5 p-5 rounded border border-white/5">
+                <p>Verify your details before completing order checkout:</p>
+                <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                  <div>
+                    <span className="text-[8px] text-muted-gray block">Full Name</span>
+                    <span className="text-ivory font-medium">{fullName}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] text-muted-gray block">Mobile Phone</span>
+                    <span className="text-ivory font-medium">{phone}</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] text-muted-gray block">Pickup Mode</span>
+                    <span className="text-ivory font-medium uppercase">{deliveryMethod} ({pickupTime})</span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] text-muted-gray block">Emergency Contact</span>
+                    <span className="text-ivory font-medium">{emergencyContact}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secure payment badge */}
+              <div className="flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 rounded text-[11px] font-mono uppercase">
+                <ShieldCheck size={18} />
+                <span>Verified SSL Connection · Recalculated server-side pricing · Secure Razorpay Checkout</span>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep("terms")}
+                  className="px-4 py-3 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateBooking}
                   disabled={isSubmitting}
-                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer animate-pulse"
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
                       <div className="w-3.5 h-3.5 rounded-full border border-obsidian/30 border-t-obsidian animate-spin"></div>
-                      Confirming...
+                      Processing Razorpay payment...
                     </>
                   ) : (
                     <>
-                      <ShieldCheck size={14} />
-                      Review & Pay
+                      <CreditCard size={14} />
+                      Pay ₹{cartTotals.totalPayable.toLocaleString("en-IN")}
                     </>
                   )}
                 </button>
               </div>
             </div>
+
+            {/* Sticky summary */}
+            <div className="lg:col-span-4">
+              <div className="glass-panel-gold border-gold-border rounded-lg p-6 space-y-4">
+                <h4 className="serif-heading text-sm text-ivory border-b border-white/10 pb-2">Cost Breakdown</h4>
+                <div className="space-y-2 text-xs font-mono border-b border-white/5 pb-2">
+                  <div className="flex justify-between text-muted-gray">
+                    <span>Base Charges:</span>
+                    <span>₹{cartTotals.rentalFee.toLocaleString("en-IN")}</span>
+                  </div>
+                  {cartTotals.discountAmount > 0 && (
+                    <div className="flex justify-between text-emerald-400">
+                      <span>Promo Coupon:</span>
+                      <span>-₹{cartTotals.discountAmount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-between text-gold-champagne font-bold text-sm">
+                  <span>Net Total:</span>
+                  <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
-{/* ----------------------------------------------------
-            STEP 3: CONFIRMATION
+
+        {/* ----------------------------------------------------
+            CONFIRMATION PAGE
             ---------------------------------------------------- */}
         {step === "confirmation" && createdBooking && (
           <div className="max-w-2xl mx-auto glass-panel-gold border-gold-border rounded-lg p-8 space-y-8 shadow-2xl backdrop-blur-md">
@@ -788,72 +1008,6 @@ export default function BookingPage() {
               </Link>
             </div>
 
-          </div>
-        )}
-
-        {/* Terms and Conditions Modal Overlay */}
-        {showTermsModal && (
-          <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
-            <div className="glass-panel border-gold-border/30 bg-[#0e0e0f] rounded-lg p-6 max-w-lg w-full space-y-4 text-ivory max-h-[85vh] overflow-y-auto">
-              <h3 className="serif-heading text-xl font-light text-ivory border-b border-[#D8B36A]/20 pb-2">
-                Rental Terms & Conditions
-              </h3>
-              
-              <div className="text-xs text-muted-gray space-y-3 leading-relaxed max-h-60 overflow-y-auto pr-2 border-b border-white/5 pb-4 font-light">
-                <p>Please review and accept our camera rental policy guidelines before completing checkout payment:</p>
-                <ul className="list-disc list-inside space-y-2">
-                  <li>Customer must return the camera on the selected date and time.</li>
-                  <li>Late return fees may be charged per extra day (at a rate of ₹999/day).</li>
-                  <li>Customer is responsible for physical damage during the rental period.</li>
-                  <li>Breakage or repair charges will be based on the actual service cost.</li>
-                  <li>Lost or stolen camera requires payment of the camera’s replacement value.</li>
-                  <li>Missing lens, battery, charger, memory card, bag or accessories will be charged separately.</li>
-                  <li>Water, impact, fire or misuse damage is the customer’s responsibility.</li>
-                  <li>Camera condition will be recorded before pickup and after return.</li>
-                  <li>Customer must not transfer or sub-rent the camera.</li>
-                  <li><strong>Cancellation & Refund Rules:</strong> Free cancellation up to 24 hours prior to booking start time. 50% fee applies if cancelled within 24 hours. No refunds post pickup.</li>
-                  <li>Razorpay payment confirms the booking only after successful server verification.</li>
-                  <li>Availability remains subject to successful payment and booking confirmation.</li>
-                </ul>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light leading-normal select-none">
-                  <input
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="mt-0.5 accent-gold-champagne"
-                  />
-                  <span>
-                    I have read and agree to the Rental Terms and Conditions.
-                  </span>
-                </label>
-
-                <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
-                  <button
-                    onClick={() => setShowTermsModal(false)}
-                    className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-[10px] font-semibold uppercase tracking-wider transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowTermsModal(false);
-                      handleCreateBooking();
-                    }}
-                    disabled={!termsAccepted || isSubmitting}
-                    className={`px-5 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition flex items-center gap-1.5 ${
-                      termsAccepted
-                        ? "bg-gold-champagne hover:bg-gold-warm text-obsidian cursor-pointer"
-                        : "bg-white/5 text-muted-gray border border-white/5 cursor-not-allowed"
-                    }`}
-                  >
-                    Proceed to Payment
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

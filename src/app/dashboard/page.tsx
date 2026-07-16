@@ -12,12 +12,14 @@ import {
   User, ShoppingBag, Settings, Camera, Calendar, Clock, CheckCircle,
   XCircle, Loader2, ShieldCheck, FileText, Download, Key, LogOut,
   ChevronRight, AlertTriangle, Menu, X, RefreshCw, Lock, Eye, EyeOff,
-  Phone, Mail, MapPin, MessageCircle, TrendingUp, Tag, CreditCard,
+  Phone, Mail, MapPin, MessageCircle, TrendingUp, Tag, CreditCard, Star,
 } from "lucide-react";
 import { animate, stagger } from "animejs";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { db } from "@/lib/db/store";
 import { Logo } from "@/components/ui/Logo";
+import { MOCK_PRODUCTS } from "@/lib/db/mockData";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -120,7 +122,8 @@ function printInvoice(booking: any, profile: any) {
 
 /* ─── Main Component ──────────────────────────────────────────── */
 export default function CustomerDashboard() {
-  const { cart } = useCart();
+  const router = useRouter();
+  const { cart, addToCart } = useCart();
   const toast = useToast();
 
   const [profile, setProfile]           = useState<Record<string, unknown> | null>(null);
@@ -132,6 +135,26 @@ export default function CustomerDashboard() {
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [refreshing, setRefreshing]     = useState(false);
+
+  // Issue reporting states
+  const [reportedIssues, setReportedIssues] = useState<Record<string, boolean>>({});
+  const [reportingIssueId, setReportingIssueId] = useState<string | null>(null);
+  const [issueText, setIssueText] = useState("");
+
+  // Booking history search filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  // Favorites & Recently viewed states
+  const [favoritesList, setFavoritesList] = useState<any[]>([]);
+  const [recentlyViewedList, setRecentlyViewedList] = useState<any[]>([]);
+
+  // Post-rental review states
+  const [reviewModalProduct, setReviewModalProduct] = useState<any | null>(null);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Settings form
   const [name, setName]   = useState("");
@@ -147,14 +170,30 @@ export default function CustomerDashboard() {
 
   const prevCount = useRef(0);
 
+  const loadFavoritesAndRecentlyViewed = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const favorites = JSON.parse(localStorage.getItem("favorites") || "[]") as string[];
+      const viewed = JSON.parse(localStorage.getItem("recently_viewed") || "[]") as string[];
+      
+      const favProducts = MOCK_PRODUCTS.filter((p) => favorites.includes(p.id));
+      const viewProducts = viewed.map((id) => MOCK_PRODUCTS.find((p) => p.id === id)).filter(Boolean);
+      
+      setFavoritesList(favProducts);
+      setRecentlyViewedList(viewProducts);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFavoritesAndRecentlyViewed();
+  }, [activeTab, loadFavoritesAndRecentlyViewed]);
+
   const loadBookings = useCallback(async () => {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
       const isSupabase = supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
       if (isSupabase && profile?.id) {
-        const { getAllBookingsAction } = await import("@/lib/actions/bookings");
-        const all = await getAllBookingsAction();
-        const mine = (all as any[]).filter((b: any) => b.profile_id === profile.id);
+        const { getUserBookingsAction } = await import("@/lib/actions/bookings");
+        const mine = await getUserBookingsAction();
         setBookings(mine);
       } else {
         const profileId = (profile?.id as string) ?? "usr-prem";
@@ -243,6 +282,28 @@ export default function CustomerDashboard() {
     setCancellingId(null);
   };
 
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewModalProduct || !reviewComment) return;
+    setSubmittingReview(true);
+    try {
+      await db.submitReview({
+        productId: reviewModalProduct.id,
+        authorName: String(profile?.full_name || "Valued Customer"),
+        rating: reviewRating,
+        quote: reviewComment,
+      });
+      toast.success("Thank you! Your review has been submitted for approval.");
+      setReviewModalProduct(null);
+      setReviewComment("");
+      setReviewRating(5);
+    } catch {
+      toast.error("Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -288,7 +349,27 @@ export default function CustomerDashboard() {
     cancelled: bookings.filter((b) => ["cancelled","rejected"].includes(b.status)).length,
   };
 
-  const filteredBookings = filterBookings(bookings, bookingFilter);
+  let filteredBookings = filterBookings(bookings, bookingFilter);
+
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    filteredBookings = filteredBookings.filter((b) => {
+      const ref = (b.referenceCode || b.reference_code || "").toLowerCase();
+      const nameMatch = (b.booking_items || b.items || []).some((item: any) => {
+        const prodName = item.product?.name || item.name || item.productId || "";
+        return prodName.toLowerCase().includes(term);
+      });
+      return ref.includes(term) || nameMatch;
+    });
+  }
+
+  if (filterStartDate) {
+    filteredBookings = filteredBookings.filter((b) => (b.startDate || b.start_date) >= filterStartDate);
+  }
+
+  if (filterEndDate) {
+    filteredBookings = filteredBookings.filter((b) => (b.endDate || b.end_date) <= filterEndDate);
+  }
 
   /* ─── Sidebar nav items ───────────────────────────────── */
   const navItems: { id: DashTab; label: string; icon: React.ReactNode; badge?: number }[] = [
@@ -421,6 +502,32 @@ export default function CustomerDashboard() {
                   ))}
                 </div>
 
+                {/* Referral Architecture Card */}
+                <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6 bg-gold-champagne/5 relative overflow-hidden">
+                  <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-5">
+                    <Tag size={160} className="text-gold-champagne" />
+                  </div>
+                  <h3 className="text-[11px] uppercase font-mono tracking-widest text-gold-champagne mb-2">Referral Concierge</h3>
+                  <p className="text-xs text-ivory/80 leading-relaxed max-w-md">
+                    Invite your fellow cinematographers and photographers to AUREVIA. When they book using your referral link, they receive a flat ₹199 discount, and you earn ₹500 in rental credits.
+                  </p>
+                  
+                  <div className="mt-4 flex flex-wrap gap-2.5 items-center">
+                    <div className="bg-black/45 border border-white/10 rounded px-3 py-2 text-xs font-mono text-gold-champagne select-all">
+                      AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`http://localhost:3000/register?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`);
+                        toast.success("Referral link copied to clipboard!");
+                      }}
+                      className="px-3 py-2 bg-white/10 hover:bg-white/15 text-[10px] uppercase font-bold text-gold-champagne rounded transition cursor-pointer"
+                    >
+                      Copy Invite Link
+                    </button>
+                  </div>
+                </div>
+
                 {/* Recent bookings */}
                 <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-5">
@@ -480,6 +587,52 @@ export default function CustomerDashboard() {
                     </Link>
                   ))}
                 </div>
+
+                {/* Favorites Section */}
+                {favoritesList.length > 0 && (
+                  <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                    <h3 className="text-[11px] uppercase font-mono tracking-widest text-gold-champagne mb-5">Your Favorite Gear</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {favoritesList.map((g) => (
+                        <div key={g.id} className="bg-black/35 border border-white/5 rounded-lg p-4 flex justify-between items-center gap-3">
+                          <div>
+                            <h4 className="text-xs font-semibold text-ivory">{g.name}</h4>
+                            <p className="text-[10px] text-gold-champagne mt-0.5">₹{g.dailyPrice.toLocaleString("en-IN")}/day</p>
+                          </div>
+                          <Link
+                            href={`/gear/${g.slug}`}
+                            className="px-3 py-1.5 bg-white/10 hover:bg-gold-champagne hover:text-obsidian text-[9px] font-bold uppercase rounded transition cursor-pointer"
+                          >
+                            View
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recently Viewed Section */}
+                {recentlyViewedList.length > 0 && (
+                  <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                    <h3 className="text-[11px] uppercase font-mono tracking-widest text-muted-gray mb-5">Recently Viewed</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {recentlyViewedList.map((g) => (
+                        <div key={g?.id} className="bg-black/35 border border-white/5 rounded-lg p-4 flex justify-between items-center gap-3">
+                          <div>
+                            <h4 className="text-xs font-semibold text-ivory">{g?.name}</h4>
+                            <p className="text-[10px] text-muted-gray mt-0.5">₹{g?.dailyPrice.toLocaleString("en-IN")}/day</p>
+                          </div>
+                          <Link
+                            href={`/gear/${g?.slug}`}
+                            className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-[9px] font-bold text-gold-champagne uppercase rounded transition cursor-pointer"
+                          >
+                            Rent
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -497,6 +650,35 @@ export default function CustomerDashboard() {
                       {f} {f === "all" ? `(${bookings.length})` : ""}
                     </button>
                   ))}
+                </div>
+
+                {/* Search & Date filters */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white/5 border border-white/5 rounded-lg p-3">
+                  <input
+                    type="text"
+                    placeholder="Search by ID or Camera Name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-black/35 border border-white/10 rounded px-3 py-2 text-xs text-ivory focus:outline-none focus:border-gold-champagne/45 placeholder:text-muted-gray/50"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] uppercase font-mono text-muted-gray/70">From:</span>
+                    <input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                      className="flex-1 bg-black/35 border border-white/10 rounded px-2 py-1.5 text-xs text-ivory focus:outline-none focus:border-gold-champagne/45"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] uppercase font-mono text-muted-gray/70">To:</span>
+                    <input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                      className="flex-1 bg-black/35 border border-white/10 rounded px-2 py-1.5 text-xs text-ivory focus:outline-none focus:border-gold-champagne/45"
+                    />
+                  </div>
                 </div>
 
                 {bookingsLoading ? (
@@ -609,23 +791,154 @@ export default function CustomerDashboard() {
                               </div>
                             </div>
                           )}
+                          
+                          {/* Countdown display */}
+                          {(() => {
+                            const now = new Date();
+                            const start = new Date(b.startDate);
+                            const end = new Date(b.endDate);
+                            if (start > now) {
+                              const diffDays = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                              return (
+                                <div className="text-[10px] text-amber-400 font-mono font-semibold bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg inline-block mt-2">
+                                  ⏱ Rental starts in {diffDays} day{diffDays > 1 ? "s" : ""}
+                                </div>
+                              );
+                            } else if (b.status === "rented" && end > now) {
+                              const diffHours = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60));
+                              return (
+                                <div className="text-[10px] text-rose-400 font-mono font-semibold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg inline-block mt-2 animate-pulse">
+                                  ⏱ Return due in {diffHours} hour{diffHours > 1 ? "s" : ""}
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
 
-                          {/* Terms acceptance */}
-                          {b.agreementAccepted && (
-                            <div className="flex items-center gap-2 text-[10px] text-muted-gray/60 font-mono">
-                              <ShieldCheck size={11} className="text-teal-400/60" />
-                              Terms accepted {b.agreementAcceptedAt ? `on ${new Date(b.agreementAcceptedAt).toLocaleString("en-IN")}` : ""}
+                          {/* Issue reporting form */}
+                          {reportingIssueId === b.id ? (
+                            <div className="space-y-2 mt-3 p-3 bg-white/5 rounded border border-white/5">
+                              <span className="text-[8px] font-mono uppercase text-gold-champagne block">Describe the issue</span>
+                              <textarea
+                                value={issueText}
+                                onChange={(e) => setIssueText(e.target.value)}
+                                placeholder="Details about damage, missing items, or device failure..."
+                                className="w-full bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none text-ivory"
+                              />
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReportedIssues(prev => ({ ...prev, [b.id]: true }));
+                                    setReportingIssueId(null);
+                                    setIssueText("");
+                                    toast.success("Issue submitted. Prem will contact you.");
+                                  }}
+                                  className="px-3 py-1.5 bg-rose-500 text-white text-[9px] uppercase font-bold rounded cursor-pointer"
+                                >
+                                  Submit Report
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setReportingIssueId(null)}
+                                  className="px-3 py-1.5 bg-white/10 text-[9px] uppercase font-bold rounded text-muted-gray cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
                             </div>
-                          )}
+                          ) : reportedIssues[b.id] ? (
+                            <div className="text-[9px] text-rose-400 font-mono uppercase bg-rose-500/10 border border-rose-500/20 p-2.5 rounded mt-3">
+                              ⚠️ Issue reported. Concierge has been alerted.
+                            </div>
+                          ) : null}
 
                           {/* Actions */}
-                          <div className="flex flex-wrap gap-2 pt-1">
+                          <div className="flex flex-wrap gap-2 pt-3 border-t border-white/5 mt-3">
                             <button
                               onClick={() => printInvoice(b, profile)}
                               className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-white/10 rounded-lg text-muted-gray hover:text-ivory hover:border-white/20 transition cursor-pointer"
                             >
                               <Download size={11} /> Download Invoice
                             </button>
+
+                            {/* Calendar download button */}
+                            {["paid", "approved", "ready_for_pickup"].includes(b.status) && (
+                              <button
+                                onClick={() => {
+                                  const productName = b.booking_items?.[0]?.product?.name || b.items?.[0]?.name || "Camera";
+                                  const mappedBooking = {
+                                    id: b.id,
+                                    startDate: b.startDate || b.start_date,
+                                    endDate: b.endDate || b.end_date,
+                                    createdAt: b.createdAt || b.created_at,
+                                    referenceCode: b.referenceCode || b.reference_code,
+                                    contactName: b.contactName || b.contact_name,
+                                    contactPhone: b.contactPhone || b.contact_phone,
+                                  } as any;
+                                  
+                                  import("@/lib/utils/ical").then((u) => {
+                                    u.downloadCalendarFile(mappedBooking, productName);
+                                    toast.success("Calendar invite downloaded successfully!");
+                                  });
+                                }}
+                                className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-white/10 rounded-lg text-muted-gray hover:text-ivory hover:border-white/20 transition cursor-pointer"
+                              >
+                                📅 Add to Calendar
+                              </button>
+                            )}
+
+                            {/* Report issue action */}
+                            {b.status === "rented" && !reportedIssues[b.id] && !reportingIssueId && (
+                              <button
+                                onClick={() => {
+                                  setReportingIssueId(b.id);
+                                  setIssueText("");
+                                }}
+                                className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-rose-500/20 rounded-lg text-rose-400/80 hover:text-rose-400 hover:border-rose-500/40 transition cursor-pointer"
+                              >
+                                Report an Issue
+                              </button>
+                            )}
+
+                            {/* Rebook and Review actions */}
+                            {["completed", "returned"].includes(b.status) && (
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  onClick={async () => {
+                                    const itemId = b.booking_items?.[0]?.product_id || b.items?.[0]?.productId;
+                                    if (itemId) {
+                                      const prod = await db.getProductById(itemId);
+                                      if (prod) {
+                                        addToCart(prod, 1, new Date().toISOString().split("T")[0], new Date(Date.now() + 3*86400000).toISOString().split("T")[0], []);
+                                        toast.success("Camera added to cart. Rebooking...");
+                                        router.push("/booking");
+                                      }
+                                    }
+                                  }}
+                                  className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian rounded-lg font-bold transition cursor-pointer"
+                                >
+                                  Rebook This Model
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    const itemId = b.booking_items?.[0]?.product_id || b.items?.[0]?.productId;
+                                    if (itemId) {
+                                      const prod = await db.getProductById(itemId);
+                                      if (prod) {
+                                        setReviewModalProduct(prod);
+                                        setReviewRating(5);
+                                        setReviewComment("");
+                                      }
+                                    }
+                                  }}
+                                  className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-gold-border text-gold-champagne hover:bg-gold-champagne/10 rounded-lg transition cursor-pointer"
+                                >
+                                  ★ Write Review
+                                </button>
+                              </div>
+                            )}
+
                             {canCancel(b.status) && (
                               <button
                                 onClick={() => handleCancel(b.id)}
@@ -757,6 +1070,62 @@ export default function CustomerDashboard() {
                       <MessageCircle size={13} /> Contact Support
                     </Link>
                   </div>
+                </div>
+              </div>
+            )}
+            {/* ── WRITE REVIEW MODAL ── */}
+            {reviewModalProduct && (
+              <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                <div className="glass-panel border-gold-border/30 max-w-md w-full p-6 space-y-4 rounded-xl shadow-2xl relative bg-charcoal">
+                  <button
+                    onClick={() => setReviewModalProduct(null)}
+                    className="absolute right-4 top-4 text-muted-gray hover:text-ivory transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+
+                  <div className="text-center space-y-1">
+                    <span className="text-[9px] uppercase font-mono text-gold-champagne tracking-widest block">Concierge Experience Review</span>
+                    <h3 className="serif-heading text-lg font-bold text-ivory">Review {reviewModalProduct.name}</h3>
+                  </div>
+
+                  <form onSubmit={handleSubmitReview} className="space-y-4 pt-2">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Your Rating</label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className="text-gold-champagne hover:scale-110 transition cursor-pointer"
+                          >
+                            <Star size={20} fill={star <= reviewRating ? "#D8B36A" : "transparent"} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Your Shooting Review</label>
+                      <textarea
+                        required
+                        rows={4}
+                        placeholder="How did the camera perform on your shoot? Mention details like autofocus accuracy, low light capture, etc."
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        className="w-full bg-black/45 border border-white/10 rounded-lg p-2.5 text-xs text-ivory focus:outline-none focus:border-gold-champagne/50 resize-none placeholder-white/20"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="w-full py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer disabled:opacity-50"
+                    >
+                      {submittingReview ? "Submitting..." : "Submit Experience Review"}
+                    </button>
+                  </form>
                 </div>
               </div>
             )}
