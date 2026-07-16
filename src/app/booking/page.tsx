@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Script from "next/script";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { db } from "@/lib/db/store";
@@ -56,6 +57,13 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
 
+  // Logistics Upgrades
+  const [pickupTime, setPickupTime] = useState("10:00 AM");
+  const [returnTime, setReturnTime] = useState("04:00 PM");
+  const [emergencyContact, setEmergencyContact] = useState("Aswin Kumar - 9876543210");
+  const [companyOrCollege, setCompanyOrCollege] = useState("Aurevia Studio");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError("");
@@ -75,6 +83,7 @@ export default function BookingPage() {
     try {
       const refCode = `AV-2026-${Math.floor(Math.random() * 90000) + 10000}`;
       
+      const payableAmount = cartTotals.totalPayable + (deliveryMethod === "delivery" ? 0 : -500);
       const bookingPayload = {
         profileId: "usr-prem", // Simulated login user
         referenceCode: refCode,
@@ -85,11 +94,17 @@ export default function BookingPage() {
         taxFee: cartTotals.taxFee,
         deliveryFee: deliveryMethod === "delivery" ? 500 : 0,
         discountAmount: cartTotals.discountAmount,
-        totalPayable: cartTotals.totalPayable + (deliveryMethod === "delivery" ? 0 : -500), // Adjust if delivery was factored or not
+        totalPayable: payableAmount,
         deliveryMethod,
         contactName: fullName,
         contactPhone: phone,
+        contactEmail: email,
         couponApplied: coupon?.code,
+        pickupTime,
+        returnTime,
+        emergencyContact,
+        companyOrCollege,
+        depositPaymentMethod: "razorpay" as const,
         items: cart.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -103,30 +118,123 @@ export default function BookingPage() {
         ),
       };
 
+      // 1. Create the booking draft (local storage)
       const result = await db.createBooking(bookingPayload);
-      setCreatedBooking(result);
-      clearCart();
-      setStep("confirmation");
 
-      // Staggered entry animation on confirmation icons
-      setTimeout(() => {
-        animate(".success-fade", {
-          opacity: [0, 1],
-          translateY: [20, 0],
-          delay: stagger(150),
-          duration: 800,
-          ease: "easeOutQuad",
-        });
-      }, 50);
+      // 2. Call backend create-order endpoint with secure payload structure (recalculated on server)
+      const orderRes = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          couponCode: coupon?.code || null,
+          deliveryMethod,
+          emergencyContact,
+          companyOrCollege,
+          contactEmail: email,
+          contactName: fullName,
+          contactPhone: phone,
+          items: cart.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            startDate: item.startDate,
+            endDate: item.endDate,
+          })),
+          addons: cart.flatMap((item) => item.selectedAddons),
+          receipt: result.referenceCode,
+        }),
+      });
+
+      if (!orderRes.ok) {
+        const errData = await orderRes.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to initiate Razorpay order on the server.");
+      }
+
+      const orderData = await orderRes.json();
+
+      // 3. Open Razorpay Modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TDzpNVr4KK6rJG",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "AUREVIA Premium Rentals",
+        description: `Rental Booking ${result.referenceCode}`,
+        order_id: orderData.order_id,
+        handler: async function (response: any) {
+          try {
+            setIsSubmitting(true);
+            setBookingError("");
+
+            // Send payment details to verification endpoint
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                bookingId: result.id,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              // 4. Mark the booking as paid and confirmed
+              const updated = await db.getBookingById(result.id);
+              setCreatedBooking(updated || { ...result, status: "confirmed", paymentStatus: "paid" });
+              clearCart();
+              setStep("confirmation");
+
+              // Staggered entry animation on confirmation icons
+              setTimeout(() => {
+                animate(".success-fade", {
+                  opacity: [0, 1],
+                  translateY: [20, 0],
+                  delay: stagger(150),
+                  duration: 800,
+                  ease: "easeOutQuad",
+                });
+              }, 50);
+            } else {
+              setBookingError(verifyData.error || "Payment verification failed.");
+            }
+          } catch (err: any) {
+            setBookingError(err.message || "Failed to verify signature.");
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          name: fullName,
+          email: email,
+          contact: phone,
+        },
+        image: "/readme/aurevia-logo.png",
+        theme: {
+          color: "#09a275",
+        },
+        modal: {
+          ondismiss: function () {
+            setBookingError("Payment modal was closed before completion.");
+            setIsSubmitting(false);
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        setBookingError(response.error.description || "Razorpay transaction failed.");
+        setIsSubmitting(false);
+      });
+      rzp.open();
     } catch (err: any) {
-      setBookingError(err.message || "Failed to reserve equipment. Check inventory availability.");
-    } finally {
+      setBookingError(err.message || "Failed to process transaction. Please try again.");
       setIsSubmitting(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-obsidian text-ivory pb-20">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <Navbar cartItemCount={cart.length} />
 
       {/* Page Title Header */}
@@ -336,6 +444,65 @@ export default function BookingPage() {
                 </div>
               </div>
 
+              {/* Pickup & Return Time Slots */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Pickup Time Slot</label>
+                  <select
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
+                  >
+                    <option value="09:00 AM">09:00 AM (Early Pickup)</option>
+                    <option value="11:00 AM">11:00 AM</option>
+                    <option value="01:00 PM">01:00 PM (Midday)</option>
+                    <option value="03:00 PM">03:00 PM</option>
+                    <option value="05:00 PM">05:00 PM (Late Pickup)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Return Time Slot</label>
+                  <select
+                    value={returnTime}
+                    onChange={(e) => setReturnTime(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none text-ivory"
+                  >
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="12:00 PM">12:00 PM</option>
+                    <option value="02:00 PM">02:00 PM</option>
+                    <option value="04:00 PM">04:00 PM</option>
+                    <option value="06:00 PM">06:00 PM (End of Day)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Emergency Contact & College/Company Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Emergency Contact Name & Phone (Required)</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Aswin Kumar - 9876543210"
+                    value={emergencyContact}
+                    onChange={(e) => setEmergencyContact(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Company / College Name (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Aurevia Studio or IIT Bangalore"
+                    value={companyOrCollege}
+                    onChange={(e) => setCompanyOrCollege(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
+                  />
+                </div>
+              </div>
+
               {/* Delivery method */}
               <div className="space-y-3 pt-4 border-t border-white/5">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Collection Method</label>
@@ -474,7 +641,22 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              {/* Terms Acceptance Checkbox */}
+              <div className="p-4 bg-gold-champagne/5 border border-gold-border/20 rounded-lg space-y-2 mt-4">
+                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light leading-normal select-none">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 accent-gold-champagne"
+                  />
+                  <span>
+                    I hereby accept the <Link href="/terms" target="_blank" className="text-gold-champagne hover:underline font-medium">Rental Agreement & Booking Terms</Link>. I understand that late returns are subject to a ₹999/day charge, and I accept full financial responsibility for any damage to the cameras.
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => setStep("cart")}
                   className="w-1/3 py-3 border border-white/10 text-muted-gray hover:text-ivory rounded text-xs uppercase font-semibold cursor-pointer transition"
@@ -483,8 +665,12 @@ export default function BookingPage() {
                 </button>
                 <button
                   onClick={handleCreateBooking}
-                  disabled={isSubmitting}
-                  className="flex-1 py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider rounded shadow-lg shadow-gold-champagne/10 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  disabled={isSubmitting || !termsAccepted}
+                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 ${
+                    termsAccepted
+                      ? "bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer"
+                      : "bg-white/5 text-muted-gray border border-white/5 cursor-not-allowed"
+                  }`}
                 >
                   {isSubmitting ? (
                     <>

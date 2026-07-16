@@ -5,6 +5,7 @@ import { getClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { BookingWithItems } from "@/lib/supabase/types";
 import { getAllBookingsAction } from "@/lib/actions/bookings";
+import { db } from "@/lib/db/store";
 
 export interface AdminRealtimeAlert {
   id: string;
@@ -35,6 +36,13 @@ export function useAdminRealtime(): UseAdminRealtimeReturn {
 
   const fetchBookings = useCallback(async () => {
     try {
+      const isSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+      if (!isSupabase) {
+        const local = await db.getBookings();
+        setBookings(local as any);
+        setLoading(false);
+        return;
+      }
       const data = await getAllBookingsAction();
       setBookings(data as BookingWithItems[]);
     } catch {
@@ -55,9 +63,14 @@ export function useAdminRealtime(): UseAdminRealtimeReturn {
   }, []);
 
   useEffect(() => {
-    const supabase = getClient();
+    const isSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
     fetchBookings();
+    if (!isSupabase) {
+      setLoading(false);
+      return;
+    }
 
+    const supabase = getClient();
     const channel = supabase
       .channel("admin:bookings:all")
       .on(

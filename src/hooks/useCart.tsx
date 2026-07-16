@@ -187,7 +187,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       depositFee += item.product.securityDeposit * item.quantity;
     });
 
-    const discountAmount = Math.round(rentalFee * (discountPercent / 100) * 100) / 100;
+    let discountAmount = 0;
+    if (coupon) {
+      if (coupon.discountFlat && coupon.discountFlat > 0) {
+        // Calculate flat discount per camera unit per day
+        cart.forEach((item) => {
+          const start = new Date(item.startDate);
+          const end = new Date(item.endDate);
+          const diffTime = Math.abs(end.getTime() - start.getTime());
+          const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 || 1;
+          discountAmount += (coupon.discountFlat || 0) * days * item.quantity;
+        });
+      } else {
+        // Calculate percentage discount
+        discountAmount = Math.round(rentalFee * (discountPercent / 100) * 100) / 100;
+      }
+    }
+
     const taxFee = Math.round((rentalFee - discountAmount) * 0.18 * 100) / 100; // 18% GST standard for luxury electronics
     
     // Flat delivery fee of 500 INR if cart has items, free pickup

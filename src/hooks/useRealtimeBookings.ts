@@ -5,6 +5,7 @@ import { getClient } from "@/lib/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import type { BookingWithItems } from "@/lib/supabase/types";
 import { getUserBookingsAction } from "@/lib/actions/bookings";
+import { db } from "@/lib/db/store";
 
 interface UseRealtimeBookingsReturn {
   bookings: BookingWithItems[];
@@ -26,6 +27,13 @@ export function useRealtimeBookings(): UseRealtimeBookingsReturn {
 
   const fetchBookings = useCallback(async () => {
     try {
+      const isSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
+      if (!isSupabase) {
+        const local = await db.getBookings("usr-prem");
+        setBookings(local as any);
+        setError(null);
+        return;
+      }
       const data = await getUserBookingsAction();
       setBookings(data as BookingWithItems[]);
       setError(null);
@@ -37,8 +45,11 @@ export function useRealtimeBookings(): UseRealtimeBookingsReturn {
   }, []);
 
   useEffect(() => {
-    const supabase = getClient();
+    const isSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-id");
     fetchBookings();
+    if (!isSupabase) return;
+
+    const supabase = getClient();
 
     // Get current user for filtered subscription
     supabase.auth.getUser().then(({ data: { user } }) => {
