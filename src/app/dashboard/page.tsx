@@ -585,7 +585,7 @@ export default function CustomerDashboard() {
                     <div className="flex gap-3 items-center">
                       <div className="text-right">
                         <span className="text-[8px] text-muted-gray uppercase block font-mono">Total Payable (Paid)</span>
-                        <span className="text-sm font-semibold text-gold-champagne">₹{booking.total_payable.toLocaleString("en-IN")}</span>
+                        <span className="text-sm font-semibold text-gold-champagne">₹{(booking.totalPayable ?? booking.total_payable ?? 0).toLocaleString("en-IN")}</span>
                       </div>
                       <span className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded border ${STATUS_STYLES[booking.status] ?? ""}`}>
                         {booking.status.replace("_", " ")}
