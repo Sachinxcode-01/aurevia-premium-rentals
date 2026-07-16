@@ -23,6 +23,7 @@ import {
 import { animate, stagger } from "animejs";
 import { db } from "@/lib/db/store";
 import type { Booking, InventoryUnit } from "@/lib/db/store";
+import { Logo } from "@/components/ui/Logo";
 import { MOCK_COUPONS } from "@/lib/db/mockData";
 import type { Coupon } from "@/lib/db/mockData";
 
@@ -344,11 +345,15 @@ export default function AdminDashboard() {
               {/* Sidebar */}
               <aside className={`fixed lg:relative top-0 left-0 h-full lg:h-auto z-50 lg:z-auto w-60 bg-obsidian lg:bg-transparent border-r border-white/5 lg:border-none pt-20 lg:pt-0 px-3 lg:px-0 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} shrink-0`}>
                 <div className="glass-panel border-white/5 rounded-xl p-3 space-y-0.5 sticky top-28">
+                  {/* Brand Wordmark */}
+                  <div className="px-2 pt-1 pb-3 border-b border-white/5 mb-2 flex justify-center">
+                    <Logo variant="wordmark" theme="light" width={110} height={28} />
+                  </div>
                   {/* Profile mini */}
                   <div className="px-2 py-3 border-b border-white/5 mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gold-champagne/15 border border-gold-border flex items-center justify-center shrink-0">
-                        <User size={13} className="text-gold-champagne" />
+                      <div className="shrink-0">
+                        <Logo variant="monogram" theme="light" width={28} height={28} />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[11px] font-semibold text-ivory truncate">{String(adminProfile?.full_name ?? "Admin")}</p>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useChatbot } from "./ChatbotProvider";
 import { MessageSquare, RefreshCw } from "lucide-react";
 import { animate } from "animejs";
+import { Logo } from "@/components/ui/Logo";
 
 export default function FloatingChatLauncher() {
   const { toggleChat, isOpen, unreadCount } = useChatbot();
@@ -197,17 +198,8 @@ export default function FloatingChatLauncher() {
           aria-label="Open AUREVIA support chat"
           className="w-14 h-14 rounded-full bg-obsidian border border-gold-border text-gold-champagne flex items-center justify-center shadow-2xl hover:bg-gold-champagne/10 transition-colors cursor-grab active:cursor-grabbing select-none"
         >
-          {/* Animated lens aperture icon / custom camera icon layout */}
           <div className="relative w-8 h-8 flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-full h-full stroke-gold-champagne fill-none stroke-[6]">
-              {/* Camera layout */}
-              <rect x="15" y="30" width="70" height="50" rx="10" />
-              <path d="M35 30 L40 18 L60 18 L65 30" />
-              <circle cx="50" cy="55" r="16" className="stroke-gold-champagne fill-none" />
-              <line x1="50" y1="39" x2="50" y2="43" className="stroke-gold-champagne" />
-              {/* Aperture blades details inside inner circle */}
-              <circle cx="50" cy="55" r="8" className="stroke-gold-champagne/40 fill-none stroke-[2]" />
-            </svg>
+            <Logo variant="monogram" theme="light" width={32} height={32} />
           </div>
         </button>
 

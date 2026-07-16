@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { animate, createTimeline, stagger } from "animejs";
 import { Search, User, Menu, X, ShoppingCart } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 interface NavbarProps {
   cartItemCount?: number;
@@ -145,13 +146,8 @@ export default function Navbar({
       >
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-full">
           {/* Brand Logo & Premium Badge */}
-          <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0">
-            <span className="serif-heading text-lg xl:text-[22px] font-semibold tracking-wider text-[#F5F1E8] transition-colors duration-300 group-hover:text-[#D8B36A] leading-none">
-              AUREVIA
-            </span>
-            <span className="text-[8px] xl:text-[10px] font-mono tracking-widest text-[#D8B36A] border border-[#D8B36A]/30 px-1 py-0.5 xl:px-1.5 xl:py-0.5 rounded uppercase leading-none scale-90 group-hover:bg-[#D8B36A] group-hover:text-[#080808] transition-all duration-300">
-              PREMIUM
-            </span>
+          <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0" aria-label="AUREVIA Premium Camera Rentals">
+            <Logo variant="wordmark" theme="light" width={140} height={38} />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -264,13 +260,8 @@ export default function Navbar({
 
           {/* Mobile Header */}
           <div className="relative z-10 px-6 py-6 flex items-center justify-between border-b border-white/5">
-            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2">
-              <span className="serif-heading text-[22px] font-semibold tracking-wider text-[#F5F1E8]">
-                AUREVIA
-              </span>
-              <span className="text-[10px] font-mono tracking-widest text-[#D8B36A] border border-[#D8B36A]/30 px-1.5 py-0.5 rounded uppercase">
-                PREMIUM
-              </span>
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2" aria-label="AUREVIA Premium Camera Rentals">
+              <Logo variant="monogram" theme="light" width={32} height={32} />
             </Link>
 
             <button

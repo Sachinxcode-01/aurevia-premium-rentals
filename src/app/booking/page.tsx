@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { animate, stagger } from "animejs";
+import { Logo } from "@/components/ui/Logo";
 
 type CheckoutStep = "cart" | "details" | "confirmation";
 
@@ -674,18 +675,20 @@ export default function BookingPage() {
             </div>
           </div>
         )}
-
-        {/* ----------------------------------------------------
+{/* ----------------------------------------------------
             STEP 3: CONFIRMATION
             ---------------------------------------------------- */}
         {step === "confirmation" && createdBooking && (
           <div className="max-w-2xl mx-auto glass-panel-gold border-gold-border rounded-lg p-8 space-y-8 shadow-2xl backdrop-blur-md">
             
             <div className="text-center space-y-3 border-b border-white/10 pb-6">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 success-fade" style={{ opacity: 0 }}>
-                <CheckCircle size={32} />
+              <div className="flex justify-center mb-2 success-fade" style={{ opacity: 0 }}>
+                <Logo variant="wordmark" theme="light" width={160} height={44} />
               </div>
-              <h2 className="serif-heading text-3xl font-light text-ivory success-fade" style={{ opacity: 0 }}>Order Confirmed</h2>
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 success-fade" style={{ opacity: 0 }}>
+                <CheckCircle size={24} />
+              </div>
+              <h2 className="serif-heading text-2xl font-light text-ivory success-fade" style={{ opacity: 0 }}>Order Confirmed</h2>
               <p className="text-xs text-gold-champagne font-mono uppercase tracking-widest success-fade" style={{ opacity: 0 }}>
                 Reservation Code: {createdBooking.referenceCode}
               </p>

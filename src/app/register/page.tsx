@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { signUpAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
+import { Logo } from "@/components/ui/Logo";
 
 export default function RegisterPage() {
   const { cart } = useCart();
@@ -101,12 +102,11 @@ export default function RegisterPage() {
         <div className="auth-panel opacity-0 glass-panel-gold border-gold-border rounded-2xl max-w-sm w-full p-8 shadow-2xl space-y-6">
 
           {/* Header */}
-          <div className="text-center space-y-1.5">
-            <div className="w-10 h-10 rounded-full bg-gold-champagne/10 border border-gold-border flex items-center justify-center mx-auto mb-3">
-              <User size={16} className="text-gold-champagne" />
+          <div className="text-center space-y-2">
+            <div className="flex justify-center mb-3">
+              <Logo variant="wordmark" theme="light" width={160} height={44} />
             </div>
             <span className="text-[9px] uppercase tracking-[0.2em] text-gold-champagne font-mono block">Club Membership</span>
-            <h1 className="serif-heading text-2xl font-light text-ivory">Create AUREVIA Profile</h1>
             <p className="text-[11px] text-muted-gray">Premium camera rental — by Prem</p>
           </div>
 

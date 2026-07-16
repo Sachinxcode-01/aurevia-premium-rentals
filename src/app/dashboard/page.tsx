@@ -17,6 +17,7 @@ import {
 import { animate, stagger } from "animejs";
 import Link from "next/link";
 import { db } from "@/lib/db/store";
+import { Logo } from "@/components/ui/Logo";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -82,8 +83,12 @@ function printInvoice(booking: any, profile: any) {
       .meta-item label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 2px; }
       .footer { margin-top: 40px; font-size: 11px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
     </style></head><body>
-    <h1>AUREVIA</h1>
-    <div class="sub">Premium Camera Rentals · Rental Invoice</div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #B98A43; padding-bottom: 12px; margin-bottom: 16px;">
+      <div>
+        <img src="${window.location.origin}/readme/aurevia-logo.png" alt="AUREVIA" style="height: 40px; filter: invert(1) brightness(0.2); object-fit: contain;" />
+        <div class="sub" style="margin-top: 4px;">Premium Camera Rentals · Invoice</div>
+      </div>
+    </div>
     <div class="meta">
       <div class="meta-item"><label>Invoice No.</label>${booking.referenceCode || booking.reference_code}</div>
       <div class="meta-item"><label>Date</label>${new Date(booking.createdAt || booking.created_at).toLocaleDateString("en-IN")}</div>
@@ -311,10 +316,14 @@ export default function CustomerDashboard() {
           {/* Sidebar */}
           <aside className={`fixed lg:relative top-0 left-0 h-full lg:h-auto z-50 lg:z-auto w-64 lg:w-56 xl:w-64 bg-obsidian lg:bg-transparent border-r border-white/5 lg:border-none pt-20 lg:pt-0 px-4 lg:px-0 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} shrink-0`}>
             <div className="glass-panel border-white/5 rounded-xl p-4 space-y-1 sticky top-28">
+              {/* Brand Wordmark */}
+              <div className="px-2 pt-1 pb-3 border-b border-white/5 mb-2 flex justify-center">
+                <Logo variant="wordmark" theme="light" width={120} height={32} />
+              </div>
               {/* Profile mini */}
               <div className="px-2 py-3 border-b border-white/5 mb-3">
-                <div className="w-9 h-9 rounded-full bg-gold-champagne/15 border border-gold-border flex items-center justify-center mb-2">
-                  <User size={16} className="text-gold-champagne" />
+                <div className="mb-2 flex items-center">
+                  <Logo variant="monogram" theme="light" width={32} height={32} />
                 </div>
                 {profileLoading ? (
                   <div className="space-y-1.5">

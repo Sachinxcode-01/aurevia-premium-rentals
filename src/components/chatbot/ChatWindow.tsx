@@ -7,6 +7,7 @@ import {
   Sparkles, Camera, Phone, User, MessageCircle, AlertTriangle, ArrowRight
 } from "lucide-react";
 import { animate } from "animejs";
+import { Logo } from "@/components/ui/Logo";
 
 const SUGGESTED_PROMPTS = [
   "Which cameras are available?",
@@ -135,8 +136,8 @@ export default function ChatWindow() {
       {/* Chat header */}
       <div className="p-4 border-b border-gold-border/20 flex items-center justify-between bg-obsidian/75 backdrop-blur-md rounded-t-2xl shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="relative w-7 h-7 rounded-full bg-gold-champagne/15 border border-gold-border/40 flex items-center justify-center">
-            <Sparkles size={13} className="text-gold-champagne" />
+          <div className="relative">
+            <Logo variant="monogram" theme="light" width={28} height={28} />
             <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-obsidian" />
           </div>
           <div>

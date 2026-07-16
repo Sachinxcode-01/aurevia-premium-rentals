@@ -9,6 +9,7 @@ import HeroScrollSequence from "@/components/hero/HeroScrollSequence";
 import { useCart } from "@/hooks/useCart";
 import { MOCK_PRODUCTS, MOCK_TESTIMONIALS, MOCK_FAQS, MOCK_BRANDS } from "@/lib/db/mockData";
 import { animate, stagger } from "animejs";
+import { Logo } from "@/components/ui/Logo";
 import {
   Camera,
   Layers,
@@ -762,9 +763,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 pb-12 border-b border-white/5">
 
           {/* Brand & owner contact */}
-          <div className="space-y-5 lg:col-span-1">
-            <h3 className="serif-heading text-xl font-bold tracking-widest text-ivory">AUREVIA</h3>
-            <p className="text-xs text-muted-gray font-light leading-relaxed">
+          <div className="space-y-4 lg:col-span-1">
+            <Logo variant="wordmark" theme="light" width={130} height={35} />
+            <p className="text-xs text-muted-gray font-light leading-relaxed mt-2">
               Premium Camera Rentals by Prem Mundargi.<br />Frame the Extraordinary.
             </p>
             <div className="space-y-1.5 text-[11px] font-mono">
