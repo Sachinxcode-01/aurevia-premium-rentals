@@ -25,7 +25,14 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
   useEffect(() => {
     // If Supabase is not configured, skip auth check (local dev mode)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const isSupabaseConfigured = supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+    const isSupabaseConfigured =
+      supabaseUrl.startsWith("https://") &&
+      supabaseUrl.includes(".supabase.co") &&
+      !supabaseUrl.includes("PLACEHOLDER") &&
+      !supabaseUrl.includes("YOUR_") &&
+      supabaseKey.length > 20 &&
+      !supabaseKey.includes("PLACEHOLDER");
 
     if (!isSupabaseConfigured) {
       setAllowed(true);

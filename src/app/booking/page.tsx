@@ -177,8 +177,13 @@ export default function BookingPage() {
       const orderData = await orderRes.json();
 
       // 3. Open Razorpay Modal
+      const rzpKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      if (!rzpKeyId) {
+        throw new Error("Razorpay Key ID is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in your environment.");
+      }
+
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_TDzpNVr4KK6rJG",
+        key: rzpKeyId,
         amount: orderData.amount,
         currency: orderData.currency,
         name: "AUREVIA Premium Rentals",

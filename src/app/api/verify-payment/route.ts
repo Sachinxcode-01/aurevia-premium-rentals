@@ -29,8 +29,20 @@ export async function POST(request: Request) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
+    // Use timingSafeEqual to prevent timing-based side-channel attacks
+    const signaturesMatch = (() => {
+      try {
+        return crypto.timingSafeEqual(
+          Buffer.from(generated_signature, "hex"),
+          Buffer.from(razorpay_signature, "hex")
+        );
+      } catch {
+        return false; // Buffers of different lengths — immediate mismatch
+      }
+    })();
+
     // Compare generated signature with razorpay_signature
-    if (generated_signature === razorpay_signature) {
+    if (signaturesMatch) {
       // 1. Transaction is verified. Now assign the physical unit atomically!
       const assigned = await db.assignAvailableUnit(bookingId);
       

@@ -250,19 +250,26 @@ function saveLocalProfile(profile: UserProfile) {
 // ----------------------------------------------------
 const isSupabaseConfigured = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return url && url.length > 0 && !url.includes("your-project-id");
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return false;
+  // Reject any placeholder values
+  if (url.includes("PLACEHOLDER") || url.includes("your-project-id") || url.includes("YOUR_")) return false;
+  if (anonKey.includes("PLACEHOLDER") || anonKey.includes("YOUR_")) return false;
+  // Must look like a real Supabase URL
+  return url.startsWith("https://") && url.includes(".supabase.co");
 };
 
-async function getSupabase() {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getSupabase(): Promise<any> {
   if (typeof window !== "undefined") {
     const { getClient } = await import("@/lib/supabase/client");
-    return getClient();
+    return getClient() as any;
   } else {
     const { createClient } = await import("@supabase/supabase-js");
     return createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    ) as any;
   }
 }
 
@@ -382,27 +389,27 @@ export const db = {
         .eq("is_archived", false);
 
       if (!error && dbProds) {
-        let products = dbProds.map(mapDbProductToApp);
+        let products: Product[] = (dbProds as any[]).map(mapDbProductToApp);
 
         if (filters?.featuredOnly) {
-          products = products.filter((p) => p.isFeatured);
+          products = products.filter((p: Product) => p.isFeatured);
         }
         if (filters?.categorySlug) {
           const { data: cat } = await supabase.from("categories").select("id").eq("slug", filters.categorySlug).single();
           if (cat) {
-            products = products.filter((p) => p.categoryId === cat.id);
+            products = products.filter((p: Product) => p.categoryId === (cat as any).id);
           }
         }
         if (filters?.brandSlug) {
           const { data: brand } = await supabase.from("brands").select("id").eq("slug", filters.brandSlug).single();
           if (brand) {
-            products = products.filter((p) => p.brandId === brand.id);
+            products = products.filter((p: Product) => p.brandId === (brand as any).id);
           }
         }
         if (filters?.search) {
           const q = filters.search.toLowerCase();
           products = products.filter(
-            (p) =>
+            (p: Product) =>
               p.name.toLowerCase().includes(q) ||
               p.description.toLowerCase().includes(q)
           );
@@ -500,17 +507,17 @@ export const db = {
         .eq("product_id", productId);
 
       if (dbUnits) {
-        const activeUnits = dbUnits.filter((u) => u.status !== "decommissioned" && u.status !== "maintenance");
-        const activeBookings = (dbBookings || []).filter(
-          (b) =>
+        const activeUnits = (dbUnits as any[]).filter((u: any) => u.status !== "decommissioned" && u.status !== "maintenance");
+        const activeBookings = ((dbBookings || []) as any[]).filter(
+          (b: any) =>
             ["paid", "approval_pending", "approved", "ready_for_pickup", "rented", "returned", "completed", "overdue"].includes(b.status) &&
             new Date(b.start_date) <= new Date(endDateStr) &&
             new Date(b.end_date) >= new Date(startDateStr)
         );
 
         let freeCount = 0;
-        activeUnits.forEach((unit) => {
-          const isBooked = activeBookings.some((b) =>
+        activeUnits.forEach((unit: any) => {
+          const isBooked = activeBookings.some((b: any) =>
             b.booking_items.some((oi: any) => oi.product_id === productId && oi.inventory_unit_id === unit.id)
           );
           if (!isBooked) freeCount++;
