@@ -233,18 +233,23 @@ export default function CustomerDashboard() {
 
         <div class="label">Financial Terms</div>
         <p>
-          Rental Fee: ₹${(booking.total_rental_fee || booking.totalRentalFee || 0).toLocaleString("en-IN")} · 
-          Tax (GST 18%): ₹${(booking.tax_fee || booking.taxFee || 0).toLocaleString("en-IN")} · 
-          Refundable Security Deposit: ₹${(booking.security_deposit || booking.securityDeposit || 0).toLocaleString("en-IN")} · 
-          <strong>Total Amount Paid: ₹${(booking.total_payable || booking.totalPayable || 0).toLocaleString("en-IN")}</strong>
+          Camera Rent (₹799/day): ₹${(booking.totalRentalFee || 0).toLocaleString("en-IN")} · 
+          Coupon Discount: -₹${(booking.discountAmount || 0).toLocaleString("en-IN")} · 
+          <strong>Total Amount Paid: ₹${(booking.totalPayable || 0).toLocaleString("en-IN")}</strong>
         </p>
 
-        <div class="label">Terms & Conditions</div>
-        <div class="terms">
-          1. PHYSICAL IDENTITY VERIFICATION: The renter agrees to present a physical government ID matching the registration details during gear collection. AUREVIA will verify details physically without storing images of ID documents.<br>
-          2. LATE RETURN FEE: Renter agrees to pay ₹999.00 per day for any equipment returned after the expected return slot.<br>
-          3. DAMAGE & LOSS: Renter assumes full financial responsibility for any damage, loss, or lens scratches during the rental period. Repair costs will be deducted from the security deposit.<br>
-          4. DEPOSIT REFUND: Refundable security deposits will be processed back to the bank source within 3 business days of a clean equipment returned check.
+        <div class="label">Rental Terms & Conditions</div>
+        <div class="terms" style="text-align: left; font-size: 10px; line-height: 1.4;">
+          1. RETURN POLICY: Customer must return the camera on the selected date and time.<br>
+          2. LATE RETURN: Late return fees may be charged per extra day at ₹999/day.<br>
+          3. PHYSICAL DAMAGE: Customer is responsible for physical damage during the rental period.<br>
+          4. REPAIR COSTS: Breakage or repair charges will be based on the actual service cost.<br>
+          5. LOSS / THEFT: Lost or stolen camera requires payment of the camera’s replacement value.<br>
+          6. ACCESSORIES: Missing lens, battery, charger, memory card, bag or accessories will be charged separately.<br>
+          7. MISUSE: Water, impact, fire or misuse damage is the customer’s responsibility.<br>
+          8. INSPECTION: Camera condition will be recorded before pickup and after return.<br>
+          9. SUB-RENT: Customer must not transfer or sub-rent the camera.<br>
+          10. CANCELLATION: Free cancellation up to 24 hours prior. 50% cancellation fee applies if cancelled within 24 hours of booking. No refunds post pickup.
         </div>
 
         <div class="sign-block">
@@ -368,18 +373,7 @@ export default function CustomerDashboard() {
               <td style="text-align: right; color: #d9534f;">-₹${(booking.discount_amount || booking.discountAmount).toLocaleString("en-IN")}</td>
             </tr>
             ` : ""}
-            <tr>
-              <td>GST (18% SGST + CGST):</td>
-              <td style="text-align: right;">₹${(booking.tax_fee || booking.taxFee || 0).toLocaleString("en-IN")}</td>
-            </tr>
-            <tr>
-              <td>Delivery Charges:</td>
-              <td style="text-align: right;">₹${(booking.delivery_fee || booking.deliveryFee || 0).toLocaleString("en-IN")}</td>
-            </tr>
-            <tr>
-              <td>Refundable Deposit (${booking.depositStatus || "Collected"}):</td>
-              <td style="text-align: right;">₹${(booking.security_deposit || booking.securityDeposit || 0).toLocaleString("en-IN")}</td>
-            </tr>
+            <!-- No GST, Delivery, or Refundable Deposit under new rules -->
             ${booking.lateFee ? `
             <tr>
               <td>Overdue Late Fees (+₹999/day):</td>
@@ -401,7 +395,6 @@ export default function CustomerDashboard() {
         
         <div class="footer">
           This is a computer-generated invoice and requires no physical signature.<br>
-          Refundable security deposits are credited back to the source bank account within 3 business days of equipment return.<br>
           Aurevia Studio · contact@aurevia.com · +91 9686909048
         </div>
         <script>
@@ -478,7 +471,7 @@ export default function CustomerDashboard() {
                 { label: "Active Rentals",    value: stats.activeRentals,     icon: <Camera size={16} className="text-gold-champagne" />,     sub: "Gear out in field" },
                 { label: "Total Bookings",    value: stats.totalBookings,     icon: <ShoppingBag size={16} className="text-gold-champagne" />, sub: "Lifetime orders" },
                 { label: "Completed Returns", value: stats.completedRentals,  icon: <History size={16} className="text-gold-champagne" />,     sub: "Vault items returned" },
-                { label: "Rental Spent",      value: `₹${stats.totalSpent.toLocaleString("en-IN")}`, icon: <TrendingUp size={16} className="text-gold-champagne" />, sub: "Excluding deposits", gold: true },
+                { label: "Rental Spent",      value: `₹${stats.totalSpent.toLocaleString("en-IN")}`, icon: <TrendingUp size={16} className="text-gold-champagne" />, sub: "Net Rent Paid", gold: true },
               ].map((m) => (
                 <div key={m.label} className="dashboard-animate opacity-0 glass-panel border-white/5 rounded-lg p-6 space-y-4">
                   <div className="flex justify-between items-center text-muted-gray">
@@ -642,7 +635,7 @@ export default function CustomerDashboard() {
                       </p>
                       <div className="p-3 bg-white/5 border border-white/5 rounded text-[10px] text-muted-gray max-h-20 overflow-y-auto space-y-1.5 font-mono">
                         <p><strong>LATE RETURNS:</strong> ₹999.00 late return charges apply for every overdue calendar day.</p>
-                        <p><strong>DAMAGES:</strong> Renter assumes full financial responsibility for any equipment damage or lens scratches. Security deposit will be locked and deducted for damages.</p>
+                        <p><strong>DAMAGES:</strong> Renter assumes full financial responsibility for any equipment damage. Breakage or repair charges will be based on actual service cost.</p>
                       </div>
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                         <label className="flex items-center gap-2 cursor-pointer text-[10px] text-muted-gray font-light">
@@ -652,7 +645,7 @@ export default function CustomerDashboard() {
                             onChange={(e) => setSignCheck(prev => ({ ...prev, [booking.id]: e.target.checked }))}
                             className="accent-gold-champagne"
                           />
-                          I accept all late return, damage liability, and physical ID verification terms.
+                          I accept all late return, damage liability, and physical rental terms.
                         </label>
                         <button
                           onClick={() => handleSignAgreement(booking.id)}
@@ -697,7 +690,7 @@ export default function CustomerDashboard() {
                       <p className="flex items-center gap-1.5"><User size={12} className="text-gold-champagne" /><strong>Renter:</strong> {booking.contact_name || booking.contactName} ({booking.contact_phone || booking.contactPhone})</p>
                       <p className="flex items-center gap-1.5"><AlertTriangle size={12} className="text-gold-champagne" /><strong>Emergency Contact:</strong> {booking.emergencyContact || "—"}</p>
                       {booking.companyOrCollege && <p className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-gold-champagne" /><strong>Organization:</strong> {booking.companyOrCollege}</p>}
-                      <p className="flex items-center gap-1.5"><CheckCircle size={12} className="text-gold-champagne" /><strong>Refundable Deposit ({booking.depositStatus || "Pending"}):</strong> ₹{booking.securityDeposit?.toLocaleString("en-IN") || "5,000"}</p>
+                      {/* Security deposit removed */}
 
                       {/* Assigned physical unit */}
                       {booking.items.some((item: any) => item.inventoryUnitId) && (

@@ -60,7 +60,6 @@ type AdminTab =
   | "ready_pickup"
   | "active_rentals"
   | "overdue"
-  | "deposits"
   | "maintenance"
   | "audit_logs";
 
@@ -414,8 +413,6 @@ export default function AdminDashboard() {
         return baseList.filter((b) => b.status === "rented" || b.status === "overdue");
       case "overdue":
         return baseList.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.end_date || b.endDate)));
-      case "deposits":
-        return baseList.filter((b) => b.securityDeposit > 0 && b.status !== "cancelled" && b.status !== "rejected");
       default:
         return baseList;
     }
@@ -512,10 +509,10 @@ export default function AdminDashboard() {
               gold: true,
             },
             {
-              label: "Refundable Deposits Held",
-              value: `₹${stats.depositHeldTotal.toLocaleString("en-IN")}`,
-              sub: "Kept out of operational revenue",
-              icon: <Sparkles size={14} className="text-emerald-400" />,
+              label: "Net Discounts Availed",
+              value: `₹${bookings.reduce((sum, b) => sum + (b.discountAmount || b.discount_amount || 0), 0).toLocaleString("en-IN")}`,
+              sub: "Promotional campaigns impact",
+              icon: <Sparkles size={14} className="text-[#D8B36A]" />,
             },
             {
               label: "Utilization Rate",
@@ -555,7 +552,6 @@ export default function AdminDashboard() {
               { id: "ready_pickup",     label: "Ready for Pickup",   count: bookings.filter((b) => b.status === "ready_for_pickup").length },
               { id: "active_rentals",   label: "Active Rentals",     count: bookings.filter((b) => b.status === "rented" || b.status === "overdue").length },
               { id: "overdue",          label: "Overdue Alerts",     count: bookings.filter((b) => b.status === "overdue" || (b.status === "rented" && new Date() > new Date(b.end_date || b.endDate))).length },
-              { id: "deposits",         label: "Security Deposits",  count: bookings.filter((b) => b.depositStatus === "Collected" || b.depositStatus === "Pending").length },
               { id: "maintenance",      label: "Maintenance Log",    count: inventoryUnits.filter((u) => u.status === "maintenance").length },
               { id: "audit_logs",       label: "Operational Audit",  count: null },
             ].map((tab) => (
@@ -815,7 +811,6 @@ export default function AdminDashboard() {
                             </td>
                             <td className="py-3 px-3 font-mono text-[10px]">
                               <div className="font-semibold text-ivory">Total: ₹{b.totalPayable?.toLocaleString("en-IN")}</div>
-                              <div className="text-emerald-400 text-[9px]">Deposit: ₹{b.securityDeposit?.toLocaleString("en-IN")} ({b.depositStatus || "Pending"})</div>
                             </td>
                             <td className="py-3 px-3">
                               <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${STATUS_STYLES[b.status] ?? ""}`}>
@@ -887,29 +882,7 @@ export default function AdminDashboard() {
                                       </button>
                                     )}
 
-                                    {/* Security Deposit controls */}
-                                    {activeTab === "deposits" && b.depositStatus === "Collected" && (
-                                      <div className="flex gap-1.5">
-                                        <button
-                                          onClick={() => handleProcessDepositStatus(b.id, "refund_full")}
-                                          className="px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 rounded text-[8px] font-mono uppercase tracking-wider transition"
-                                        >
-                                          Refund Full
-                                        </button>
-                                        <button
-                                          onClick={() => handleProcessDepositStatus(b.id, "refund_partial")}
-                                          className="px-1.5 py-0.5 bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 rounded text-[8px] font-mono uppercase tracking-wider transition"
-                                        >
-                                          Deduct Late/Damage
-                                        </button>
-                                        <button
-                                          onClick={() => handleProcessDepositStatus(b.id, "deduct_full")}
-                                          className="px-1.5 py-0.5 bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 rounded text-[8px] font-mono uppercase tracking-wider transition"
-                                        >
-                                          Forfeit Full
-                                        </button>
-                                      </div>
-                                    )}
+                                    {/* Security deposits removed */}
                                   </>
                                 )}
                               </div>

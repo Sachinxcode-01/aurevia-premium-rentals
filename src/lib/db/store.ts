@@ -102,11 +102,11 @@ let serverBookings: Booking[] = [
     startDate: "2026-07-20",
     endDate: "2026-07-25",
     totalRentalFee: 17495.00, // 5 days Canon R5
-    securityDeposit: 15000.00,
-    taxFee: 3149.10,
-    deliveryFee: 500.00,
+    securityDeposit: 0.00,
+    taxFee: 0.00,
+    deliveryFee: 0.00,
     discountAmount: 1749.50, // 10% coupon
-    totalPayable: 19394.60,
+    totalPayable: 15745.50,
     status: "approved",
     paymentStatus: "paid",
     deliveryMethod: "delivery",
@@ -139,11 +139,11 @@ let serverBookings: Booking[] = [
     startDate: "2026-07-02",
     endDate: "2026-07-04",
     totalRentalFee: 8998.00, // 2 days Sony FX3
-    securityDeposit: 20000.00,
-    taxFee: 1619.64,
+    securityDeposit: 0.00,
+    taxFee: 0.00,
     deliveryFee: 0.00,
     discountAmount: 0.00,
-    totalPayable: 30617.64,
+    totalPayable: 8998.00,
     status: "returned",
     paymentStatus: "paid",
     deliveryMethod: "pickup",
@@ -364,7 +364,7 @@ export const db = {
     };
   },
 
-  async createBooking(booking: Omit<Booking, "id" | "createdAt" | "status" | "paymentStatus" | "depositStatus" | "agreementAccepted" | "statusHistory" | "auditLogs">): Promise<Booking> {
+  async createBooking(booking: Omit<Booking, "id" | "createdAt" | "status" | "paymentStatus" | "depositStatus" | "statusHistory" | "auditLogs">): Promise<Booking> {
     for (const item of booking.items) {
       const { available, remainingQty } = await this.checkAvailability(
         item.productId,
@@ -387,15 +387,17 @@ export const db = {
       createdAt: new Date().toISOString(),
       depositStatus: "pending",
       depositPaymentMethod: booking.deliveryMethod === "pickup" ? "razorpay" : "razorpay", // Default to Razorpay
-      agreementAccepted: false,
+      agreementAccepted: booking.agreementAccepted || false,
+      agreementAcceptedAt: booking.agreementAcceptedAt,
+      agreementIP: booking.agreementIP,
       lateFee: 0,
       damageDescription: "",
       damageCost: 0,
       statusHistory: [
-        { status: "pending_payment", timestamp: new Date().toISOString(), note: "Booking initiated, pending checkout payment." }
+        { status: "pending_payment", timestamp: new Date().toISOString(), note: "Booking initiated, terms agreed, pending checkout payment." }
       ],
       auditLogs: [
-        { action: "booking_created", timestamp: new Date().toISOString(), performedBy: "customer", details: `Booking reference ${refCode} initialized.` }
+        { action: "booking_created", timestamp: new Date().toISOString(), performedBy: "customer", details: `Booking reference ${refCode} initialized after terms acceptance.` }
       ],
     };
 

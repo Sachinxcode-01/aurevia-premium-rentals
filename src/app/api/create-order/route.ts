@@ -47,18 +47,9 @@ export async function POST(request: Request) {
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 || 1;
 
-      const baseCost = product.dailyPrice * days * item.quantity;
+      // Force regular pricing: 799 INR per camera per day (never trust client)
+      const baseCost = 799 * days * item.quantity;
       rentalFee += baseCost;
-      depositFee += product.securityDeposit * item.quantity;
-
-      // Addons Calculation
-      if (addons && Array.isArray(addons)) {
-        addons.forEach((addId) => {
-          if (addId === "a1000000-0000-0000-0000-000000000001") rentalFee += 499 * days * item.quantity;
-          if (addId === "a1000000-0000-0000-0000-000000000002") rentalFee += 199 * days * item.quantity;
-          if (addId === "a1000000-0000-0000-0000-000000000003") rentalFee += 999 * days * item.quantity;
-        });
-      }
 
       // 2. Validate Coupon server-side
       if (couponCode) {
@@ -72,7 +63,7 @@ export async function POST(request: Request) {
           // Check limits from database bookings
           const allBookings = await db.getBookings();
           const paidBookingsWithCoupon = allBookings.filter(
-            (b) => b.couponApplied === "AUREVIA199" && b.paymentStatus === "paid"
+            (b) => b.couponApplied === "AUREVIA199" && (b.paymentStatus === "paid" || b.status !== "cancelled")
           );
 
           // Total usage limit
@@ -80,7 +71,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Coupon total usage limit reached." }, { status: 400 });
           }
 
-          // Per-user limit (check simulated profileId or phone)
+          // Per-user limit
           const userHasUsed = paidBookingsWithCoupon.some(
             (b) => b.profileId === "usr-prem" || b.contactPhone === "9686909048"
           );
@@ -98,9 +89,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const taxFee = Math.round((rentalFee - totalDiscount) * 0.18 * 100) / 100;
-    const deliveryFee = deliveryMethod === "delivery" ? 500 : 0;
-    const totalPayable = rentalFee + depositFee + taxFee + deliveryFee - totalDiscount;
+    // Zero out security deposits, taxes (GST), and delivery/shipping fees
+    const taxFee = 0;
+    const deliveryFee = 0;
+    const totalPayable = rentalFee - totalDiscount;
     const amountPaise = Math.round(totalPayable * 100);
 
     // Validate amount >= 100 paise

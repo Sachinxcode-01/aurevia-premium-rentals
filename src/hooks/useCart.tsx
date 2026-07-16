@@ -153,6 +153,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const calculateTotals = () => {
     let rentalFee = 0;
     let depositFee = 0;
+    let taxFee = 0;
+    let deliveryFee = 0;
     let totalDays = 0;
 
     cart.forEach((item) => {
@@ -163,53 +165,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       
       totalDays = Math.max(totalDays, days);
 
-      // Daily vs Weekly pricing breakdown
-      let rate = item.product.dailyPrice;
-      if (days >= 7) {
-        // Use weekly rate averaged per day if weekly price is better
-        const weeklyEquivalent = item.product.weeklyPrice / 7;
-        rate = Math.min(rate, weeklyEquivalent);
-      }
-
+      // Force regular pricing: 799 INR per camera per day
+      const rate = 799;
       const baseCost = rate * days * item.quantity;
       
-      // Calculate addons cost
-      const addonsCost = item.selectedAddons.reduce((sum, addId) => {
-        const addon = db.getAddons().then(list => list.find(a => a.id === addId));
-        // Note: For sync UI, we've predefined mock addons and resolve their cost directly
-        if (addId === "a1000000-0000-0000-0000-000000000001") return sum + 499 * days * item.quantity;
-        if (addId === "a1000000-0000-0000-0000-000000000002") return sum + 199 * days * item.quantity;
-        if (addId === "a1000000-0000-0000-0000-000000000003") return sum + 999 * days * item.quantity;
-        return sum;
-      }, 0);
+      // Addons are completely free under new rules (zero cost)
+      const addonsCost = 0;
 
       rentalFee += baseCost + addonsCost;
-      depositFee += item.product.securityDeposit * item.quantity;
     });
 
     let discountAmount = 0;
     if (coupon) {
-      if (coupon.discountFlat && coupon.discountFlat > 0) {
-        // Calculate flat discount per camera unit per day
+      if (coupon.code && coupon.code.toUpperCase() === "AUREVIA199") {
+        // Calculate flat discount of 199 per camera day
         cart.forEach((item) => {
           const start = new Date(item.startDate);
           const end = new Date(item.endDate);
           const diffTime = Math.abs(end.getTime() - start.getTime());
           const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 || 1;
-          discountAmount += (coupon.discountFlat || 0) * days * item.quantity;
+          discountAmount += 199 * days * item.quantity;
         });
       } else {
-        // Calculate percentage discount
         discountAmount = Math.round(rentalFee * (discountPercent / 100) * 100) / 100;
       }
     }
 
-    const taxFee = Math.round((rentalFee - discountAmount) * 0.18 * 100) / 100; // 18% GST standard for luxury electronics
-    
-    // Flat delivery fee of 500 INR if cart has items, free pickup
-    const deliveryFee = cart.length > 0 ? 500 : 0;
-    
-    const totalPayable = rentalFee + depositFee + taxFee + deliveryFee - discountAmount;
+    const totalPayable = rentalFee - discountAmount;
 
     return {
       rentalFee,

@@ -63,6 +63,7 @@ export default function BookingPage() {
   const [emergencyContact, setEmergencyContact] = useState("Aswin Kumar - 9876543210");
   const [companyOrCollege, setCompanyOrCollege] = useState("Aurevia Studio");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,16 +84,16 @@ export default function BookingPage() {
     try {
       const refCode = `AV-2026-${Math.floor(Math.random() * 90000) + 10000}`;
       
-      const payableAmount = cartTotals.totalPayable + (deliveryMethod === "delivery" ? 0 : -500);
+      const payableAmount = cartTotals.totalPayable;
       const bookingPayload = {
         profileId: "usr-prem", // Simulated login user
         referenceCode: refCode,
         startDate: cart[0].startDate,
         endDate: cart[0].endDate,
         totalRentalFee: cartTotals.rentalFee,
-        securityDeposit: cartTotals.depositFee,
-        taxFee: cartTotals.taxFee,
-        deliveryFee: deliveryMethod === "delivery" ? 500 : 0,
+        securityDeposit: 0,
+        taxFee: 0,
+        deliveryFee: 0,
         discountAmount: cartTotals.discountAmount,
         totalPayable: payableAmount,
         deliveryMethod,
@@ -104,16 +105,19 @@ export default function BookingPage() {
         returnTime,
         emergencyContact,
         companyOrCollege,
+        agreementAccepted: true,
+        agreementAcceptedAt: new Date().toISOString(),
+        agreementIP: "127.0.0.1",
         depositPaymentMethod: "razorpay" as const,
         items: cart.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
-          unitPrice: item.product.dailyPrice,
+          unitPrice: 799,
         })),
         addons: cart.flatMap((item) =>
           item.selectedAddons.map((addId) => ({
             addonId: addId,
-            price: addId === "a1000000-0000-0000-0000-000000000001" ? 499 : addId === "a1000000-0000-0000-0000-000000000002" ? 199 : 999,
+            price: 0,
           }))
         ),
       };
@@ -621,41 +625,27 @@ export default function BookingPage() {
                 <h3 className="serif-heading text-base font-light text-ivory border-b border-white/5 pb-2">Checkout Reservation</h3>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="flex justify-between text-muted-gray">
-                    <span>Payable Rent:</span>
+                    <span>Camera Rent (₹799/day):</span>
                     <span>₹{cartTotals.rentalFee.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-muted-gray">
-                    <span>Refundable Deposit:</span>
-                    <span>₹{cartTotals.depositFee.toLocaleString("en-IN")}</span>
+                    <span>Rental Duration:</span>
+                    <span>{cartTotals.totalDays} Days</span>
                   </div>
-                  {deliveryMethod === "delivery" ? (
-                    <div className="flex justify-between text-muted-gray">
-                      <span>Delivery Fee:</span>
-                      <span>₹500</span>
+                  {cartTotals.discountAmount > 0 && (
+                    <div className="flex justify-between text-rose-400">
+                      <span>Coupon Discount:</span>
+                      <span>-₹{cartTotals.discountAmount.toLocaleString("en-IN")}</span>
                     </div>
-                  ) : null}
+                  )}
                   <div className="flex justify-between text-gold-champagne font-bold text-sm border-t border-white/5 pt-2">
-                    <span>Due Now:</span>
-                    <span>₹{(cartTotals.totalPayable + (deliveryMethod === "delivery" ? 0 : -500)).toLocaleString("en-IN")}</span>
+                    <span>Final Payable:</span>
+                    <span>₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Terms Acceptance Checkbox */}
-              <div className="p-4 bg-gold-champagne/5 border border-gold-border/20 rounded-lg space-y-2 mt-4">
-                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light leading-normal select-none">
-                  <input
-                    type="checkbox"
-                    checked={termsAccepted}
-                    onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="mt-0.5 accent-gold-champagne"
-                  />
-                  <span>
-                    I hereby accept the <Link href="/terms" target="_blank" className="text-gold-champagne hover:underline font-medium">Rental Agreement & Booking Terms</Link>. I understand that late returns are subject to a ₹999/day charge, and I accept full financial responsibility for any damage to the cameras.
-                  </span>
-                </label>
-              </div>
-
+              {/* Action Button: Opens terms modal */}
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={() => setStep("cart")}
@@ -664,13 +654,9 @@ export default function BookingPage() {
                   Back
                 </button>
                 <button
-                  onClick={handleCreateBooking}
-                  disabled={isSubmitting || !termsAccepted}
-                  className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 ${
-                    termsAccepted
-                      ? "bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer"
-                      : "bg-white/5 text-muted-gray border border-white/5 cursor-not-allowed"
-                  }`}
+                  onClick={() => setShowTermsModal(true)}
+                  disabled={isSubmitting}
+                  className="flex-1 py-3 text-xs font-bold uppercase tracking-wider rounded transition flex items-center justify-center gap-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian shadow-lg shadow-gold-champagne/10 cursor-pointer animate-pulse"
                 >
                   {isSubmitting ? (
                     <>
@@ -680,7 +666,7 @@ export default function BookingPage() {
                   ) : (
                     <>
                       <ShieldCheck size={14} />
-                      Submit Order
+                      Review & Pay
                     </>
                   )}
                 </button>
@@ -746,10 +732,6 @@ export default function BookingPage() {
                   <span>Grand Total Paid:</span>
                   <span className="text-ivory">₹{createdBooking.totalPayable.toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Security Deposit Included:</span>
-                  <span className="text-ivory">₹{createdBooking.securityDeposit.toLocaleString("en-IN")}</span>
-                </div>
               </div>
             </div>
 
@@ -790,6 +772,72 @@ export default function BookingPage() {
               </Link>
             </div>
 
+          </div>
+        )}
+
+        {/* Terms and Conditions Modal Overlay */}
+        {showTermsModal && (
+          <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 animate-fade-in font-sans">
+            <div className="glass-panel border-gold-border/30 bg-[#0e0e0f] rounded-lg p-6 max-w-lg w-full space-y-4 text-ivory max-h-[85vh] overflow-y-auto">
+              <h3 className="serif-heading text-xl font-light text-ivory border-b border-[#D8B36A]/20 pb-2">
+                Rental Terms & Conditions
+              </h3>
+              
+              <div className="text-xs text-muted-gray space-y-3 leading-relaxed max-h-60 overflow-y-auto pr-2 border-b border-white/5 pb-4 font-light">
+                <p>Please review and accept our camera rental policy guidelines before completing checkout payment:</p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Customer must return the camera on the selected date and time.</li>
+                  <li>Late return fees may be charged per extra day (at a rate of ₹999/day).</li>
+                  <li>Customer is responsible for physical damage during the rental period.</li>
+                  <li>Breakage or repair charges will be based on the actual service cost.</li>
+                  <li>Lost or stolen camera requires payment of the camera’s replacement value.</li>
+                  <li>Missing lens, battery, charger, memory card, bag or accessories will be charged separately.</li>
+                  <li>Water, impact, fire or misuse damage is the customer’s responsibility.</li>
+                  <li>Camera condition will be recorded before pickup and after return.</li>
+                  <li>Customer must not transfer or sub-rent the camera.</li>
+                  <li><strong>Cancellation & Refund Rules:</strong> Free cancellation up to 24 hours prior to booking start time. 50% fee applies if cancelled within 24 hours. No refunds post pickup.</li>
+                  <li>Razorpay payment confirms the booking only after successful server verification.</li>
+                  <li>Availability remains subject to successful payment and booking confirmation.</li>
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <label className="flex items-start gap-2.5 cursor-pointer text-[10px] text-muted-gray font-light leading-normal select-none">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 accent-gold-champagne"
+                  />
+                  <span>
+                    I have read and agree to the Rental Terms and Conditions.
+                  </span>
+                </label>
+
+                <div className="flex justify-end gap-3 pt-2 border-t border-white/5">
+                  <button
+                    onClick={() => setShowTermsModal(false)}
+                    className="px-4 py-2 border border-white/10 text-muted-gray hover:text-ivory rounded text-[10px] font-semibold uppercase tracking-wider transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowTermsModal(false);
+                      handleCreateBooking();
+                    }}
+                    disabled={!termsAccepted || isSubmitting}
+                    className={`px-5 py-2 rounded text-[10px] font-bold uppercase tracking-wider transition flex items-center gap-1.5 ${
+                      termsAccepted
+                        ? "bg-gold-champagne hover:bg-gold-warm text-obsidian cursor-pointer"
+                        : "bg-white/5 text-muted-gray border border-white/5 cursor-not-allowed"
+                    }`}
+                  >
+                    Proceed to Payment
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
