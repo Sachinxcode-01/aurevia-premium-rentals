@@ -776,7 +776,19 @@ export const db = {
           })
           .eq("id", bookingId);
 
-        return await this.getBookingById(bookingId);
+        const updatedBooking = await this.getBookingById(bookingId);
+        if (updatedBooking && typeof window === "undefined") {
+          import("@/lib/email/mailer").then((m) => {
+            if (status === "approved") {
+              m.sendBookingApproved(updatedBooking).catch(err => console.error("Approved email failed:", err));
+            } else if (status === "rejected") {
+              m.sendBookingRejected(updatedBooking, note).catch(err => console.error("Rejected email failed:", err));
+            } else if (status === "cancelled") {
+              m.sendBookingCancelled(updatedBooking).catch(err => console.error("Cancelled email failed:", err));
+            }
+          });
+        }
+        return updatedBooking;
       }
     }
 
@@ -807,6 +819,18 @@ export const db = {
       details: `Transitioned booking status from ${oldStatus} to ${status}. Note: ${note}`
     });
 
+    const updatedBooking = bookings[idx];
+    if (typeof window === "undefined") {
+      import("@/lib/email/mailer").then((m) => {
+        if (status === "approved") {
+          m.sendBookingApproved(updatedBooking).catch(err => console.error("Approved email failed:", err));
+        } else if (status === "rejected") {
+          m.sendBookingRejected(updatedBooking, note).catch(err => console.error("Rejected email failed:", err));
+        } else if (status === "cancelled") {
+          m.sendBookingCancelled(updatedBooking).catch(err => console.error("Cancelled email failed:", err));
+        }
+      });
+    }
     saveLocalBookings([...bookings]);
     return bookings[idx];
   },
@@ -850,7 +874,13 @@ export const db = {
           })
           .eq("id", bookingId);
 
-        return await this.getBookingById(bookingId);
+        const updated = await this.getBookingById(bookingId);
+        if (updated && typeof window === "undefined") {
+          import("@/lib/email/mailer").then((m) => {
+            m.sendPickupOTP(updated, pickupOTP).catch(err => console.error("OTP email failed:", err));
+          });
+        }
+        return updated;
       }
     }
 
@@ -884,6 +914,12 @@ export const db = {
       details: `Renter accepted terms and signed agreement from IP ${ip}. OTP: ${pickupOTP}`
     });
 
+    const updated = bookings[idx];
+    if (typeof window === "undefined") {
+      import("@/lib/email/mailer").then((m) => {
+        m.sendPickupOTP(updated, pickupOTP).catch(err => console.error("OTP email failed:", err));
+      });
+    }
     saveLocalBookings(bookings);
     return bookings[idx];
   },
@@ -1067,7 +1103,20 @@ export const db = {
           })
           .eq("id", bookingId);
 
-        return await this.getBookingById(bookingId);
+        const updated = await this.getBookingById(bookingId);
+        if (updated && typeof window === "undefined") {
+          import("@/lib/email/mailer").then((m) => {
+            if (totalDeductions > 0) {
+              const type = (lateFee > 0 && cost > 0) ? "both" : (lateFee > 0 ? "late" : "damage");
+              m.sendLateReturnDamageCharge(updated, type, totalDeductions, `${damageDescription || ''} ${remarks || ''}`).then(() => {
+                m.sendBookingCompletion(updated).catch(e => console.error(e));
+              });
+            } else {
+              m.sendBookingCompletion(updated).catch(e => console.error(e));
+            }
+          });
+        }
+        return updated;
       }
     }
 
@@ -1139,6 +1188,19 @@ export const db = {
       details: `Returned gear condition: ${condition.toUpperCase()}. Late Fee: ₹${lateFee}, Damage Cost: ₹${cost}. Deposit refunded: ${bookings[idx].depositStatus}`
     });
 
+    const updated = bookings[idx];
+    if (typeof window === "undefined") {
+      import("@/lib/email/mailer").then((m) => {
+        if (totalDeductions > 0) {
+          const type = (lateFee > 0 && cost > 0) ? "both" : (lateFee > 0 ? "late" : "damage");
+          m.sendLateReturnDamageCharge(updated, type, totalDeductions, `${damageDescription || ''} ${remarks || ''}`).then(() => {
+            m.sendBookingCompletion(updated).catch(e => console.error(e));
+          });
+        } else {
+          m.sendBookingCompletion(updated).catch(e => console.error(e));
+        }
+      });
+    }
     saveLocalInventoryUnits(units);
     saveLocalBookings(bookings);
     return bookings[idx];
@@ -1475,6 +1537,13 @@ export const db = {
         return false;
       }
 
+      const updated = await this.getBookingById(bookingId);
+      if (updated && typeof window === "undefined") {
+        import("@/lib/email/mailer").then((m) => {
+          m.sendPaymentReceived(updated).catch((e) => console.error("Payment received email failed:", e));
+        });
+      }
+
       return true;
     }
 
@@ -1534,6 +1603,12 @@ export const db = {
       details: "Razorpay payment signature verified. Placed reservation into Approval Pending tab."
     });
 
+    const updated = bookings[bIdx];
+    if (typeof window === "undefined") {
+      import("@/lib/email/mailer").then((m) => {
+        m.sendPaymentReceived(updated).catch((e) => console.error("Payment received email failed:", e));
+      });
+    }
     saveLocalBookings(bookings);
     return true;
   },
