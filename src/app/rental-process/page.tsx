@@ -42,8 +42,8 @@ export default function RentalProcessPage() {
             },
             {
               step: "Step 04",
-              title: "Return & Refund",
-              desc: "Return the checked-out gear. Once inspected, security deposits are fully returned to your original payment source within 24 hours.",
+              title: "Return & Completion",
+              desc: "Return the checked-out gear. Once inspected by our staff, the booking status is marked completed in your dashboard.",
             },
           ].map((item) => (
             <div key={item.step} className="glass-panel border-white/5 p-6 rounded-lg space-y-4">
@@ -64,7 +64,7 @@ export default function RentalProcessPage() {
               </p>
               <p className="flex gap-2 items-start">
                 <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>Security Deposits:</strong> Pre-authorization holds are mandatorily computed for security reasons and cannot be waived.</span>
+                <span><strong>No Security Deposits:</strong> AUREVIA charges zero security deposits or collateral holds. Pay only the flat rate!</span>
               </p>
             </div>
 

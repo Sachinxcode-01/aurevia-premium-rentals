@@ -114,7 +114,6 @@ export default function BookingPage() {
         startDate: cart[0].startDate,
         endDate: cart[0].endDate,
         totalRentalFee: cartTotals.rentalFee,
-        securityDeposit: 0,
         taxFee: 0,
         deliveryFee: 0,
         discountAmount: cartTotals.discountAmount,
@@ -131,7 +130,6 @@ export default function BookingPage() {
         agreementAccepted: true,
         agreementAcceptedAt: new Date().toISOString(),
         agreementIP: "127.0.0.1",
-        depositPaymentMethod: "razorpay" as const,
         items: cart.map((item) => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -350,27 +348,15 @@ export default function BookingPage() {
                     <span>Base Rental Charges:</span>
                     <span className="font-mono text-ivory">₹{cartTotals.rentalFee.toLocaleString("en-IN")}</span>
                   </div>
-                  <div className="flex justify-between text-muted-gray">
-                    <span>Security Deposit (Refundable):</span>
-                    <span className="font-mono text-ivory">₹{cartTotals.depositFee.toLocaleString("en-IN")}</span>
-                  </div>
                   {discountPercent > 0 && (
                     <div className="flex justify-between text-emerald-400">
                       <span>Promo Discount ({discountPercent}%):</span>
                       <span className="font-mono">- ₹{cartTotals.discountAmount.toLocaleString("en-IN")}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-muted-gray">
-                    <span>Estimated GST (18%):</span>
-                    <span className="font-mono text-ivory">₹{cartTotals.taxFee.toLocaleString("en-IN")}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-gray">
-                    <span>Handling & Shipping:</span>
-                    <span className="font-mono text-ivory">₹{cartTotals.deliveryFee.toLocaleString("en-IN")}</span>
-                  </div>
                   
                   <div className="flex justify-between text-sm font-bold border-t border-white/10 pt-3 text-gold-champagne">
-                    <span>Total Estimated:</span>
+                    <span>Total Net Amount:</span>
                     <span className="font-mono">₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
                   </div>
                 </div>

@@ -6,28 +6,43 @@ interface EmailPayload {
   html: string;
   text: string;
   idempotencyKey?: string;
+  bookingId?: string;
+  notificationType?: string;
 }
 
-// In-memory cache to prevent duplicate email sends within the same request/worker lifetime
-const sentEmailsCache = new Set<string>();
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+  idempotencyKey,
+  bookingId,
+  notificationType
+}: EmailPayload): Promise<boolean> {
+  const eventKey = idempotencyKey || `email:${notificationType || "unknown"}:${bookingId || Date.now()}`;
 
-export async function sendEmail({ to, subject, html, text, idempotencyKey }: EmailPayload): Promise<boolean> {
-  const cacheKey = idempotencyKey ? `${to}:${idempotencyKey}` : "";
-  if (cacheKey && sentEmailsCache.has(cacheKey)) {
-    console.log(`[Email Bypass] Duplicate email send prevented to: ${to} (Key: ${idempotencyKey})`);
+  // 1. Check idempotency (database-driven)
+  const { db } = await import("@/lib/db/store");
+  const isDuplicate = await db.checkIdempotency(eventKey, undefined, bookingId, notificationType);
+  if (isDuplicate) {
+    console.log(`[Email Bypass] Duplicate email prevented: ${eventKey}`);
     return true;
   }
 
+  // 2. Setup SMTP transporter
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT || 465);
   const secure = process.env.SMTP_SECURE === "true";
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_APP_PASSWORD;
 
-  if (!host || !user || !pass) {
-    console.warn("[Email Warning] SMTP credentials are not configured. Logging content to console:");
+  if (!host || !user || !pass || pass.includes("PLACEHOLDER")) {
+    console.warn("[Email Warning] SMTP credentials are not configured or are placeholders. Logging email to console:");
     console.log(`--- EMAIL START ---\nTo: ${to}\nSubject: ${subject}\nText: ${text}\n--- EMAIL END ---`);
-    return false;
+    
+    // In mock/dev, consider mock send a success and register in db
+    await db.logProcessedEvent(eventKey, "processed", 1, undefined, bookingId, notificationType);
+    return true;
   }
 
   const transporter = nodemailer.createTransport({
@@ -50,61 +65,39 @@ export async function sendEmail({ to, subject, html, text, idempotencyKey }: Ema
     html,
   };
 
-  let retries = 3;
-  while (retries > 0) {
+  // 3. Retry Loop with Bounded Exponential Backoff
+  let attempt = 0;
+  const maxAttempts = 3;
+  const initialDelay = 1000; // 1s
+  const maxDelay = 8000; // 8s
+
+  while (attempt < maxAttempts) {
+    attempt++;
     try {
       const info = await transporter.sendMail(mailOptions);
       console.log(`[Email Success] Email sent to ${to}: ${info.messageId}`);
-      if (cacheKey) {
-        sentEmailsCache.add(cacheKey);
-      }
+      
+      // Log successful processed event
+      await db.logProcessedEvent(eventKey, "processed", attempt, undefined, bookingId, notificationType);
       return true;
     } catch (err: any) {
-      retries--;
-      console.error(`[Email Retry] Failed to send email to ${to} (${retries} retries remaining):`, err.message);
-      if (retries === 0) {
-        // Critical failure: notify Technical Manager (Sachin)
-        await notifySachinOfFailure(to, subject, err.message);
+      console.error(`[Email Failed] Attempt ${attempt} failed to send email to ${to}:`, err.message);
+      
+      if (attempt === maxAttempts) {
+        // Record final failure state in database processed_events
+        await db.logProcessedEvent(eventKey, "failed", attempt, undefined, bookingId, notificationType);
+        
+        // Critical: Do NOT try to send warning alert to Sachin using the same broken SMTP client.
+        console.error(`[Email Error] Critical SMTP failure: All ${maxAttempts} attempts failed. Event logged as failed.`);
+        break;
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const backoffDelay = Math.min(initialDelay * Math.pow(2, attempt - 1), maxDelay);
+        console.warn(`[Email Backoff] Waiting ${backoffDelay}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, backoffDelay));
       }
     }
   }
   return false;
-}
-
-async function notifySachinOfFailure(failedRecipient: string, originalSubject: string, errorMessage: string) {
-  const sachinEmail = process.env.EMAIL_SUPPORT || "sachiii8827@gmail.com";
-  if (failedRecipient === sachinEmail) return; // avoid infinite loop
-
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 465);
-  const secure = process.env.SMTP_SECURE === "true";
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_APP_PASSWORD;
-
-  if (!host || !user || !pass) return;
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-  });
-
-  const mailOptions = {
-    from: process.env.EMAIL_FROM || `"AUREVIA Alert" <${user}>`,
-    to: sachinEmail,
-    subject: `⚠️ [CRITICAL] AUREVIA Email Delivery Failure`,
-    text: `Technical Alert:\n\nEmail delivery failed to ${failedRecipient}.\n\nOriginal Subject: ${originalSubject}\nError: ${errorMessage}\n\nPlease check the SMTP app credentials immediately.`,
-  };
-
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log(`[Email Warning] System failure alert sent to Sachin: ${sachinEmail}`);
-  } catch (err: any) {
-    console.error(`[Email Error] Critical: Could not notify Sachin:`, err.message);
-  }
 }
 
 function getBrandedTemplate(title: string, bodyContent: string): string {
@@ -207,10 +200,10 @@ function getBrandedTemplate(title: string, bodyContent: string): string {
   `;
 }
 
-// ─── TRANSACTIONS / BRANDED emailS ───────────────────────────────────
+// ─── TRANSACTIONS / BRANDED EMAILS ───────────────────────────────────
 
 export async function sendEmailVerification(email: string, token: string) {
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/verify?token=${token}`;
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
   const html = getBrandedTemplate("Verify Your Email", `
     <p>Welcome to AUREVIA Premium Rentals.</p>
     <p>Please click the button below to verify your email address and activate your account access.</p>
@@ -218,11 +211,19 @@ export async function sendEmailVerification(email: string, token: string) {
     <p style="margin-top: 25px; font-size: 11px; color: #6b7280;">If the button doesn't work, copy this link into your browser: <br>${verifyUrl}</p>
   `);
   const text = `Welcome to AUREVIA.\n\nPlease verify your email using this link:\n${verifyUrl}`;
-  await sendEmail({ to: email, subject: "Verify Your AUREVIA Account", html, text, idempotencyKey: `verify-${email}` });
+  
+  await sendEmail({
+    to: email,
+    subject: "Verify Your AUREVIA Account",
+    html,
+    text,
+    idempotencyKey: `verify-${email}`,
+    notificationType: "verification"
+  });
 }
 
 export async function sendPasswordReset(email: string, token: string) {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
   const html = getBrandedTemplate("Reset Your Password", `
     <p>We received a request to reset your password for your AUREVIA vault account.</p>
     <p>Please click the button below to establish a new password.</p>
@@ -230,13 +231,22 @@ export async function sendPasswordReset(email: string, token: string) {
     <p style="margin-top: 25px; font-size: 11px; color: #6b7280;">If you did not request a password reset, you can safely ignore this email.</p>
   `);
   const text = `Reset your password using this link:\n${resetUrl}`;
-  await sendEmail({ to: email, subject: "Reset Your AUREVIA Password", html, text, idempotencyKey: `reset-${email}` });
+  
+  await sendEmail({
+    to: email,
+    subject: "Reset Your AUREVIA Password",
+    html,
+    text,
+    idempotencyKey: `reset-${email}`,
+    notificationType: "password_reset"
+  });
 }
 
 export async function sendPaymentReceived(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
   const total = Number(booking.totalPayable ?? booking.total_payable ?? 0);
+  const bookingId = booking.id;
 
   // 1. Notify Customer
   const htmlCustomer = getBrandedTemplate("Payment Confirmed", `
@@ -246,7 +256,16 @@ export async function sendPaymentReceived(booking: any) {
     <p>Your rental status is currently <strong>Approval Pending</strong> while our administration reviews the equipment logs. You will receive an update shortly.</p>
   `);
   const textCustomer = `Dear ${booking.contactName || "Customer"},\n\nPayment confirmed for booking ${refCode}. Amount: ₹${total.toLocaleString("en-IN")}. Current status: Approval Pending.`;
-  await sendEmail({ to: customerEmail, subject: `Payment Confirmed - ${refCode}`, html: htmlCustomer, text: textCustomer, idempotencyKey: `pay-cust-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Payment Confirmed - ${refCode}`,
+    html: htmlCustomer,
+    text: textCustomer,
+    idempotencyKey: `pay-cust-${refCode}`,
+    bookingId,
+    notificationType: "payment_received_customer"
+  });
 
   // 2. Notify Prem (Business Owner)
   const premEmail = process.env.EMAIL_REPLY_TO || "premmundargi135@gmail.com";
@@ -256,26 +275,46 @@ export async function sendPaymentReceived(booking: any) {
     <p>Please log in to the admin panel to review and approve this booking request.</p>
   `);
   const textOwner = `Hello Prem,\n\nNew payment of ₹${total.toLocaleString("en-IN")} received from ${booking.contactName || "Customer"} for booking ${refCode}. Please review in the admin panel.`;
-  await sendEmail({ to: premEmail, subject: `[PAYMENT] ₹${total} received from ${booking.contactName || "Customer"}`, html: htmlOwner, text: textOwner, idempotencyKey: `pay-owner-${refCode}` });
+  
+  await sendEmail({
+    to: premEmail,
+    subject: `[PAYMENT] ₹${total} received from ${booking.contactName || "Customer"}`,
+    html: htmlOwner,
+    text: textOwner,
+    idempotencyKey: `pay-owner-${refCode}`,
+    bookingId,
+    notificationType: "payment_received_owner"
+  });
 }
 
 export async function sendBookingApproved(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Booking Approved", `
     <p>Dear ${booking.contactName || "Customer"},</p>
     <p>Good news! Your booking request <strong>${refCode}</strong> has been **approved** by our administration.</p>
     <p>Please log in to your dashboard to sign the digital rental agreement. Once signed, your pick-up OTP will be generated.</p>
-    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" class="btn">Go to Dashboard</a>
+    <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard" class="btn">Go to Dashboard</a>
   `);
-  const text = `Dear ${booking.contactName || "Customer"},\n\nYour booking ${refCode} has been approved. Please log in to sign the digital agreement:\n${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard`;
-  await sendEmail({ to: customerEmail, subject: `Booking Approved - ${refCode}`, html, text, idempotencyKey: `appr-${refCode}` });
+  const text = `Dear ${booking.contactName || "Customer"},\n\nYour booking ${refCode} has been approved. Please log in to sign the digital agreement:\n${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard`;
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Booking Approved - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `appr-${refCode}`,
+    bookingId,
+    notificationType: "booking_approved"
+  });
 }
 
 export async function sendBookingRejected(booking: any, reason: string) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Booking Rejected", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -284,12 +323,22 @@ export async function sendBookingRejected(booking: any, reason: string) {
     <p>A full refund will be initiated to your source account. Please contact support if you have any questions.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour booking ${refCode} has been rejected. Reason: ${reason}. A refund will be initiated.`;
-  await sendEmail({ to: customerEmail, subject: `Booking Request Rejected - ${refCode}`, html, text, idempotencyKey: `rej-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Booking Request Rejected - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `rej-${refCode}`,
+    bookingId,
+    notificationType: "booking_rejected"
+  });
 }
 
 export async function sendBookingCancelled(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Booking Cancelled", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -297,12 +346,22 @@ export async function sendBookingCancelled(booking: any) {
     <p>Any payments made will be refunded to your source account within 5-7 business days.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour booking ${refCode} has been cancelled. Refund will be processed.`;
-  await sendEmail({ to: customerEmail, subject: `Booking Cancelled - ${refCode}`, html, text, idempotencyKey: `canc-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Booking Cancelled - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `canc-${refCode}`,
+    bookingId,
+    notificationType: "booking_cancelled"
+  });
 }
 
 export async function sendPickupOTP(booking: any, otp: string) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Equipment Handover OTP", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -313,12 +372,22 @@ export async function sendPickupOTP(booking: any, otp: string) {
     <p>Please present this OTP code to Prem Mundargi at the checkout counter to collect your gear.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour pickup OTP code is: ${otp}. Present it at checkout to collect your gear.`;
-  await sendEmail({ to: customerEmail, subject: `Equipment Handover OTP - ${refCode}`, html, text, idempotencyKey: `otp-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Equipment Handover OTP - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `otp-${refCode}`,
+    bookingId,
+    notificationType: "pickup_otp"
+  });
 }
 
 export async function sendPickupReminder(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Pickup Reminder", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -326,12 +395,22 @@ export async function sendPickupReminder(booking: any) {
     <p>Please bring a valid ID and present your pickup OTP at the checkout counter to verify the gear serial numbers and collect your equipment.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nReminder: Your rental pickup is scheduled today for booking ${refCode}.`;
-  await sendEmail({ to: customerEmail, subject: `Pickup Reminder - Booking ${refCode}`, html, text, idempotencyKey: `pickup-rem-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Pickup Reminder - Booking ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `pickup-rem-${refCode}`,
+    bookingId,
+    notificationType: "pickup_reminder"
+  });
 }
 
 export async function sendReturnReminder(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Return Reminder", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -339,12 +418,22 @@ export async function sendReturnReminder(booking: any) {
     <p>Please arrange to return the equipment before the cutoff time to avoid late fees (₹999 per day).</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nReminder: Your rental return is scheduled tomorrow for booking ${refCode}.`;
-  await sendEmail({ to: customerEmail, subject: `Return Reminder - Booking ${refCode}`, html, text, idempotencyKey: `return-rem-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Return Reminder - Booking ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `return-rem-${refCode}`,
+    bookingId,
+    notificationType: "return_reminder"
+  });
 }
 
 export async function sendLateReturnDamageCharge(booking: any, type: "late" | "damage" | "both", amount: number, description: string) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Incident Charges Assessed", `
     <p>Dear ${booking.contactName || "Customer"},</p>
@@ -355,22 +444,40 @@ export async function sendLateReturnDamageCharge(booking: any, type: "late" | "d
       <li>Amount: ₹${amount.toLocaleString("en-IN")}</li>
       <li>Description: ${description || "N/A"}</li>
     </ul>
-    <p>These charges will be deducted from your security deposit, or must be settled directly if they exceed the deposit amount.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nIncident charges assessed for booking ${refCode}. Type: ${type}, Amount: ₹${amount.toLocaleString("en-IN")}, Details: ${description}`;
-  await sendEmail({ to: customerEmail, subject: `Assessed Charges Notification - ${refCode}`, html, text, idempotencyKey: `charge-${refCode}-${type}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Assessed Charges Notification - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `charge-${refCode}-${type}`,
+    bookingId,
+    notificationType: "incident_charge"
+  });
 }
 
 export async function sendBookingCompletion(booking: any) {
   const refCode = booking.referenceCode || booking.reference_code;
   const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
 
   const html = getBrandedTemplate("Rental Completed", `
     <p>Dear ${booking.contactName || "Customer"},</p>
     <p>Thank you for choosing AUREVIA Premium Rentals.</p>
     <p>Your return for booking <strong>${refCode}</strong> has been successfully processed, and the gear was returned in good order.</p>
-    <p>Your security deposit has been fully refunded. We hope to serve you again for your next creative project!</p>
+    <p>We hope to serve you again for your next creative project!</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour rental ${refCode} has been completed and returned in good order. Thank you!`;
-  await sendEmail({ to: customerEmail, subject: `Rental Completed - Thank You - ${refCode}`, html, text, idempotencyKey: `compl-${refCode}` });
+  
+  await sendEmail({
+    to: customerEmail,
+    subject: `Rental Completed - Thank You - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `compl-${refCode}`,
+    bookingId,
+    notificationType: "booking_completed"
+  });
 }

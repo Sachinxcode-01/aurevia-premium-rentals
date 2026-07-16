@@ -43,7 +43,6 @@ export interface Database {
           description: string;
           daily_rate: number;
           weekly_rate: number | null;
-          security_deposit: number;
           is_featured: boolean;
           is_available: boolean;
           image_urls: string[];
@@ -75,7 +74,6 @@ export interface Database {
           start_date: string;
           end_date: string;
           total_rental_fee: number;
-          security_deposit: number;
           tax_fee: number;
           delivery_fee: number;
           discount_amount: number;
@@ -131,6 +129,20 @@ export interface Database {
         };
         Insert: Omit<Database["public"]["Tables"]["audit_logs"]["Row"], "id" | "created_at">;
         Update: never;
+      };
+      processed_events: {
+        Row: {
+          event_key: string;
+          provider_event_id: string | null;
+          booking_id: string | null;
+          notification_type: string | null;
+          status: string;
+          attempt_count: number;
+          created_at: string;
+          processed_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["processed_events"]["Row"], "created_at" | "processed_at">;
+        Update: Partial<Database["public"]["Tables"]["processed_events"]["Insert"]>;
       };
     };
     Views: Record<string, never>;

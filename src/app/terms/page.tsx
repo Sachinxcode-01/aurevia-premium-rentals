@@ -27,8 +27,8 @@ export default function TermsPage() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="serif-heading text-lg font-medium text-ivory">2. Security Deposits & Payments</h3>
-          <p>Aurevia holds a pre-authorization security deposit for all equipment rentals. Deposits are released in full within 24-48 hours after returning gear in inspected condition. If damage is verified, the cost will be assessed and deducted from the deposit.</p>
+          <h3 className="serif-heading text-lg font-medium text-ivory">2. Rental Rates & Payments</h3>
+          <p>Aurevia does not charge any security deposits. Rental fees are billed at a flat rate of ₹799 per day (or ₹600 per day if an authorized promo code is applied). Checkout payment must be fully cleared before gear pickup handover.</p>
         </div>
 
         <div className="space-y-3">

@@ -43,11 +43,10 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
 
   const days = countDays(payload.startDate, payload.endDate);
   let totalRentalFee = 0;
-  let securityDeposit = 0;
 
   const { data: productsRaw } = await (service as any)
     .from("products")
-    .select("id, daily_rate, security_deposit, is_available")
+    .select("id, daily_rate, is_available")
     .in("id", payload.items.map((i) => i.productId));
 
   const products: any[] = productsRaw ?? [];
@@ -58,7 +57,6 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
     if (!p) return { success: false, error: `Product ${item.productId} not found.` };
     if (!p.is_available) return { success: false, error: "A selected product is currently unavailable." };
     totalRentalFee += p.daily_rate * item.quantity * days;
-    securityDeposit += p.security_deposit * item.quantity;
   }
 
   let discountAmount = 0;
@@ -68,9 +66,10 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
     if (coupon?.is_active) discountAmount = (totalRentalFee * coupon.discount_percent) / 100;
   }
 
-  const deliveryFee = payload.deliveryMethod === "delivery" ? 500 : 0;
-  const taxFee = (totalRentalFee - discountAmount + deliveryFee) * 0.18;
-  const totalPayable = totalRentalFee - discountAmount + deliveryFee + taxFee + securityDeposit;
+  // Under pricing rules: No deposit, GST, shipping, handling or hidden charges.
+  const deliveryFee = 0;
+  const taxFee = 0;
+  const totalPayable = totalRentalFee - discountAmount;
 
   const { data: bookingRaw, error: bookingErr } = await (service as any)
     .from("bookings")
@@ -80,9 +79,8 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
       start_date: payload.startDate,
       end_date: payload.endDate,
       total_rental_fee: +totalRentalFee.toFixed(2),
-      security_deposit: +securityDeposit.toFixed(2),
-      tax_fee: +taxFee.toFixed(2),
-      delivery_fee: deliveryFee,
+      tax_fee: 0,
+      delivery_fee: 0,
       discount_amount: +discountAmount.toFixed(2),
       total_payable: +totalPayable.toFixed(2),
       status: "pending",

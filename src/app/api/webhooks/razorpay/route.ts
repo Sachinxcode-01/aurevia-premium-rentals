@@ -13,11 +13,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing webhook signature header." }, { status: 400 });
     }
 
-    if (!webhookSecret) {
+    if (!webhookSecret || webhookSecret.includes("PLACEHOLDER")) {
       return NextResponse.json({ error: "Razorpay Webhook Secret is not configured on the server." }, { status: 500 });
     }
 
-    // 1. Signature Verification
+    // 1. Webhook Signature Verification
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
       .update(rawBody)
@@ -27,11 +27,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Webhook signature verification failed." }, { status: 400 });
     }
 
-    // Parse payload
     const body = JSON.parse(rawBody);
     const event = body.event;
 
-    // Supported payment confirmation events
+    // We process only payment.captured and order.paid
     if (event === "payment.captured" || event === "order.paid") {
       const paymentEntity = body.payload?.payment?.entity;
       const orderEntity = body.payload?.order?.entity;
@@ -41,12 +40,10 @@ export async function POST(request: Request) {
       const amountPaise = paymentEntity?.amount || orderEntity?.amount || 0;
       const amountInr = amountPaise / 100;
       const method = paymentEntity?.method || "razorpay";
-
-      // Attempt to extract receipt (which is the booking reference code)
       const referenceCode = paymentEntity?.notes?.receipt || orderEntity?.receipt || "";
 
       if (!referenceCode && !orderId) {
-        return NextResponse.json({ error: "Missing receipt or order_id in webhook payload." }, { status: 400 });
+        return NextResponse.json({ error: "Missing receipt reference in webhook payload." }, { status: 400 });
       }
 
       // Initialize Supabase Client
@@ -54,22 +51,8 @@ export async function POST(request: Request) {
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
       const supabase = createClient(supabaseUrl, supabaseKey);
 
-      // 2. Idempotency Check (prevent duplicate processing)
-      if (transactionId) {
-        const { data: existingPayment } = await supabase
-          .from("payments")
-          .select("id")
-          .eq("transaction_id", transactionId)
-          .single();
-
-        if (existingPayment) {
-          return NextResponse.json({ received: true, message: "Duplicate webhook event bypassed." });
-        }
-      }
-
-      // 3. Find booking by reference code (or order ID in notes)
+      // 2. Find booking by reference code (or order ID in notes)
       let bookingRow: any = null;
-
       if (referenceCode) {
         const { data } = await supabase
           .from("bookings")
@@ -80,8 +63,6 @@ export async function POST(request: Request) {
       }
 
       if (!bookingRow && orderId) {
-        // Fallback search by reference code format in notes if orderId matches or search in logs
-        // Usually, reference_code is AV-YYYY-XXXXX
         const { data } = await supabase
           .from("bookings")
           .select("*")
@@ -95,14 +76,36 @@ export async function POST(request: Request) {
       }
 
       const bookingId = bookingRow.id;
+      const eventKey = `webhook:razorpay:${body.id || transactionId}`;
 
-      // 4. Confirm Payment and Assign Inventory Unit
+      // 3. PostgreSQL Database Idempotency Check
+      const isEventProcessed = await db.checkIdempotency(eventKey, body.id || transactionId, bookingId, "razorpay_webhook");
+      if (isEventProcessed) {
+        return NextResponse.json({ received: true, message: "Webhook event already processed." });
+      }
+
+      // 4. Validate order amount server-side (₹799 or ₹600 coupon daily checkout rates)
+      const expectedAmount = Number(bookingRow.total_payable || 0);
+      if (Math.abs(amountInr - expectedAmount) > 0.01) {
+        // Tampered checkout payment! Block and cancel the booking.
+        await db.updateBookingStatus(
+          bookingId,
+          "cancelled",
+          `Fraud check: Payment amount mismatch. Expected ₹${expectedAmount}, but received ₹${amountInr}. Refusing handover.`,
+          "razorpay_webhook"
+        );
+
+        // Mark the event attempt as logged/finished with fraud details
+        await db.logProcessedEvent(eventKey, "failed", 1, body.id || transactionId, bookingId, "razorpay_webhook_fraud");
+        return NextResponse.json({ error: "Fraudulent payment: Amount mismatch." }, { status: 400 });
+      }
+
+      // 5. Atomic db verification and unit allocation
       if (bookingRow.payment_status !== "paid") {
-        // Call store method to assign unit and update status to approval_pending/paid
         const assigned = await db.assignAvailableUnit(bookingId);
 
         if (assigned) {
-          // Record the transaction
+          // Record successful payment entry
           await supabase.from("payments").insert({
             booking_id: bookingId,
             transaction_id: transactionId || `txn_${Date.now()}`,
@@ -111,11 +114,18 @@ export async function POST(request: Request) {
             payment_method: method,
           });
 
+          // Mark event as processed successfully
+          await db.logProcessedEvent(eventKey, "processed", 1, body.id || transactionId, bookingId, "razorpay_webhook");
           return NextResponse.json({ success: true, message: "Payment confirmed and unit assigned successfully." });
         } else {
-          // Double-booking conflict (no units left) - cancel/refund booking
-          await db.updateBookingStatus(bookingId, "cancelled", "Inventory conflict: Camera booked by another user during payment process.", "razorpay_webhook");
-          
+          // Double-booking conflict (exhausted physical camera stock concurrently)
+          await db.updateBookingStatus(
+            bookingId,
+            "cancelled",
+            "Inventory collision check failed: camera stock booked concurrently during checkout.",
+            "razorpay_webhook"
+          );
+
           await supabase.from("payments").insert({
             booking_id: bookingId,
             transaction_id: transactionId || `txn_${Date.now()}`,
@@ -124,16 +134,18 @@ export async function POST(request: Request) {
             payment_method: method,
           });
 
-          return NextResponse.json({ error: "Inventory conflict: Booking cancelled and flagged for refund." }, { status: 409 });
+          await db.logProcessedEvent(eventKey, "failed", 1, body.id || transactionId, bookingId, "razorpay_webhook_collision");
+          return NextResponse.json({ error: "Inventory collision: booking cancelled for refund." }, { status: 409 });
         }
       }
 
-      return NextResponse.json({ received: true, message: "Payment already processed." });
+      return NextResponse.json({ received: true, message: "Booking already marked paid." });
     }
 
     return NextResponse.json({ received: true });
   } catch (err: any) {
-    console.error("Razorpay webhook error:", err);
-    return NextResponse.json({ error: err.message || "Internal server error during webhook processing." }, { status: 500 });
+    console.error("Razorpay webhook processing error:", err);
+    // Secure error wrapping - do not leak internal system exceptions to client
+    return NextResponse.json({ error: "Internal processing failure." }, { status: 500 });
   }
 }

@@ -44,7 +44,6 @@ UPDATE products
 SET name = 'Canon Camera', 
     daily_price = 799.00, 
     weekly_price = 4999.00, 
-    security_deposit = 5000.00, 
     inventory_qty = 2 
 WHERE id = 'p1000000-0000-0000-0000-000000000001';
 
@@ -52,7 +51,6 @@ UPDATE products
 SET name = 'Nikon Camera', 
     daily_price = 799.00, 
     weekly_price = 4999.00, 
-    security_deposit = 5000.00, 
     inventory_qty = 1 
 WHERE id = 'p1000000-0000-0000-0000-000000000003';
 

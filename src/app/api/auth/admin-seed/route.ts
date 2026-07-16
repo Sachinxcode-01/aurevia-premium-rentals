@@ -12,6 +12,10 @@ import { createServiceSupabaseClient } from "@/lib/supabase/server";
  *     -H "x-seed-secret: <ADMIN_SEED_SECRET>"
  */
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Admin seeding is disabled in production." }, { status: 403 });
+  }
+
   const secret = request.headers.get("x-seed-secret");
   const expectedSecret = process.env.ADMIN_SEED_SECRET;
 
@@ -21,11 +25,11 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createServiceSupabaseClient();
 
-  const adminEmail    = process.env.ADMIN_EMAIL    ?? "prem@aurevia.in";
+  const adminEmail    = process.env.ADMIN_EMAIL    ?? "premmundargi135@gmail.com";
   const adminPassword = process.env.ADMIN_PASSWORD ?? "AureviaAdmin@2026";
   const adminName     = process.env.ADMIN_NAME     ?? "Prem Mundargi";
 
-  const staffEmail    = process.env.STAFF_EMAIL    ?? "sachin@aurevia.in";
+  const staffEmail    = process.env.STAFF_EMAIL    ?? "sachiii8827@gmail.com";
   const staffPassword = process.env.STAFF_PASSWORD ?? "AureviaStaff@2026";
   const staffName     = process.env.STAFF_NAME     ?? "Sachin";
 

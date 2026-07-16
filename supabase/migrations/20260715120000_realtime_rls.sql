@@ -215,6 +215,62 @@ CREATE POLICY "audit_logs_admin_select" ON audit_logs
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+-- Booking Items RLS Policies
+DROP POLICY IF EXISTS "booking_items_customer_select" ON booking_items;
+CREATE POLICY "booking_items_customer_select" ON booking_items
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM bookings
+      WHERE bookings.id = booking_items.booking_id AND bookings.profile_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "booking_items_admin_all" ON booking_items;
+CREATE POLICY "booking_items_admin_all" ON booking_items
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+  );
+
+-- Payments RLS Policies
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "payments_customer_select" ON payments;
+CREATE POLICY "payments_customer_select" ON payments
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM bookings
+      WHERE bookings.id = payments.booking_id AND bookings.profile_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "payments_admin_all" ON payments;
+CREATE POLICY "payments_admin_all" ON payments
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+  );
+
+-- Processed Events RLS Policies
+ALTER TABLE processed_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "processed_events_admin_all" ON processed_events;
+CREATE POLICY "processed_events_admin_all" ON processed_events
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+  );
+
+-- Coupons RLS Policies
+ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "coupons_read_active" ON coupons;
+CREATE POLICY "coupons_read_active" ON coupons
+  FOR SELECT USING (is_active = true);
+
+DROP POLICY IF EXISTS "coupons_admin_all" ON coupons;
+CREATE POLICY "coupons_admin_all" ON coupons
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff'))
+  );
+
 -- ─── 9. ENABLE SUPABASE REALTIME ─────────────────────────────
 -- Grant Realtime access to required tables
 -- (You must also enable these in Dashboard → Database → Replication)

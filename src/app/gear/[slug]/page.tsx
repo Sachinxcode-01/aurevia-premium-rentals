@@ -440,10 +440,7 @@ Please confirm availability and let me know the next steps. Thank you!`;
                   <span>Duration:</span>
                   <span className="font-mono text-ivory">{rentalDays} Days</span>
                 </div>
-                <div className="flex justify-between text-xs text-muted-gray">
-                  <span>Security Deposit (Refundable):</span>
-                  <span className="font-mono text-ivory">₹{(product.securityDeposit * quantity).toLocaleString("en-IN")}</span>
-                </div>
+
                 <div className="flex justify-between text-xs font-semibold border-t border-white/5 pt-2">
                   <span>Est. Rent Cost:</span>
                   <span className="font-mono text-gold-champagne">₹{estimatedCost.toLocaleString("en-IN")}</span>

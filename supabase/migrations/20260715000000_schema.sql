@@ -9,7 +9,7 @@ CREATE TYPE user_role AS ENUM ('customer', 'staff', 'admin');
 CREATE TYPE inventory_status AS ENUM ('available', 'rented', 'maintenance', 'decommissioned');
 CREATE TYPE booking_status AS ENUM ('pending', 'confirmed', 'picked_up', 'returned', 'cancelled', 'rejected');
 CREATE TYPE payment_status AS ENUM ('unpaid', 'paid', 'refunded');
-CREATE TYPE deposit_status AS ENUM ('held', 'released', 'forfeited');
+-- deposit_status enum removed
 CREATE TYPE damage_report_status AS ENUM ('pending', 'paid', 'waived');
 
 -- 1. Profiles Table (Linked to Supabase auth.users)
@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT NOT NULL,
     daily_price NUMERIC(10, 2) NOT NULL CHECK (daily_price >= 0),
     weekly_price NUMERIC(10, 2) NOT NULL CHECK (weekly_price >= 0),
-    security_deposit NUMERIC(10, 2) NOT NULL CHECK (security_deposit >= 0),
     inventory_qty INTEGER NOT NULL DEFAULT 1 CHECK (inventory_qty >= 0),
     rating NUMERIC(3, 2) DEFAULT 5.0,
     is_featured BOOLEAN DEFAULT false,
@@ -137,7 +136,6 @@ CREATE TABLE IF NOT EXISTS bookings (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     total_rental_fee NUMERIC(10, 2) NOT NULL,
-    security_deposit NUMERIC(10, 2) NOT NULL,
     tax_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
     delivery_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
     discount_amount NUMERIC(10, 2) NOT NULL DEFAULT 0.0,
@@ -183,14 +181,16 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 16. Security Deposits Status Tracking
-CREATE TABLE IF NOT EXISTS deposits (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
-    amount NUMERIC(10, 2) NOT NULL,
-    status deposit_status DEFAULT 'held',
-    notes TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- 16. Processed Events Tracking for Idempotency
+CREATE TABLE IF NOT EXISTS processed_events (
+    event_key VARCHAR(255) PRIMARY KEY,
+    provider_event_id VARCHAR(255),
+    booking_id UUID,
+    notification_type VARCHAR(100),
+    status VARCHAR(50) NOT NULL DEFAULT 'processed',
+    attempt_count INTEGER DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 17. Gear Returns
@@ -310,24 +310,24 @@ INSERT INTO categories (id, name, slug, description) VALUES
 ('c1000000-0000-0000-0000-000000000008', 'Production Accessories', 'accessories', 'Luxury tripods, matte boxes, monitors, and media cards');
 
 -- 3. Insert Products
-INSERT INTO products (id, brand_id, category_id, name, slug, description, daily_price, weekly_price, security_deposit, inventory_qty, rating, is_featured, specs_json) VALUES
+INSERT INTO products (id, brand_id, category_id, name, slug, description, daily_price, weekly_price, inventory_qty, rating, is_featured, specs_json) VALUES
 -- Flagship Canon EOS R5
-('p1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'Canon EOS R5', 'canon-eos-r5', 'A game-changing mirrorless body offering 45MP stills and internal 8K RAW video recording. Features 5-axis in-body image stabilization (IBIS), 20 fps mechanical/electronic shutter, and outstanding Dual Pixel AF II for commercial shoots.', 3499.00, 19999.00, 15000.00, 5, 4.95, true, '{"sensor": "45MP Full-Frame CMOS", "video": "8K RAW Internal", "stabilization": "8-stops IBIS", "iso": "100 - 51,200", "weight": "738g"}'),
+('p1000000-0000-0000-0000-000000000001', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000002', 'Canon EOS R5', 'canon-eos-r5', 'A game-changing mirrorless body offering 45MP stills and internal 8K RAW video recording. Features 5-axis in-body image stabilization (IBIS), 20 fps mechanical/electronic shutter, and outstanding Dual Pixel AF II for commercial shoots.', 3499.00, 19999.00, 5, 4.95, true, '{"sensor": "45MP Full-Frame CMOS", "video": "8K RAW Internal", "stabilization": "8-stops IBIS", "iso": "100 - 51,200", "weight": "738g"}'),
 
 -- Sony FX3 Cinema Camera
-('p1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003', 'Sony FX3 Cinema Camera', 'sony-fx3', 'Part of Sony''s Cinema Line, the FX3 offers high sensitivity, cinematic color science, and an incredibly compact design. Features 12.1MP Exmor R sensor optimized for 4K video, 15+ stops of dynamic range, and S-Cinetone color profile.', 4499.00, 26999.00, 20000.00, 3, 4.98, true, '{"sensor": "12.1MP Full-Frame Exmor R", "video": "4K 120p Internal", "dynamic_range": "15+ Stops", "iso": "80 - 409,600", "weight": "715g"}'),
+('p1000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', 'c1000000-0000-0000-0000-000000000003', 'Sony FX3 Cinema Camera', 'sony-fx3', 'Part of Sony''s Cinema Line, the FX3 offers high sensitivity, cinematic color science, and an incredibly compact design. Features 12.1MP Exmor R sensor optimized for 4K video, 15+ stops of dynamic range, and S-Cinetone color profile.', 4499.00, 26999.00, 3, 4.98, true, '{"sensor": "12.1MP Full-Frame Exmor R", "video": "4K 120p Internal", "dynamic_range": "15+ Stops", "iso": "80 - 409,600", "weight": "715g"}'),
 
 -- Nikon Z8
-('p1000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000002', 'Nikon Z8 Mirrorless Camera', 'nikon-z8', 'A compact powerhouse inheriting the flagship Z9 features. Equipped with a 45.7MP stacked sensor, blackout-free viewfinder, 8K 60p internal N-RAW video, and state-of-the-art deep learning subject detection autofocus.', 3799.00, 22999.00, 18000.00, 2, 4.88, false, '{"sensor": "45.7MP Stacked CMOS", "video": "8K 60p N-RAW Internal", "stabilization": "5.5-stops IBIS", "iso": "64 - 25,600", "weight": "910g"}'),
+('p1000000-0000-0000-0000-000000000003', 'b1000000-0000-0000-0000-000000000003', 'c1000000-0000-0000-0000-000000000002', 'Nikon Z8 Mirrorless Camera', 'nikon-z8', 'A compact powerhouse inheriting the flagship Z9 features. Equipped with a 45.7MP stacked sensor, blackout-free viewfinder, 8K 60p internal N-RAW video, and state-of-the-art deep learning subject detection autofocus.', 3799.00, 22999.00, 2, 4.88, false, '{"sensor": "45.7MP Stacked CMOS", "video": "8K 60p N-RAW Internal", "stabilization": "5.5-stops IBIS", "iso": "64 - 25,600", "weight": "910g"}'),
 
 -- Canon RF 24-70mm f/2.8L IS USM
-('p1000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000004', 'Canon RF 24-70mm f/2.8L IS USM', 'canon-rf-24-70mm-f2-8l', 'The workhorse zoom lens for the Canon EOS R system. Constant f/2.8 aperture, L-series optical performance, Nano USM AF motor, and 5 stops of image stabilization make it ideal for portraits, landscapes, and documentary video.', 1499.00, 8999.00, 6000.00, 8, 4.90, true, '{"focal_range": "24-70mm", "aperture": "f/2.8 constant", "filter_size": "82mm", "lens_mount": "Canon RF", "weight": "900g"}'),
+('p1000000-0000-0000-0000-000000000004', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000004', 'Canon RF 24-70mm f/2.8L IS USM', 'canon-rf-24-70mm-f2-8l', 'The workhorse zoom lens for the Canon EOS R system. Constant f/2.8 aperture, L-series optical performance, Nano USM AF motor, and 5 stops of image stabilization make it ideal for portraits, landscapes, and documentary video.', 1499.00, 8999.00, 8, 4.90, true, '{"focal_range": "24-70mm", "aperture": "f/2.8 constant", "filter_size": "82mm", "lens_mount": "Canon RF", "weight": "900g"}'),
 
 -- Canon RF 70-200mm f/2.8L IS USM
-('p1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000004', 'Canon RF 70-200mm f/2.8L IS USM', 'canon-rf-70-200mm-f2-8l', 'Unbelievably compact telephoto zoom lens that delivers pristine L-series optical quality. Features a fast constant f/2.8 aperture, dual Nano USM focus motors, 5 stops of optical stabilization, and weather-sealed construction.', 1999.00, 11999.00, 8000.00, 4, 4.92, false, '{"focal_range": "70-200mm", "aperture": "f/2.8 constant", "filter_size": "77mm", "lens_mount": "Canon RF", "weight": "1070g"}'),
+('p1000000-0000-0000-0000-000000000005', 'b1000000-0000-0000-0000-000000000001', 'c1000000-0000-0000-0000-000000000004', 'Canon RF 70-200mm f/2.8L IS USM', 'canon-rf-70-200mm-f2-8l', 'Unbelievably compact telephoto zoom lens that delivers pristine L-series optical quality. Features a fast constant f/2.8 aperture, dual Nano USM focus motors, 5 stops of optical stabilization, and weather-sealed construction.', 1999.00, 11999.00, 4, 4.92, false, '{"focal_range": "70-200mm", "aperture": "f/2.8 constant", "filter_size": "77mm", "lens_mount": "Canon RF", "weight": "1070g"}'),
 
 -- DJI RS 3 Pro Gimbal
-('p1000000-0000-0000-0000-000000000006', 'b1000000-0000-0000-0000-000000000004', 'c1000000-0000-0000-0000-000000000005', 'DJI RS 3 Pro Gimbal Stabilizer', 'dji-rs-3-pro', 'An advanced expansion platform that empowers videographers with modular stabilization tools. Features extended carbon fiber axis arms, automated axis locks, LiDAR focusing support, and 4.5kg payload capacity.', 1299.00, 7499.00, 5000.00, 4, 4.82, false, '{"payload": "4.5kg (10 lbs)", "weight": "1.5kg", "battery_life": "12 hours", "material": "Carbon Fiber", "modes": "Pan Follow, FPV, 3D Roll"}');
+('p1000000-0000-0000-0000-000000000006', 'b1000000-0000-0000-0000-000000000004', 'c1000000-0000-0000-0000-000000000005', 'DJI RS 3 Pro Gimbal Stabilizer', 'dji-rs-3-pro', 'An advanced expansion platform that empowers videographers with modular stabilization tools. Features extended carbon fiber axis arms, automated axis locks, LiDAR focusing support, and 4.5kg payload capacity.', 1299.00, 7499.00, 4, 4.82, false, '{"payload": "4.5kg (10 lbs)", "weight": "1.5kg", "battery_life": "12 hours", "material": "Carbon Fiber", "modes": "Pan Follow, FPV, 3D Roll"}');
 
 -- 4. Insert Product Images
 INSERT INTO product_images (product_id, image_url, is_primary) VALUES
@@ -364,7 +364,7 @@ INSERT INTO testimonials (author_name, author_title, quote, rating) VALUES
 
 -- 8. Insert FAQs
 INSERT INTO faqs (question, answer, category) VALUES
-('What is the security deposit and how is it processed?', 'The security deposit is a temporary pre-authorization held on your card or paid online. It is fully refunded within 24-48 hours after returning the equipment in original inspected condition.', 'Security'),
+('How do payments and cancellations work?', 'Payments are processed securely via Razorpay. We do not require any security deposit. Cancellations can be processed from your dashboard, with full refunds processed in 5-7 business days.', 'Payments'),
 ('Can I extend my rental period mid-booking?', 'Yes, extensions are allowed subject to equipment availability. Please submit an extension request from your dashboard or contact our concierge immediately.', 'Rentals'),
 ('Do you offer delivery to shooting locations?', 'Absolutely. We offer high-security delivery directly to your studio or field location in custom protective hard cases. Rates vary based on distance and urgency.', 'Shipping'),
 ('What happens in case of accidental damage?', 'We require checking the equipment details upon receipt. We offer optional damage waivers during checkout to protect against minor accidents. Severe damages are assessed and billed according to repair cost.', 'Damage & Insurance');

@@ -21,7 +21,6 @@ export interface Product {
   description: string;
   dailyPrice: number;
   weeklyPrice: number;
-  securityDeposit: number;
   inventoryQty: number;
   rating: number;
   isFeatured: boolean;
@@ -141,7 +140,6 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "A professional Canon camera body offering high-performance stills and internal video recording. Features 5-axis image stabilization and outstanding autofocus for commercial shoots.",
     dailyPrice: 799.00,
     weeklyPrice: 4999.00,
-    securityDeposit: 5000.00,
     inventoryQty: 2,
     rating: 4.95,
     isFeatured: true,
@@ -165,7 +163,6 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "A compact professional Nikon body inheriting advanced features. Equipped with a stacked sensor, high-speed autofocus, and deep learning subject tracking.",
     dailyPrice: 799.00,
     weeklyPrice: 4999.00,
-    securityDeposit: 5000.00,
     inventoryQty: 1,
     rating: 4.88,
     isFeatured: true,
@@ -233,8 +230,8 @@ export const MOCK_TESTIMONIALS: Testimonial[] = [
 export const MOCK_FAQS: FAQ[] = [
   {
     id: "f1",
-    question: "What is the security deposit and how is it processed?",
-    answer: "The security deposit is a temporary pre-authorization held on your card or paid online. It is fully refunded within 24-48 hours after returning the equipment in original inspected condition.",
+    question: "Do you require a security deposit?",
+    answer: "No, AUREVIA does not charge any security deposits. You pay only the flat daily rental rate for the gear you checkout.",
     category: "Security",
   },
   {

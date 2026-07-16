@@ -44,7 +44,6 @@ export interface Booking {
   startDate: string;
   endDate: string;
   totalRentalFee: number;
-  securityDeposit: number;
   taxFee: number;
   deliveryFee: number;
   discountAmount: number;
@@ -63,8 +62,6 @@ export interface Booking {
   returnTime?: string;
   emergencyContact: string;
   companyOrCollege?: string;
-  depositStatus: "pending" | "collected" | "partially_refunded" | "fully_refunded" | "deducted";
-  depositPaymentMethod: "razorpay" | "cash";
   agreementAccepted: boolean;
   agreementAcceptedAt?: string;
   agreementIP?: string;
@@ -100,7 +97,6 @@ let serverBookings: Booking[] = [
     startDate: "2026-07-20",
     endDate: "2026-07-25",
     totalRentalFee: 17495.00,
-    securityDeposit: 0.00,
     taxFee: 0.00,
     deliveryFee: 0.00,
     discountAmount: 1749.50,
@@ -124,8 +120,6 @@ let serverBookings: Booking[] = [
     ],
     createdAt: "2026-07-14T10:00:00.000Z",
     emergencyContact: "Aswin Kumar - 9876543210",
-    depositStatus: "collected",
-    depositPaymentMethod: "razorpay",
     agreementAccepted: true,
     statusHistory: [],
     auditLogs: [],
@@ -137,7 +131,6 @@ let serverBookings: Booking[] = [
     startDate: "2026-07-02",
     endDate: "2026-07-04",
     totalRentalFee: 8998.00,
-    securityDeposit: 0.00,
     taxFee: 0.00,
     deliveryFee: 0.00,
     discountAmount: 0.00,
@@ -158,8 +151,6 @@ let serverBookings: Booking[] = [
     addons: [],
     createdAt: "2026-07-01T15:30:00.000Z",
     emergencyContact: "Raj Sen - 9876543211",
-    depositStatus: "fully_refunded",
-    depositPaymentMethod: "razorpay",
     agreementAccepted: true,
     statusHistory: [],
     auditLogs: [],
@@ -168,8 +159,8 @@ let serverBookings: Booking[] = [
 
 let serverProfile: UserProfile = {
   id: "usr-prem",
-  fullName: "Prem Kumar",
-  email: "contact@prem.dev",
+  fullName: "Prem Mundargi",
+  email: "premmundargi135@gmail.com",
   phone: "9686909048",
   role: "admin",
 };
@@ -285,7 +276,6 @@ function mapDbProductToApp(p: any): Product {
     description: p.description,
     dailyPrice: Number(p.daily_price || p.daily_rate || 799),
     weeklyPrice: Number(p.weekly_price || p.weekly_rate || 4999),
-    securityDeposit: Number(p.security_deposit || 5000),
     inventoryQty: Number(p.inventory_qty || 1),
     rating: Number(p.rating || 5.0),
     isFeatured: p.is_featured || false,
@@ -304,7 +294,6 @@ function mapDbBookingToApp(b: any): Booking {
     startDate: b.start_date,
     endDate: b.end_date,
     totalRentalFee: Number(b.total_rental_fee || 0),
-    securityDeposit: Number(b.security_deposit || 0),
     taxFee: Number(b.tax_fee || 0),
     deliveryFee: Number(b.delivery_fee || 0),
     discountAmount: Number(b.discount_amount || 0),
@@ -321,8 +310,6 @@ function mapDbBookingToApp(b: any): Booking {
     returnTime: b.return_time || undefined,
     emergencyContact: b.emergency_contact || "",
     companyOrCollege: b.company_or_college || undefined,
-    depositStatus: b.deposit_status || "pending",
-    depositPaymentMethod: b.deposit_payment_method || "razorpay",
     agreementAccepted: b.agreement_accepted || false,
     agreementAcceptedAt: b.agreement_accepted_at || undefined,
     agreementIP: b.agreement_ip || undefined,
@@ -582,7 +569,6 @@ export const db = {
           start_date: booking.startDate,
           end_date: booking.endDate,
           total_rental_fee: booking.totalRentalFee,
-          security_deposit: booking.securityDeposit,
           tax_fee: booking.taxFee,
           delivery_fee: booking.deliveryFee,
           discount_amount: booking.discountAmount,
@@ -595,8 +581,6 @@ export const db = {
           contact_email: booking.contactEmail,
           emergency_contact: booking.emergencyContact,
           company_or_college: booking.companyOrCollege || null,
-          deposit_status: "pending",
-          deposit_payment_method: "razorpay",
           agreement_accepted: booking.agreementAccepted || false,
           agreement_accepted_at: booking.agreementAcceptedAt || null,
           agreement_ip: booking.agreementIP || null,
@@ -666,8 +650,6 @@ export const db = {
       status: "pending_payment",
       paymentStatus: "unpaid",
       createdAt: new Date().toISOString(),
-      depositStatus: "pending",
-      depositPaymentMethod: "razorpay",
       agreementAccepted: booking.agreementAccepted || false,
       agreementAcceptedAt: booking.agreementAcceptedAt,
       agreementIP: booking.agreementIP,
@@ -963,7 +945,6 @@ export const db = {
           .from("bookings")
           .update({
             status: "rented",
-            deposit_status: "collected",
             pickup_remarks: remarks,
             pickup_handover_at: new Date().toISOString(),
             pickup_condition_photos: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=400&q=80"],
@@ -990,7 +971,6 @@ export const db = {
     }
 
     bookings[idx].status = "rented";
-    bookings[idx].depositStatus = "collected";
     bookings[idx].pickupRemarks = remarks;
     bookings[idx].pickupHandoverAt = new Date().toISOString();
     bookings[idx].pickupConditionPhotos = [
@@ -1053,14 +1033,7 @@ export const db = {
         const cost = damageCost || 0;
         const totalDeductions = lateFee + cost;
 
-        let depositStatus: "pending" | "collected" | "partially_refunded" | "fully_refunded" | "deducted" = "fully_refunded";
-        if (totalDeductions === 0) {
-          depositStatus = "fully_refunded";
-        } else if (totalDeductions >= booking.securityDeposit) {
-          depositStatus = "deducted";
-        } else {
-          depositStatus = "partially_refunded";
-        }
+        // depositStatus removed
 
         const assignedUnits = booking.items.map((item) => item.inventoryUnitId).filter(Boolean) as string[];
         for (const uId of assignedUnits) {
@@ -1084,7 +1057,7 @@ export const db = {
           action: "return_inspection",
           timestamp: new Date().toISOString(),
           performedBy: "admin",
-          details: `Returned gear condition: ${condition.toUpperCase()}. Late Fee: ₹${lateFee}, Damage Cost: ₹${cost}. Deposit refunded: ${depositStatus}`
+          details: `Returned gear condition: ${condition.toUpperCase()}. Late Fee: ₹${lateFee}, Damage Cost: ₹${cost}.`
         });
 
         await supabase
@@ -1097,7 +1070,6 @@ export const db = {
             return_remarks: remarks,
             return_inspection_at: new Date().toISOString(),
             return_condition_photos: ["https://images.unsplash.com/photo-1453974336185-b58122a72a11?auto=format&fit=crop&w=400&q=80"],
-            deposit_status: depositStatus,
             status_history: statusHistory,
             audit_logs: auditLogs,
           })
@@ -1153,13 +1125,7 @@ export const db = {
       "https://images.unsplash.com/photo-1453974336185-b58122a72a11?auto=format&fit=crop&w=400&q=80"
     ];
 
-    if (totalDeductions === 0) {
-      bookings[idx].depositStatus = "fully_refunded";
-    } else if (totalDeductions >= booking.securityDeposit) {
-      bookings[idx].depositStatus = "deducted";
-    } else {
-      bookings[idx].depositStatus = "partially_refunded";
-    }
+    // depositStatus mock logic removed
 
     const assignedUnits = booking.items.map((item) => item.inventoryUnitId).filter(Boolean) as string[];
     const units = await this.getInventoryUnits();
@@ -1185,7 +1151,7 @@ export const db = {
       action: "return_inspection",
       timestamp: new Date().toISOString(),
       performedBy: "admin",
-      details: `Returned gear condition: ${condition.toUpperCase()}. Late Fee: ₹${lateFee}, Damage Cost: ₹${cost}. Deposit refunded: ${bookings[idx].depositStatus}`
+      details: `Returned gear condition: ${condition.toUpperCase()}. Late Fee: ₹${lateFee}, Damage Cost: ₹${cost}.`
     });
 
     const updated = bookings[idx];
@@ -1206,50 +1172,65 @@ export const db = {
     return bookings[idx];
   },
 
-  async updateDepositStatus(
-    bookingId: string,
-    depositStatus: "pending" | "collected" | "partially_refunded" | "fully_refunded" | "deducted",
-    message: string = ""
-  ): Promise<Booking | null> {
+  async checkIdempotency(
+    eventKey: string,
+    providerEventId?: string,
+    bookingId?: string,
+    notificationType?: string
+  ): Promise<boolean> {
     if (isSupabaseConfigured()) {
       const supabase = await getSupabase();
-      const { data: b, error } = await supabase.from("bookings").select("*").eq("id", bookingId).single();
-      if (!error && b) {
-        const auditLogs = b.audit_logs || [];
-        auditLogs.push({
-          action: "deposit_status_change",
-          timestamp: new Date().toISOString(),
-          performedBy: "admin",
-          details: `Security deposit status updated to ${depositStatus.toUpperCase()}. Message: ${message}`
+      const { data: existing } = await supabase
+        .from("processed_events")
+        .select("event_key")
+        .eq("event_key", eventKey)
+        .single();
+
+      if (existing) {
+        return true;
+      }
+
+      const { error } = await supabase
+        .from("processed_events")
+        .insert({
+          event_key: eventKey,
+          provider_event_id: providerEventId || null,
+          booking_id: bookingId || null,
+          notification_type: notificationType || null,
+          status: "processed",
+          attempt_count: 1
         });
 
-        await supabase
-          .from("bookings")
-          .update({
-            deposit_status: depositStatus,
-            audit_logs: auditLogs,
-          })
-          .eq("id", bookingId);
-
-        return await this.getBookingById(bookingId);
+      if (error) {
+        return true;
       }
+      return false;
     }
+    return false;
+  },
 
-    // Mock
-    const bookings = getLocalBookings();
-    const idx = bookings.findIndex((b) => b.id === bookingId);
-    if (idx === -1) return null;
-
-    bookings[idx].depositStatus = depositStatus;
-    bookings[idx].auditLogs.push({
-      action: "deposit_status_change",
-      timestamp: new Date().toISOString(),
-      performedBy: "admin",
-      details: `Security deposit status updated to ${depositStatus.toUpperCase()}. Message: ${message}`
-    });
-
-    saveLocalBookings(bookings);
-    return bookings[idx];
+  async logProcessedEvent(
+    eventKey: string,
+    status: "processed" | "failed",
+    attemptCount: number,
+    providerEventId?: string,
+    bookingId?: string,
+    notificationType?: string
+  ): Promise<void> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      await supabase
+        .from("processed_events")
+        .upsert({
+          event_key: eventKey,
+          provider_event_id: providerEventId || null,
+          booking_id: bookingId || null,
+          notification_type: notificationType || null,
+          status,
+          attempt_count: attemptCount,
+          processed_at: new Date().toISOString()
+        });
+    }
   },
 
   // 5. Customer Profile
@@ -1366,13 +1347,13 @@ export const db = {
     const bookings = await this.getBookings();
     const paidBookings = bookings.filter((b) => b.paymentStatus === "paid" && b.status !== "cancelled" && b.status !== "rejected");
     
-    const revenueTotal = paidBookings.reduce((sum, b) => sum + (b.totalPayable - b.securityDeposit), 0);
+    const revenueTotal = paidBookings.reduce((sum, b) => sum + b.totalPayable, 0);
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const revenueMonth = paidBookings
       .filter((b) => new Date(b.createdAt) >= startOfMonth)
-      .reduce((sum, b) => sum + (b.totalPayable - b.securityDeposit), 0);
+      .reduce((sum, b) => sum + b.totalPayable, 0);
 
     const bookingsTotalCount = bookings.length;
     const bookingsPendingCount = bookings.filter((b) => b.status === "pending_payment").length;
@@ -1425,7 +1406,7 @@ export const db = {
       const bDate = new Date(b.createdAt);
       const dateStr = bDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
       if (dateStr in trendMap) {
-        trendMap[dateStr] += (b.totalPayable - b.securityDeposit);
+        trendMap[dateStr] += b.totalPayable;
       }
     });
 

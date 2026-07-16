@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get("secret");
+    // 1. Disable in production
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ error: "Email testing endpoint is disabled in production." }, { status: 403 });
+    }
 
-    const expectedSecret = process.env.ADMIN_SEED_SECRET || "testsecret";
-    if (secret !== expectedSecret) {
-      return NextResponse.json({ error: "Unauthorized. Please specify the correct secret query parameter." }, { status: 401 });
+    // 2. Validate header-based authorization
+    const secret = request.headers.get("x-seed-secret");
+    const expectedSecret = process.env.ADMIN_SEED_SECRET;
+
+    if (!expectedSecret || secret !== expectedSecret) {
+      return NextResponse.json({ error: "Unauthorized. Missing or invalid authentication header." }, { status: 401 });
     }
 
     const testBooking = {

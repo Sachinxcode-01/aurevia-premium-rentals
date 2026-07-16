@@ -5,9 +5,7 @@
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(100);
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS company_or_college VARCHAR(100);
 
--- Security Deposit tracking
-ALTER TABLE bookings ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(50) DEFAULT 'pending';
-ALTER TABLE bookings ADD COLUMN IF NOT EXISTS deposit_payment_method VARCHAR(50) DEFAULT 'razorpay';
+-- Security Deposit tracking removed
 
 -- Digital agreement fields
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS agreement_accepted BOOLEAN DEFAULT false;

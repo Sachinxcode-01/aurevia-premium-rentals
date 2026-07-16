@@ -96,7 +96,7 @@ function ComparePageContent() {
               </div>
               <div className="py-2.5">Daily Rental Price</div>
               <div className="py-2.5">Weekly Rental Price</div>
-              <div className="py-2.5 border-b border-white/5 pb-4">Refundable Security Deposit</div>
+
               
               {specKeys.map((key) => (
                 <div key={key} className="py-2.5 border-b border-white/5 truncate">
@@ -142,10 +142,7 @@ function ComparePageContent() {
                       <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Weekly Price</span>
                       <span className="text-xs text-ivory/80">₹{product.weeklyPrice.toLocaleString("en-IN")}</span>
                     </div>
-                    <div className="py-1 border-b border-white/5 pb-4">
-                      <span className="md:hidden text-[8px] text-muted-gray uppercase block font-mono">Security Deposit</span>
-                      <span className="text-xs text-muted-gray">₹{product.securityDeposit.toLocaleString("en-IN")}</span>
-                    </div>
+
                   </div>
 
                   {/* Specs List */}
