@@ -111,7 +111,7 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
   const taxFee = 0;
   const totalPayable = totalRentalFee - discountAmount;
 
-  const { data: bookingRaw, error: bookingErr } = await (service as any)
+  const { data: bookingRaw, error: bookingErr } = await (supabase as any)
     .from("bookings")
     .insert({
       profile_id: user.id,
@@ -137,14 +137,14 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
 
   if (bookingErr || !bookingRaw) return { success: false, error: bookingErr?.message ?? "Failed to create booking." };
 
-  await (service as any).from("booking_items").insert(
+  await (supabase as any).from("booking_items").insert(
     payload.items.map((item) => {
       const p = products.find((x: any) => x.id === item.productId);
       return { booking_id: bookingRaw.id, product_id: item.productId, quantity: item.quantity, unit_price: p?.daily_rate ?? 0 };
     })
   );
 
-  await (service as any).from("audit_logs").insert({
+  await (supabase as any).from("audit_logs").insert({
     action: "booking_created", table_name: "bookings", record_id: bookingRaw.id,
     changed_by: user.id, new_data: { reference_code: bookingRaw.reference_code, status: "pending" }, old_data: null,
   });

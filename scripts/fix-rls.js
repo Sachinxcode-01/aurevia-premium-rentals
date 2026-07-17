@@ -64,9 +64,15 @@ CREATE POLICY "inventory_admin_write" ON inventory_units FOR ALL USING (EXISTS (
 DROP POLICY IF EXISTS "audit_logs_admin_select" ON audit_logs;
 CREATE POLICY "audit_logs_admin_select" ON audit_logs FOR SELECT USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid()::text AND role = 'admin'));
 
+DROP POLICY IF EXISTS "audit_logs_customer_insert" ON audit_logs;
+CREATE POLICY "audit_logs_customer_insert" ON audit_logs FOR INSERT WITH CHECK (true);
+
 -- Booking Items policies
 DROP POLICY IF EXISTS "booking_items_customer_select" ON booking_items;
 CREATE POLICY "booking_items_customer_select" ON booking_items FOR SELECT USING (EXISTS (SELECT 1 FROM bookings WHERE bookings.id = booking_items.booking_id AND bookings.profile_id = auth.uid()::text));
+
+DROP POLICY IF EXISTS "booking_items_customer_insert" ON booking_items;
+CREATE POLICY "booking_items_customer_insert" ON booking_items FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM bookings WHERE bookings.id = booking_items.booking_id AND bookings.profile_id = auth.uid()::text));
 
 DROP POLICY IF EXISTS "booking_items_admin_all" ON booking_items;
 CREATE POLICY "booking_items_admin_all" ON booking_items FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid()::text AND role IN ('admin', 'staff')));
@@ -89,6 +95,13 @@ CREATE POLICY "coupons_admin_all" ON coupons FOR ALL USING (EXISTS (SELECT 1 FRO
 -- Reviews policies
 DROP POLICY IF EXISTS "Allow admin/staff full access to reviews" ON reviews;
 CREATE POLICY "Allow admin/staff full access to reviews" ON reviews FOR ALL USING (EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid()::text AND (profiles.role = 'admin' OR profiles.role = 'staff')));
+
+-- Booking Addons policies
+DROP POLICY IF EXISTS "booking_addons_customer_select" ON booking_addons;
+CREATE POLICY "booking_addons_customer_select" ON booking_addons FOR SELECT USING (EXISTS (SELECT 1 FROM bookings WHERE bookings.id = booking_addons.booking_id AND bookings.profile_id = auth.uid()::text));
+
+DROP POLICY IF EXISTS "booking_addons_customer_insert" ON booking_addons;
+CREATE POLICY "booking_addons_customer_insert" ON booking_addons FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM bookings WHERE bookings.id = booking_addons.booking_id AND bookings.profile_id = auth.uid()::text));
 `;
 
 async function main() {
