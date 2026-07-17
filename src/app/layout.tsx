@@ -8,6 +8,7 @@ import { ChatbotProvider } from "@/components/chatbot/ChatbotProvider";
 import FloatingChatLauncher from "@/components/chatbot/FloatingChatLauncher";
 import ChatWindow from "@/components/chatbot/ChatWindow";
 import { PWARegister } from "@/components/pwa/PWARegister";
+import { Analytics } from "@vercel/analytics/next";
 
 
 const playfair = Playfair_Display({
@@ -124,6 +125,7 @@ export default function RootLayout({
             </ChatbotProvider>
           </CartProvider>
         </ToastProvider>
+        <Analytics />
       </body>
     </html>
   );
