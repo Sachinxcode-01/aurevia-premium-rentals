@@ -50,7 +50,7 @@ const TIMELINE_STEPS = [
 
 const STEP_ORDER = TIMELINE_STEPS.map((s) => s.key);
 
-type DashTab = "overview" | "bookings" | "settings";
+type DashTab = "overview" | "bookings" | "support" | "settings";
 type BookingFilter = "all" | "upcoming" | "active" | "completed" | "cancelled";
 
 /* ─── Booking filter helper ──────────────────────────────────── */
@@ -168,6 +168,111 @@ export default function CustomerDashboard() {
   const [showCfmPw, setShowCfmPw] = useState(false);
   const [pwSaving, setPwSaving]   = useState(false);
 
+  // Support Desk & Cancellation Policy States
+  const [cancelPolicyTarget, setCancelPolicyTarget] = useState<any | null>(null);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [activeTicket, setActiveTicket] = useState<any | null>(null);
+  const [replies, setReplies] = useState<any[]>([]);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
+  const [newTicketSubject, setNewTicketSubject] = useState("");
+  const [newTicketCategory, setNewTicketCategory] = useState("rental");
+  const [newTicketPriority, setNewTicketPriority] = useState("medium");
+  const [newTicketDescription, setNewTicketDescription] = useState("");
+  const [newTicketBookingId, setNewTicketBookingId] = useState("");
+  const [replyText, setReplyText] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+  const [submittingTicket, setSubmittingTicket] = useState(false);
+
+  const loadTickets = useCallback(async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await fetch("/api/support");
+      const data = await res.json();
+      if (data.success) {
+        setTickets(data.tickets);
+      }
+    } catch (err) {
+      console.error("Failed to load tickets:", err);
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, []);
+
+  const loadReplies = useCallback(async (ticketId: string) => {
+    try {
+      const res = await fetch(`/api/support/replies?ticketId=${ticketId}`);
+      const data = await res.json();
+      if (data.success) {
+        setReplies(data.replies);
+      }
+    } catch (err) {
+      console.error("Failed to load replies:", err);
+    }
+  }, []);
+
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTicketSubject || !newTicketDescription) return;
+    setSubmittingTicket(true);
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: newTicketBookingId || undefined,
+          subject: newTicketSubject,
+          category: newTicketCategory,
+          priority: newTicketPriority,
+          description: newTicketDescription,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Support ticket created successfully.");
+        setIsCreatingTicket(false);
+        setNewTicketSubject("");
+        setNewTicketDescription("");
+        setNewTicketBookingId("");
+        loadTickets();
+      } else {
+        toast.error(data.error || "Failed to create ticket.");
+      }
+    } catch (err) {
+      toast.error("Failed to submit support request.");
+    } finally {
+      setSubmittingTicket(false);
+    }
+  };
+
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyText.trim() || !activeTicket) return;
+    setSendingReply(true);
+    try {
+      const res = await fetch("/api/support/replies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketId: activeTicket.id,
+          message: replyText,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReplyText("");
+        loadReplies(activeTicket.id);
+        loadTickets();
+      } else {
+        toast.error(data.error || "Failed to send reply.");
+      }
+    } catch (err) {
+      toast.error("Failed to send reply.");
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
   const prevCount = useRef(0);
 
   const loadFavoritesAndRecentlyViewed = useCallback(() => {
@@ -232,10 +337,13 @@ export default function CustomerDashboard() {
     }
   }, []);
 
-  // Load bookings after profile
+  // Load bookings and tickets after profile
   useEffect(() => {
-    if (!profileLoading) loadBookings();
-  }, [profileLoading, loadBookings]);
+    if (!profileLoading) {
+      loadBookings();
+      loadTickets();
+    }
+  }, [profileLoading, loadBookings, loadTickets]);
 
   // Animate on tab change
   useEffect(() => {
@@ -375,6 +483,7 @@ export default function CustomerDashboard() {
   const navItems: { id: DashTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "overview",  label: "Overview",  icon: <TrendingUp size={15} /> },
     { id: "bookings",  label: "Bookings",  icon: <ShoppingBag size={15} />, badge: bookings.length },
+    { id: "support",   label: "Support Desk", icon: <MessageCircle size={15} />, badge: tickets.filter(t => t.status !== 'resolved').length },
     { id: "settings",  label: "Settings",  icon: <Settings size={15} /> },
   ];
 
@@ -458,7 +567,9 @@ export default function CustomerDashboard() {
               </button>
               <div>
                 <span className="text-[9px] text-gold-champagne uppercase font-mono tracking-widest">Customer Portal</span>
-                <h2 className="text-base font-semibold text-ivory serif-heading">{["Overview","Bookings","Settings"][["overview","bookings","settings"].indexOf(activeTab)]}</h2>
+                <h2 className="text-base font-semibold text-ivory serif-heading">
+                  {activeTab === "overview" ? "Overview" : activeTab === "bookings" ? "Bookings" : activeTab === "support" ? "Support Desk" : "Settings"}
+                </h2>
               </div>
             </div>
 
@@ -469,6 +580,7 @@ export default function CustomerDashboard() {
                 <h1 className="serif-heading text-2xl font-light text-ivory">
                   {activeTab === "overview" && `Welcome, ${String(profile?.full_name ?? "").split(" ")[0] || "Member"}`}
                   {activeTab === "bookings" && "My Bookings"}
+                  {activeTab === "support" && "Support Desk"}
                   {activeTab === "settings" && "Account Settings"}
                 </h1>
               </div>
@@ -853,6 +965,43 @@ export default function CustomerDashboard() {
                             </div>
                           ) : null}
 
+                          {/* Penalty details block */}
+                          {(b.penalty_payment_status === "unpaid" || b.penaltyPaymentStatus === "unpaid") && (
+                            <div className="bg-rose-500/10 border border-rose-500/30 rounded-lg p-4 space-y-2 mt-3">
+                              <div className="flex items-center gap-2 text-rose-400 text-xs font-semibold">
+                                <AlertTriangle size={14} />
+                                Late Return or Damage Penalty Assessed
+                              </div>
+                              <div className="text-xs text-muted-gray leading-relaxed space-y-1 font-light">
+                                {Number(b.late_fee || b.lateFee) > 0 && (
+                                  <p>• Late Fee: <span className="text-ivory font-semibold">₹{Number(b.late_fee || b.lateFee).toLocaleString("en-IN")}</span></p>
+                                )}
+                                {Number(b.damage_cost || b.damageCost) > 0 && (
+                                  <p>• Damage Assessment: <span className="text-ivory font-semibold">₹{Number(b.damage_cost || b.damageCost).toLocaleString("en-IN")}</span></p>
+                                )}
+                                <p>• Notes: <span className="italic text-ivory">"{b.damage_description || b.damageDescription || 'No description provided'}"</span></p>
+                                <p className="text-[10px] text-rose-400/80 font-mono mt-1">Total Payable: ₹{(Number(b.late_fee || b.lateFee || 0) + Number(b.damage_cost || b.damageCost || 0)).toLocaleString("en-IN")}</p>
+                              </div>
+                              {b.penalty_payment_url || b.penaltyPaymentUrl ? (
+                                <Link
+                                  href={b.penalty_payment_url || b.penaltyPaymentUrl}
+                                  target="_blank"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-[10px] uppercase font-bold rounded tracking-wider transition mt-1 cursor-pointer"
+                                >
+                                  <CreditCard size={11} /> Pay Penalty Charges (Razorpay)
+                                </Link>
+                              ) : (
+                                <p className="text-[10px] text-muted-gray italic">Prem is setting up your Razorpay payment link. Please check back shortly.</p>
+                              )}
+                            </div>
+                          )}
+
+                          {b.penalty_payment_status === "paid" || b.penaltyPaymentStatus === "paid" ? (
+                            <div className="bg-emerald-500/10 border border-emerald-500/35 text-emerald-400 rounded-lg p-3 text-[10px] font-mono mt-3">
+                              ✓ Late return/damage penalty charges paid successfully.
+                            </div>
+                          ) : null}
+
                           {/* Actions */}
                           <div className="flex flex-wrap gap-2 pt-3 border-t border-white/5 mt-3">
                             <button
@@ -941,7 +1090,7 @@ export default function CustomerDashboard() {
 
                             {canCancel(b.status) && (
                               <button
-                                onClick={() => handleCancel(b.id)}
+                                onClick={() => setCancelPolicyTarget(b)}
                                 disabled={cancellingId === b.id}
                                 className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-rose-500/20 rounded-lg text-rose-400/70 hover:text-rose-400 hover:border-rose-500/40 transition cursor-pointer disabled:opacity-50"
                               >
@@ -953,6 +1102,248 @@ export default function CustomerDashboard() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── SUPPORT TAB ── */}
+            {activeTab === "support" && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center bg-white/5 border border-white/5 rounded-xl p-4">
+                  <div>
+                    <h3 className="text-sm font-semibold text-ivory">Support Tickets Desk</h3>
+                    <p className="text-xs text-muted-gray">Report device issues, booking queries, or seek assistance.</p>
+                  </div>
+                  {!isCreatingTicket && !activeTicket && (
+                    <button
+                      onClick={() => setIsCreatingTicket(true)}
+                      className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded transition cursor-pointer"
+                    >
+                      Create Support Ticket
+                    </button>
+                  )}
+                  {(isCreatingTicket || activeTicket) && (
+                    <button
+                      onClick={() => {
+                        setIsCreatingTicket(false);
+                        setActiveTicket(null);
+                      }}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/15 text-ivory text-xs font-semibold rounded transition cursor-pointer"
+                    >
+                      Back to Tickets List
+                    </button>
+                  )}
+                </div>
+
+                {/* Create Ticket Form */}
+                {isCreatingTicket && (
+                  <div className="glass-panel border-white/5 rounded-xl p-6 bg-black/30">
+                    <h4 className="text-xs uppercase font-mono tracking-widest text-gold-champagne mb-4">New Support Ticket</h4>
+                    <form onSubmit={handleCreateTicket} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-mono text-muted-gray">Category</label>
+                          <select
+                            value={newTicketCategory}
+                            onChange={(e) => setNewTicketCategory(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                          >
+                            <option value="rental" className="bg-obsidian">Rental Issues (Assigned to Prem)</option>
+                            <option value="technical" className="bg-obsidian">Technical & Hardware Issues (Assigned to Sachin)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-mono text-muted-gray">Related Booking (Optional)</label>
+                          <select
+                            value={newTicketBookingId}
+                            onChange={(e) => setNewTicketBookingId(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                          >
+                            <option value="" className="bg-obsidian">No Specific Booking</option>
+                            {bookings.map((b: any) => (
+                              <option key={b.id} value={b.id} className="bg-obsidian">
+                                {b.referenceCode || b.reference_code} - {b.startDate || b.start_date}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-mono text-muted-gray">Subject</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Brief summary of request"
+                            value={newTicketSubject}
+                            onChange={(e) => setNewTicketSubject(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] uppercase font-mono text-muted-gray">Priority</label>
+                          <select
+                            value={newTicketPriority}
+                            onChange={(e) => setNewTicketPriority(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                          >
+                            <option value="low" className="bg-obsidian">Low</option>
+                            <option value="medium" className="bg-obsidian">Medium</option>
+                            <option value="high" className="bg-obsidian">High</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] uppercase font-mono text-muted-gray">Detailed Description</label>
+                        <textarea
+                          rows={5}
+                          required
+                          placeholder="Describe the issue, hardware error, or reservation request in detail..."
+                          value={newTicketDescription}
+                          onChange={(e) => setNewTicketDescription(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={submittingTicket}
+                        className="px-5 py-2.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded-lg tracking-wider transition cursor-pointer flex items-center gap-2"
+                      >
+                        {submittingTicket ? <Loader2 size={12} className="animate-spin" /> : "Submit Ticket"}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* View Ticket Thread */}
+                {activeTicket && (
+                  <div className="space-y-4">
+                    <div className="glass-panel border-white/5 rounded-xl p-5 bg-black/20 space-y-3">
+                      <div className="flex justify-between items-start border-b border-white/5 pb-3">
+                        <div>
+                          <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">Support Request</span>
+                          <h4 className="text-sm font-semibold text-ivory mt-0.5">{activeTicket.subject}</h4>
+                          <p className="text-[10px] text-muted-gray mt-1 font-mono">Ticket ID: {activeTicket.id} · Assigned to: {activeTicket.assigned_to}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
+                          activeTicket.status === "resolved"
+                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                        } border`}>
+                          {activeTicket.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-ivory/80 leading-relaxed bg-white/2 p-3 rounded border border-white/5 font-light">
+                        {activeTicket.description}
+                      </p>
+                    </div>
+
+                    {/* Replies Thread */}
+                    <div className="space-y-3 pl-4 md:pl-8 border-l border-white/5">
+                      <h5 className="text-[9px] uppercase font-mono tracking-widest text-muted-gray mb-2">Conversation History</h5>
+                      {replies.length === 0 ? (
+                        <p className="text-xs text-muted-gray italic">No replies yet.</p>
+                      ) : (
+                        replies.map((rep: any) => {
+                          const isMe = rep.sender_id === profile?.id;
+                          return (
+                            <div key={rep.id} className={`p-3.5 rounded-lg border text-xs max-w-lg ${
+                              isMe
+                                ? "bg-gold-champagne/5 border-gold-border/20 self-end ml-auto"
+                                : "bg-white/5 border-white/10"
+                            }`}>
+                              <div className="flex justify-between items-center text-[9px] text-muted-gray mb-1.5 font-mono">
+                                <span className={isMe ? "text-gold-champagne" : "text-ivory"}>
+                                  {isMe ? "You (Customer)" : rep.profiles?.full_name || "Aurevia Support"}
+                                </span>
+                                <span>{new Date(rep.created_at).toLocaleString("en-IN")}</span>
+                              </div>
+                              <p className="leading-relaxed text-ivory/95 font-light">{rep.message}</p>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Reply Form */}
+                    {activeTicket.status !== "resolved" && (
+                      <form onSubmit={handleSendReply} className="space-y-2 mt-4">
+                        <textarea
+                          rows={3}
+                          required
+                          placeholder="Type your reply to support..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50 placeholder:text-muted-gray/40"
+                        />
+                        <button
+                          type="submit"
+                          disabled={sendingReply}
+                          className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded-lg transition cursor-pointer flex items-center gap-2"
+                        >
+                          {sendingReply ? <Loader2 size={12} className="animate-spin" /> : "Send Reply"}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {/* Tickets List */}
+                {!isCreatingTicket && !activeTicket && (
+                  <div className="space-y-3">
+                    {ticketsLoading ? (
+                      <div className="space-y-2">
+                        {[1,2].map(i => <div key={i} className="h-16 bg-white/5 rounded animate-pulse" />)}
+                      </div>
+                    ) : tickets.length === 0 ? (
+                      <div className="glass-panel border-white/5 rounded-xl p-12 text-center space-y-2">
+                        <MessageCircle size={24} className="text-muted-gray/30 mx-auto" />
+                        <p className="text-xs text-muted-gray">No support tickets found. Create a ticket if you need help.</p>
+                      </div>
+                    ) : (
+                      tickets.map((t: any) => (
+                        <div
+                          key={t.id}
+                          onClick={() => {
+                            setActiveTicket(t);
+                            loadReplies(t.id);
+                          }}
+                          className="p-4 bg-white/3 hover:bg-white/5 border border-white/5 rounded-xl flex items-center justify-between gap-4 transition cursor-pointer"
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-ivory truncate">{t.subject}</span>
+                              <span className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded font-mono ${
+                                t.priority === "high"
+                                  ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                                  : t.priority === "medium"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                  : "bg-white/5 text-muted-gray border border-white/10"
+                              }`}>
+                                {t.priority}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-muted-gray mt-1.5">
+                              Category: {t.category === "technical" ? "Technical (Sachin)" : "Rental Operations (Prem)"} · Updated: {new Date(t.updated_at || t.created_at).toLocaleDateString("en-IN")}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
+                              t.status === "resolved"
+                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                            } border`}>
+                              {t.status}
+                            </span>
+                            <ChevronRight size={14} className="text-muted-gray/50" />
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
@@ -1132,6 +1523,90 @@ export default function CustomerDashboard() {
           </main>
         </div>
       </div>
+
+      {/* Cancellation Policy rich modal */}
+      {cancelPolicyTarget && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-panel border-white/10 rounded-xl max-w-md w-full p-6 space-y-6 relative bg-obsidian shadow-2xl">
+            <button
+              onClick={() => setCancelPolicyTarget(null)}
+              className="absolute right-4 top-4 text-muted-gray hover:text-ivory transition cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+            
+            <div className="space-y-2 border-b border-white/5 pb-3">
+              <span className="text-[9px] text-gold-champagne uppercase font-mono tracking-widest block">Cancellation Request</span>
+              <h3 className="serif-heading text-lg font-light text-ivory">Booking Ref: {cancelPolicyTarget.referenceCode || cancelPolicyTarget.reference_code}</h3>
+            </div>
+
+            <div className="space-y-4 text-xs font-light text-muted-gray leading-relaxed">
+              <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg p-3 text-rose-400 font-mono text-[10px] flex items-start gap-2">
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold uppercase tracking-wider mb-1">Aurevia Cancellation Terms</p>
+                  <p>• Cancel 24h or more prior: Eligible for 100% full refund.</p>
+                  <p>• Cancel under 24h prior: Subject to 50% cancellation fee.</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 bg-white/3 rounded-lg p-4 font-mono text-[10px]">
+                <p className="text-gold-champagne uppercase tracking-wider font-bold border-b border-white/5 pb-1 mb-2">Estimated Refund Calculation</p>
+                <p>Booking Paid: ₹{((cancelPolicyTarget.totalPayable ?? cancelPolicyTarget.total_payable) || 0).toLocaleString("en-IN")}</p>
+                {(() => {
+                  const start = new Date(cancelPolicyTarget.startDate || cancelPolicyTarget.start_date);
+                  const now = new Date();
+                  const hoursRemaining = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
+                  const isFull = hoursRemaining >= 24;
+                  const fee = isFull ? 0 : (cancelPolicyTarget.totalPayable ?? cancelPolicyTarget.total_payable) * 0.5;
+                  const refund = (cancelPolicyTarget.totalPayable ?? cancelPolicyTarget.total_payable) - fee;
+                  return (
+                    <>
+                      <p>Hours Until Booking: {hoursRemaining > 0 ? `${Math.round(hoursRemaining)} hours` : "Expired"}</p>
+                      <p>Cancellation Fee: ₹{fee.toLocaleString("en-IN")} ({isFull ? "0%" : "50%"})</p>
+                      <p className="text-ivory font-bold border-t border-white/5 pt-1.5 mt-1">Est. Refund Back: ₹{refund.toLocaleString("en-IN")}</p>
+                    </>
+                  );
+                })()}
+              </div>
+
+              <p className="italic text-[10px] text-muted-gray/80">Refunds are processed back to your original payment method via Razorpay within 5-7 business days.</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  const bid = cancelPolicyTarget.id;
+                  setCancelPolicyTarget(null);
+                  setCancellingId(bid);
+                  try {
+                    const res = await cancelBookingAction(bid);
+                    if (res.success) {
+                      toast.success("Booking cancelled & refund request queued.");
+                      await loadBookings();
+                    } else {
+                      toast.error(res.error || "Cancellation failed.");
+                    }
+                  } catch {
+                    toast.error("Cancellation failed.");
+                  } finally {
+                    setCancellingId(null);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer text-center"
+              >
+                Agree & Cancel Booking
+              </button>
+              <button
+                onClick={() => setCancelPolicyTarget(null)}
+                className="flex-1 py-2.5 bg-white/10 hover:bg-white/15 text-ivory text-xs font-semibold uppercase rounded-lg transition cursor-pointer text-center"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   );
 }

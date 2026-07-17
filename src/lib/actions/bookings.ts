@@ -35,6 +35,33 @@ function countDays(start: string, end: string): number {
 
 // ─── 1. Create Booking ────────────────────────────────────────
 export async function createBookingAction(payload: CreateBookingPayload): Promise<BookingActionResult> {
+  const { isSupabaseConfigured, db } = await import("@/lib/db/store");
+  if (!isSupabaseConfigured()) {
+    const booking = await db.createBooking({
+      profileId: "mock-profile-id",
+      referenceCode: generateReferenceCode(),
+      startDate: payload.startDate,
+      endDate: payload.endDate,
+      totalRentalFee: 0,
+      taxFee: 0,
+      deliveryFee: 0,
+      discountAmount: 0,
+      totalPayable: 0,
+      deliveryMethod: payload.deliveryMethod,
+      contactName: payload.contactName,
+      contactPhone: payload.contactPhone,
+      contactEmail: payload.contactEmail,
+      couponApplied: payload.couponApplied,
+      items: payload.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: 799 })),
+      addons: payload.addonIds.map((a) => ({ addonId: a.addonId, price: 0 })),
+      emergencyContact: "",
+      agreementAccepted: false,
+    });
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+    return { success: true, referenceCode: booking.referenceCode, bookingId: booking.id };
+  }
+
   const supabase = await createServerSupabaseClient();
   const service = await createServiceSupabaseClient();
 
@@ -46,7 +73,7 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
 
   const { data: productsRaw } = await (service as any)
     .from("products")
-    .select("id, daily_rate, is_available")
+    .select("id, daily_rate, daily_price, is_available")
     .in("id", payload.items.map((i) => i.productId));
 
   const products: any[] = productsRaw ?? [];
@@ -56,15 +83,28 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
     const p = products.find((x: any) => x.id === item.productId);
     if (!p) return { success: false, error: `Product ${item.productId} not found.` };
     if (!p.is_available) return { success: false, error: "A selected product is currently unavailable." };
-    totalRentalFee += p.daily_rate * item.quantity * days;
+    const rate = p.daily_price || p.daily_rate || 799;
+    totalRentalFee += rate * item.quantity * days;
   }
 
   let discountAmount = 0;
   if (payload.couponApplied) {
     const { data: coupon } = await (service as any)
-      .from("coupons").select("discount_percent, is_active").eq("code", payload.couponApplied.toUpperCase()).single();
-    if (coupon?.is_active) discountAmount = (totalRentalFee * coupon.discount_percent) / 100;
+      .from("coupons")
+      .select("discount_percent, discount_flat, is_active")
+      .eq("code", payload.couponApplied.toUpperCase())
+      .maybeSingle();
+
+    if (coupon?.is_active) {
+      if (coupon.discount_flat && coupon.discount_flat > 0) {
+        const totalItemsQty = payload.items.reduce((acc, item) => acc + item.quantity, 0);
+        discountAmount = Number(coupon.discount_flat) * totalItemsQty * days;
+      } else {
+        discountAmount = (totalRentalFee * Number(coupon.discount_percent || 0)) / 100;
+      }
+    }
   }
+
 
   // Under pricing rules: No deposit, GST, shipping, handling or hidden charges.
   const deliveryFee = 0;
@@ -147,29 +187,72 @@ export async function updateBookingStatusAction(
 
 // ─── 3. Cancel Booking (Customer own only) ───────────────────
 export async function cancelBookingAction(bookingId: string): Promise<{ success: boolean; error?: string }> {
+  const { isSupabaseConfigured, db } = await import("@/lib/db/store");
+  if (!isSupabaseConfigured()) {
+    const booking = await db.getBookingById(bookingId);
+    if (!booking) return { success: false, error: "Booking not found." };
+    if (!["pending", "confirmed", "approval_pending", "paid", "pending_payment"].includes(booking.status)) {
+      return { success: false, error: "This booking cannot be cancelled at its current stage." };
+    }
+    
+    await db.updateBookingStatus(bookingId, "cancelled", "Cancelled by customer.", "Customer");
+    
+    // Create refund request if paid
+    if (booking.paymentStatus === "paid") {
+      const start = new Date(booking.startDate);
+      const now = new Date();
+      const hoursRemaining = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
+      const refundAmount = hoursRemaining >= 24 ? booking.totalPayable : booking.totalPayable * 0.5;
+      await db.requestRefund(bookingId, refundAmount, "Customer cancellation request");
+    }
+    
+    revalidatePath("/dashboard");
+    revalidatePath("/admin");
+    return { success: true };
+  }
+
   const supabase = await createServerSupabaseClient();
   const service = await createServiceSupabaseClient();
 
   const { data: { user }, error: authErr } = await supabase.auth.getUser();
   if (authErr || !user) return { success: false, error: "Not authenticated." };
 
-  const { data: bookingRaw } = await (service as any).from("bookings").select("profile_id, status").eq("id", bookingId).single();
+  const { data: bookingRaw } = await (service as any).from("bookings").select("profile_id, status, total_payable, payment_status, start_date").eq("id", bookingId).single();
   if (!bookingRaw) return { success: false, error: "Booking not found." };
   if (bookingRaw.profile_id !== user.id) return { success: false, error: "Unauthorized." };
-  if (!["pending", "confirmed"].includes(bookingRaw.status)) return { success: false, error: "This booking cannot be cancelled at its current stage." };
+  if (!["pending", "confirmed", "approval_pending", "paid", "pending_payment"].includes(bookingRaw.status)) {
+    return { success: false, error: "This booking cannot be cancelled at its current stage." };
+  }
 
   const { error } = await (service as any).from("bookings").update({ status: "cancelled" }).eq("id", bookingId);
   if (error) return { success: false, error: error.message };
 
   await (service as any).rpc("release_inventory_for_booking", { p_booking_id: bookingId });
+  
+  if (bookingRaw.payment_status === "paid") {
+    const start = new Date(bookingRaw.start_date);
+    const now = new Date();
+    const hoursRemaining = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const refundAmount = hoursRemaining >= 24 ? bookingRaw.total_payable : bookingRaw.total_payable * 0.5;
+
+    await (service as any).from("refunds").insert({
+      booking_id: bookingId,
+      amount: refundAmount,
+      status: "requested",
+      reason: "Customer cancellation request",
+    });
+  }
+
   await (service as any).from("audit_logs").insert({
     action: "booking_cancelled_by_customer", table_name: "bookings", record_id: bookingId,
     changed_by: user.id, old_data: { status: bookingRaw.status }, new_data: { status: "cancelled" },
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/admin");
   return { success: true };
 }
+
 
 // ─── 4. Get current user's bookings ─────────────────────────
 export async function getUserBookingsAction() {

@@ -41,16 +41,27 @@ export default function Home() {
   const [revRating, setRevRating] = React.useState(5);
   const [revSuccess, setRevSuccess] = React.useState(false);
 
+  const [faqsList, setFaqsList] = React.useState<any[]>([]);
+  const [testimonialsList, setTestimonialsList] = React.useState<any[]>([]);
+  const [productsList, setProductsList] = React.useState<any[]>([]);
+  const [settings, setSettings] = React.useState<Record<string, string>>({});
+
   React.useEffect(() => {
     db.getReviews(undefined, true).then(setReviewsList);
+    db.getFAQs().then(setFaqsList);
+    db.getTestimonials().then(setTestimonialsList);
+    db.getProducts().then(setProductsList);
+    db.getAllWebsiteSettings().then(setSettings);
   }, []);
 
-  const featuredGear = MOCK_PRODUCTS.filter((p) => p.isFeatured).slice(0, 3);
-  const mostRented = MOCK_PRODUCTS.slice(0, 4);
+  const finalProducts = productsList.length > 0 ? productsList : MOCK_PRODUCTS;
+
+  const featuredGear = finalProducts.filter((p) => p.isFeatured).slice(0, 3);
+  const mostRented = finalProducts.slice(0, 4);
 
   const featuredSectionRef = useRef<HTMLDivElement>(null);
 
-  const featuredCameras = MOCK_PRODUCTS.filter(
+  const featuredCameras = finalProducts.filter(
     (p) =>
       p.categoryId === "c1000000-0000-0000-0000-000000000001" || // DSLR Cameras
       p.categoryId === "c1000000-0000-0000-0000-000000000002" || // Mirrorless Cameras
@@ -266,6 +277,8 @@ export default function Home() {
       <HeroScrollSequence
         onExploreClick={() => router.push("/explore")}
         onBookClick={() => router.push("/booking")}
+        title={settings.homepage_banner_title}
+        subtitle={settings.homepage_banner_subtitle}
       />
 
       {/* Brand Highlights Ribbon */}
@@ -813,7 +826,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-4">
-            {MOCK_FAQS.map((faq) => (
+            {(faqsList.length > 0 ? faqsList : MOCK_FAQS).map((faq) => (
               <details key={faq.id} className="group glass-panel border-white/5 rounded-lg p-5 [&_summary::-webkit-details-marker]:hidden transition-all duration-300">
                 <summary className="flex justify-between items-center font-semibold text-xs uppercase tracking-wider text-ivory cursor-pointer select-none">
                   {faq.question}

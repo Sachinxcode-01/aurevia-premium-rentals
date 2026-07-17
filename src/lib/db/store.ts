@@ -335,7 +335,188 @@ function saveLocalWaitlist(waitlist: WaitlistEntry[]) {
   }
 }
 
+// Local mock storage helpers
+let serverDrafts: any[] = [];
+let serverHistory: any[] = [];
+let serverRefunds: any[] = [];
+let serverMaintenance: any[] = [];
+let serverTickets: any[] = [];
+let serverReplies: any[] = [];
+let serverWebsiteSettings: Record<string, string> = {
+  homepage_banner_title: "Frame the Extraordinary",
+  homepage_banner_subtitle: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
+  homepage_banner_image: "/assets/canon-sequence/frame-210.jpg",
+  announcement_bar_text: "⚡ SPECIAL OFFER: Save ₹199/day on all cameras with coupon AUREVIA199!",
+  announcement_bar_active: "true",
+  rental_terms: "1. No security deposit or KYC required.\n2. Flat daily rate billing.\n3. Cancel 24h prior for 100% refund.",
+  contact_phone: "+91 96869 09048",
+  contact_email: "prem@aurevia.com",
+  contact_address: "Aurevia Studio Vault, Gadag, Karnataka",
+};
+
+let previewModeActive = false;
+
+function getLocalDrafts(): any[] {
+  if (!isClient) return serverDrafts;
+  const stored = localStorage.getItem("aurevia_drafts");
+  return stored ? JSON.parse(stored) : serverDrafts;
+}
+
+function saveLocalDrafts(drafts: any[]) {
+  serverDrafts = drafts;
+  if (isClient) {
+    localStorage.setItem("aurevia_drafts", JSON.stringify(drafts));
+  }
+}
+
+function getLocalHistory(): any[] {
+  if (!isClient) return serverHistory;
+  const stored = localStorage.getItem("aurevia_history");
+  return stored ? JSON.parse(stored) : serverHistory;
+}
+
+function saveLocalHistory(hist: any[]) {
+  serverHistory = hist;
+  if (isClient) {
+    localStorage.setItem("aurevia_history", JSON.stringify(hist));
+  }
+}
+
+function getLocalRefunds(): any[] {
+  if (!isClient) return serverRefunds;
+  const stored = localStorage.getItem("aurevia_refunds");
+  return stored ? JSON.parse(stored) : serverRefunds;
+}
+
+function saveLocalRefunds(refs: any[]) {
+  serverRefunds = refs;
+  if (isClient) {
+    localStorage.setItem("aurevia_refunds", JSON.stringify(refs));
+  }
+}
+
+function getLocalMaintenance(): any[] {
+  if (!isClient) return serverMaintenance;
+  const stored = localStorage.getItem("aurevia_maintenance");
+  return stored ? JSON.parse(stored) : serverMaintenance;
+}
+
+function saveLocalMaintenance(maint: any[]) {
+  serverMaintenance = maint;
+  if (isClient) {
+    localStorage.setItem("aurevia_maintenance", JSON.stringify(maint));
+  }
+}
+
+function getLocalTickets(): any[] {
+  if (!isClient) return serverTickets;
+  const stored = localStorage.getItem("aurevia_tickets");
+  return stored ? JSON.parse(stored) : serverTickets;
+}
+
+function saveLocalTickets(tix: any[]) {
+  serverTickets = tix;
+  if (isClient) {
+    localStorage.setItem("aurevia_tickets", JSON.stringify(tix));
+  }
+}
+
+function getLocalReplies(): any[] {
+  if (!isClient) return serverReplies;
+  const stored = localStorage.getItem("aurevia_replies");
+  return stored ? JSON.parse(stored) : serverReplies;
+}
+
+function saveLocalReplies(reps: any[]) {
+  serverReplies = reps;
+  if (isClient) {
+    localStorage.setItem("aurevia_replies", JSON.stringify(reps));
+  }
+}
+
+function getLocalSettings(): Record<string, string> {
+  if (!isClient) return serverWebsiteSettings;
+  const stored = localStorage.getItem("aurevia_website_settings");
+  if (!stored) {
+    localStorage.setItem("aurevia_website_settings", JSON.stringify(serverWebsiteSettings));
+    return serverWebsiteSettings;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalSettings(settings: Record<string, string>) {
+  serverWebsiteSettings = settings;
+  if (isClient) {
+    localStorage.setItem("aurevia_website_settings", JSON.stringify(settings));
+  }
+}
+
+function getLocalProducts(): Product[] {
+  if (!isClient) return MOCK_PRODUCTS;
+  const stored = localStorage.getItem("aurevia_products");
+  if (!stored) {
+    localStorage.setItem("aurevia_products", JSON.stringify(MOCK_PRODUCTS));
+    return MOCK_PRODUCTS;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalProducts(products: Product[]) {
+  if (isClient) {
+    localStorage.setItem("aurevia_products", JSON.stringify(products));
+  }
+}
+
+function getLocalCoupons(): Coupon[] {
+  if (!isClient) return MOCK_COUPONS;
+  const stored = localStorage.getItem("aurevia_coupons");
+  if (!stored) {
+    localStorage.setItem("aurevia_coupons", JSON.stringify(MOCK_COUPONS));
+    return MOCK_COUPONS;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalCoupons(coupons: Coupon[]) {
+  if (isClient) {
+    localStorage.setItem("aurevia_coupons", JSON.stringify(coupons));
+  }
+}
+
+function getLocalFAQs(): FAQ[] {
+  if (!isClient) return MOCK_FAQS;
+  const stored = localStorage.getItem("aurevia_faqs");
+  if (!stored) {
+    localStorage.setItem("aurevia_faqs", JSON.stringify(MOCK_FAQS));
+    return MOCK_FAQS;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalFAQs(faqs: FAQ[]) {
+  if (isClient) {
+    localStorage.setItem("aurevia_faqs", JSON.stringify(faqs));
+  }
+}
+
+function getLocalTestimonials(): Testimonial[] {
+  if (!isClient) return MOCK_TESTIMONIALS;
+  const stored = localStorage.getItem("aurevia_testimonials");
+  if (!stored) {
+    localStorage.setItem("aurevia_testimonials", JSON.stringify(MOCK_TESTIMONIALS));
+    return MOCK_TESTIMONIALS;
+  }
+  return JSON.parse(stored);
+}
+
+function saveLocalTestimonials(testimonials: Testimonial[]) {
+  if (isClient) {
+    localStorage.setItem("aurevia_testimonials", JSON.stringify(testimonials));
+  }
+}
+
 // ----------------------------------------------------
+
 // SUPABASE CLIENT SELECTOR & DUAL-MODE LOGIC
 // ----------------------------------------------------
 export const isSupabaseConfigured = () => {
@@ -472,6 +653,8 @@ export const db = {
     search?: string;
     featuredOnly?: boolean;
   }): Promise<Product[]> {
+    let products: Product[] = [];
+
     if (isSupabaseConfigured()) {
       const supabase = await getSupabase();
       const { data: dbProds, error } = await supabase
@@ -480,7 +663,7 @@ export const db = {
         .eq("is_archived", false);
 
       if (!error && dbProds) {
-        let products: Product[] = (dbProds as any[]).map(mapDbProductToApp);
+        products = (dbProds as any[]).map(mapDbProductToApp);
 
         if (filters?.featuredOnly) {
           products = products.filter((p: Product) => p.isFeatured);
@@ -505,60 +688,55 @@ export const db = {
               p.description.toLowerCase().includes(q)
           );
         }
-        return products;
       }
+    } else {
+      // Mock Fallback
+      products = getLocalProducts();
+      if (filters?.featuredOnly) products = products.filter((p) => p.isFeatured);
+      if (filters?.categorySlug) {
+        const cat = MOCK_CATEGORIES.find((c) => c.slug === filters.categorySlug);
+        if (cat) products = products.filter((p) => p.categoryId === cat.id);
+      }
+      if (filters?.brandSlug) {
+        const brand = MOCK_BRANDS.find((b) => b.slug === filters.brandSlug);
+        if (brand) products = products.filter((p) => p.brandId === brand.id);
+      }
+      if (filters?.search) {
+        const query = filters.search.toLowerCase();
+        products = products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            p.description.toLowerCase().includes(query) ||
+            Object.values(p.specs).some((val) => val.toLowerCase().includes(query))
+        );
+      }
+      products = products.filter((p) => !p.isArchived);
     }
 
-    // Mock Fallback
-    let products = [...MOCK_PRODUCTS];
-    if (filters?.featuredOnly) products = products.filter((p) => p.isFeatured);
-    if (filters?.categorySlug) {
-      const cat = MOCK_CATEGORIES.find((c) => c.slug === filters.categorySlug);
-      if (cat) products = products.filter((p) => p.categoryId === cat.id);
+    // Merge content drafts if preview mode is active
+    if (this.getPreviewMode()) {
+      const drafts = await this.getDrafts("product");
+      products = products.map((p) => {
+        const draft = drafts.find((d) => d.item_id === p.id);
+        return draft ? { ...p, ...draft.draft_data } : p;
+      });
     }
-    if (filters?.brandSlug) {
-      const brand = MOCK_BRANDS.find((b) => b.slug === filters.brandSlug);
-      if (brand) products = products.filter((p) => p.brandId === brand.id);
-    }
-    if (filters?.search) {
-      const query = filters.search.toLowerCase();
-      products = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
-          Object.values(p.specs).some((val) => val.toLowerCase().includes(query))
-      );
-    }
-    return products.filter((p) => !p.isArchived);
+
+    return products;
   },
 
   async getProductBySlug(slug: string): Promise<Product | null> {
-    if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, product_images(*)")
-        .eq("slug", slug)
-        .single();
-      if (!error && data) return mapDbProductToApp(data);
-    }
-    const product = MOCK_PRODUCTS.find((p) => p.slug === slug);
+    const products = await this.getProducts();
+    const product = products.find((p) => p.slug === slug);
     return product || null;
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase
-        .from("products")
-        .select("*, product_images(*)")
-        .eq("id", id)
-        .single();
-      if (!error && data) return mapDbProductToApp(data);
-    }
-    const product = MOCK_PRODUCTS.find((p) => p.id === id);
+    const products = await this.getProducts();
+    const product = products.find((p) => p.id === id);
     return product || null;
   },
+
 
   async getAddons(): Promise<ProductAddon[]> {
     if (isSupabaseConfigured()) {
@@ -1411,14 +1589,60 @@ export const db = {
 
   // 6. Testimonials & FAQs & Coupon Codes
   async getTestimonials(): Promise<Testimonial[]> {
-    return MOCK_TESTIMONIALS;
+    let testimonials: Testimonial[] = [];
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.from("testimonials").select("*");
+      if (!error && data) {
+        testimonials = data.map((t: any) => ({
+          id: t.id,
+          authorName: t.author_name,
+          authorTitle: t.author_title,
+          quote: t.quote,
+          rating: Number(t.rating || 5),
+          avatarUrl: t.avatar_url,
+        }));
+      }
+    } else {
+      testimonials = getLocalTestimonials();
+    }
+
+    if (this.getPreviewMode()) {
+      const drafts = await this.getDrafts("testimonial");
+      testimonials = testimonials.map((t) => {
+        const draft = drafts.find((d) => d.item_id === t.id);
+        return draft ? { ...t, ...draft.draft_data } : t;
+      });
+    }
+    return testimonials;
   },
 
   async getFAQs(): Promise<FAQ[]> {
-    return MOCK_FAQS;
+    let faqs: FAQ[] = [];
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.from("faqs").select("*");
+      if (!error && data) faqs = data;
+    } else {
+      faqs = getLocalFAQs();
+    }
+
+    if (this.getPreviewMode()) {
+      const drafts = await this.getDrafts("faq");
+      faqs = faqs.map((f) => {
+        const draft = drafts.find((d) => d.item_id === f.id);
+        return draft ? { ...f, ...draft.draft_data } : f;
+      });
+    }
+    return faqs;
   },
 
   async getCoupon(code: string): Promise<Coupon | null> {
+    if (this.getPreviewMode()) {
+      const draft = await this.getDraft("coupon", code);
+      if (draft) return draft.draft_data;
+    }
+
     if (isSupabaseConfigured()) {
       const supabase = await getSupabase();
       const { data, error } = await supabase
@@ -1441,11 +1665,13 @@ export const db = {
         };
       }
     }
-    const coupon = MOCK_COUPONS.find(
+    const coupons = getLocalCoupons();
+    const coupon = coupons.find(
       (c) => c.code.toUpperCase() === code.toUpperCase() && c.isActive
     );
     return coupon || null;
   },
+
 
   // 7. Advanced Admin Analytics Report
   async getAdminStats(): Promise<{
@@ -2155,4 +2381,924 @@ export const db = {
     }
     return false;
   },
+
+  // ----------------------------------------------------
+  // CMS Drafts, Preview, Publish, Rollback
+  // ----------------------------------------------------
+  async saveDraft(itemType: string, itemId: string, draftData: any): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("content_drafts")
+        .upsert({
+          item_type: itemType,
+          item_id: itemId,
+          draft_data: draftData,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "item_type,item_id" });
+      return !error;
+    }
+    const drafts = getLocalDrafts();
+    const idx = drafts.findIndex((d) => d.item_type === itemType && d.item_id === itemId);
+    if (idx !== -1) {
+      drafts[idx].draft_data = draftData;
+      drafts[idx].updated_at = new Date().toISOString();
+    } else {
+      drafts.push({
+        id: `draft_${Date.now()}`,
+        item_type: itemType,
+        item_id: itemId,
+        draft_data: draftData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+    saveLocalDrafts(drafts);
+    return true;
+  },
+
+  async getDraft(itemType: string, itemId: string): Promise<any | null> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("content_drafts")
+        .select("*")
+        .eq("item_type", itemType)
+        .eq("item_id", itemId)
+        .maybeSingle();
+      if (!error && data) return data;
+      return null;
+    }
+    const drafts = getLocalDrafts();
+    const draft = drafts.find((d) => d.item_type === itemType && d.item_id === itemId);
+    return draft || null;
+  },
+
+  async getDrafts(itemType?: string): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      let query = supabase.from("content_drafts").select("*");
+      if (itemType) {
+        query = query.eq("item_type", itemType);
+      }
+      const { data, error } = await query;
+      return error ? [] : data;
+    }
+    const drafts = getLocalDrafts();
+    if (itemType) {
+      return drafts.filter((d) => d.item_type === itemType);
+    }
+    return drafts;
+  },
+
+  async publishDraft(itemType: string, itemId: string, publishedBy = "admin"): Promise<boolean> {
+    const draft = await this.getDraft(itemType, itemId);
+    if (!draft) return false;
+
+    const draftData = draft.draft_data;
+
+    // Save history / backup current live before publishing
+    let currentLive: any = null;
+    if (itemType === "settings") {
+      const liveVal = await this.getWebsiteSetting(itemId);
+      currentLive = { value: liveVal };
+    } else if (itemType === "product") {
+      currentLive = await this.getProductById(itemId);
+    } else if (itemType === "coupon") {
+      currentLive = await this.getCoupon(itemId);
+    } else if (itemType === "faq") {
+      const faqs = await this.getFAQs();
+      currentLive = faqs.find((f: any) => f.id === itemId) || null;
+    } else if (itemType === "testimonial") {
+      const testimonials = await this.getTestimonials();
+      currentLive = testimonials.find((t: any) => t.id === itemId) || null;
+    }
+
+    if (currentLive) {
+      if (isSupabaseConfigured()) {
+        const supabase = await getSupabase();
+        await supabase.from("content_history").insert({
+          item_type: itemType,
+          item_id: itemId,
+          published_data: currentLive,
+          published_by: publishedBy,
+        });
+      } else {
+        const history = getLocalHistory();
+        history.push({
+          id: `hist_${Date.now()}`,
+          item_type: itemType,
+          item_id: itemId,
+          published_data: currentLive,
+          published_by: publishedBy,
+          published_at: new Date().toISOString(),
+        });
+        saveLocalHistory(history);
+      }
+    }
+
+    // Publish: Write draft data to actual tables
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      if (itemType === "settings") {
+        await supabase.from("website_settings").upsert({
+          key: itemId,
+          value: typeof draftData === "object" ? JSON.stringify(draftData) : String(draftData),
+        });
+      } else if (itemType === "product") {
+        await supabase.from("products").update({
+          name: draftData.name,
+          description: draftData.description,
+          daily_price: draftData.dailyPrice || draftData.dailyPrice === 0 ? draftData.dailyPrice : draftData.daily_price,
+          specs_json: draftData.specs,
+        }).eq("id", itemId);
+      } else if (itemType === "coupon") {
+        // Find existing record or insert
+        const { data: couponExists } = await supabase.from("coupons").select("id").eq("code", itemId).maybeSingle();
+        if (couponExists) {
+          await supabase.from("coupons").update({
+            is_active: draftData.isActive,
+            active_until: draftData.activeUntil,
+          }).eq("code", itemId);
+        } else {
+          await supabase.from("coupons").insert({
+            code: itemId,
+            discount_percent: draftData.discountPercent || 0,
+            discount_flat: draftData.discountFlat || 0,
+            is_active: draftData.isActive,
+            active_until: draftData.activeUntil,
+          });
+        }
+      } else if (itemType === "faq") {
+        await supabase.from("faqs").upsert({
+          id: itemId,
+          question: draftData.question,
+          answer: draftData.answer,
+          category: draftData.category,
+        });
+      } else if (itemType === "testimonial") {
+        await supabase.from("testimonials").upsert({
+          id: itemId,
+          author_name: draftData.authorName,
+          author_title: draftData.authorTitle,
+          quote: draftData.quote,
+          rating: draftData.rating,
+        });
+      }
+
+      // Delete draft
+      await supabase.from("content_drafts").delete().eq("item_type", itemType).eq("item_id", itemId);
+    } else {
+      // Mock publish
+      if (itemType === "settings") {
+        const settings = getLocalSettings();
+        settings[itemId] = typeof draftData === "object" ? JSON.stringify(draftData) : String(draftData);
+        saveLocalSettings(settings);
+      } else if (itemType === "product") {
+        const products = getLocalProducts();
+        const pIdx = products.findIndex((p) => p.id === itemId);
+        if (pIdx !== -1) {
+          products[pIdx] = { ...products[pIdx], ...draftData };
+          saveLocalProducts(products);
+        }
+      } else if (itemType === "coupon") {
+        const coupons = getLocalCoupons();
+        const cIdx = coupons.findIndex((c) => c.code.toUpperCase() === itemId.toUpperCase());
+        if (cIdx !== -1) {
+          coupons[cIdx] = { ...coupons[cIdx], ...draftData };
+        } else {
+          coupons.push({ id: `c_${Date.now()}`, code: itemId.toUpperCase(), ...draftData });
+        }
+        saveLocalCoupons(coupons);
+      } else if (itemType === "faq") {
+        const faqs = getLocalFAQs();
+        const fIdx = faqs.findIndex((f) => f.id === itemId);
+        if (fIdx !== -1) {
+          faqs[fIdx] = { ...faqs[fIdx], ...draftData };
+        } else {
+          faqs.push({ id: itemId, ...draftData });
+        }
+        saveLocalFAQs(faqs);
+      } else if (itemType === "testimonial") {
+        const testimonials = getLocalTestimonials();
+        const tIdx = testimonials.findIndex((t) => t.id === itemId);
+        if (tIdx !== -1) {
+          testimonials[tIdx] = { ...testimonials[tIdx], ...draftData };
+        } else {
+          testimonials.push({ id: itemId, ...draftData });
+        }
+        saveLocalTestimonials(testimonials);
+      }
+
+      // Delete draft
+      const drafts = getLocalDrafts();
+      const updatedDrafts = drafts.filter((d) => !(d.item_type === itemType && d.item_id === itemId));
+      saveLocalDrafts(updatedDrafts);
+    }
+
+    return true;
+  },
+
+  async rollbackVersion(itemType: string, itemId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data: historyList, error } = await supabase
+        .from("content_history")
+        .select("*")
+        .eq("item_type", itemType)
+        .eq("item_id", itemId)
+        .order("published_at", { ascending: false });
+      
+      if (error || !historyList || historyList.length === 0) return false;
+
+      const latestHistory = historyList[0];
+      const prevData = latestHistory.published_data;
+
+      // Write back prevData to actual table
+      if (itemType === "settings") {
+        await supabase.from("website_settings").upsert({
+          key: itemId,
+          value: typeof prevData.value === "object" ? JSON.stringify(prevData.value) : String(prevData.value),
+        });
+      } else if (itemType === "product") {
+        await supabase.from("products").update({
+          name: prevData.name,
+          description: prevData.description,
+          daily_price: prevData.dailyPrice || prevData.daily_price || 799,
+          specs_json: prevData.specs || prevData.specs_json || {},
+        }).eq("id", itemId);
+      } else if (itemType === "coupon") {
+        await supabase.from("coupons").update({
+          is_active: prevData.isActive || prevData.is_active || false,
+          active_until: prevData.activeUntil || prevData.active_until || "",
+        }).eq("code", itemId);
+      } else if (itemType === "faq") {
+        await supabase.from("faqs").upsert({
+          id: itemId,
+          question: prevData.question,
+          answer: prevData.answer,
+          category: prevData.category,
+        });
+      } else if (itemType === "testimonial") {
+        await supabase.from("testimonials").upsert({
+          id: itemId,
+          author_name: prevData.authorName || prevData.author_name,
+          author_title: prevData.authorTitle || prevData.author_title,
+          quote: prevData.quote,
+          rating: prevData.rating,
+        });
+      }
+
+      // Delete the history entry we rolled back to
+      await supabase.from("content_history").delete().eq("id", latestHistory.id);
+      return true;
+    }
+
+    const history = getLocalHistory();
+    let hIdx = -1;
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].item_type === itemType && history[i].item_id === itemId) {
+        hIdx = i;
+        break;
+      }
+    }
+
+    if (hIdx === -1) return false;
+
+    const prevData = history[hIdx].published_data;
+
+    if (itemType === "settings") {
+      const settings = getLocalSettings();
+      settings[itemId] = prevData.value;
+      saveLocalSettings(settings);
+    } else if (itemType === "product") {
+      const products = getLocalProducts();
+      const pIdx = products.findIndex((p) => p.id === itemId);
+      if (pIdx !== -1) {
+        products[pIdx] = { ...products[pIdx], ...prevData };
+        saveLocalProducts(products);
+      }
+    } else if (itemType === "coupon") {
+      const coupons = getLocalCoupons();
+      const cIdx = coupons.findIndex((c) => c.code.toUpperCase() === itemId.toUpperCase());
+      if (cIdx !== -1) {
+        coupons[cIdx] = { ...coupons[cIdx], ...prevData };
+        saveLocalCoupons(coupons);
+      }
+    } else if (itemType === "faq") {
+      const faqs = getLocalFAQs();
+      const fIdx = faqs.findIndex((f) => f.id === itemId);
+      if (fIdx !== -1) {
+        faqs[fIdx] = prevData;
+        saveLocalFAQs(faqs);
+      }
+    } else if (itemType === "testimonial") {
+      const testimonials = getLocalTestimonials();
+      const tIdx = testimonials.findIndex((t) => t.id === itemId);
+      if (tIdx !== -1) {
+        testimonials[tIdx] = prevData;
+        saveLocalTestimonials(testimonials);
+      }
+    }
+
+    history.splice(hIdx, 1);
+    saveLocalHistory(history);
+    return true;
+  },
+
+  async getContentHistory(itemType: string, itemId: string): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("content_history")
+        .select("*")
+        .eq("item_type", itemType)
+        .eq("item_id", itemId)
+        .order("published_at", { ascending: false });
+      return error ? [] : data;
+    }
+    const history = getLocalHistory();
+    return history.filter((h) => h.item_type === itemType && h.item_id === itemId);
+  },
+
+  setPreviewMode(enabled: boolean): void {
+    previewModeActive = enabled;
+    if (typeof window !== "undefined") {
+      if (enabled) {
+        sessionStorage.setItem("aurevia_preview_mode", "true");
+      } else {
+        sessionStorage.removeItem("aurevia_preview_mode");
+      }
+    }
+  },
+
+  getPreviewMode(): boolean {
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("aurevia_preview_mode") === "true";
+    }
+    return previewModeActive;
+  },
+
+  async getWebsiteSetting(key: string): Promise<string | null> {
+    if (this.getPreviewMode()) {
+      const draft = await this.getDraft("settings", key);
+      if (draft) return draft.draft_data.value ?? draft.draft_data;
+    }
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("website_settings")
+        .select("value")
+        .eq("key", key)
+        .maybeSingle();
+      if (!error && data) return data.value;
+    }
+
+    const settings = getLocalSettings();
+    return settings[key] || null;
+  },
+
+  async saveWebsiteSetting(key: string, value: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("website_settings")
+        .upsert({ key, value });
+      return !error;
+    }
+    const settings = getLocalSettings();
+    settings[key] = value;
+    saveLocalSettings(settings);
+    return true;
+  },
+
+  async getAllWebsiteSettings(): Promise<Record<string, string>> {
+    const defaultSettings = getLocalSettings();
+    const settings: Record<string, string> = { ...defaultSettings };
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase.from("website_settings").select("*");
+      if (!error && data) {
+        data.forEach((row: any) => {
+          settings[row.key] = row.value;
+        });
+      }
+    }
+
+    if (this.getPreviewMode()) {
+      const drafts = await this.getDrafts("settings");
+      drafts.forEach((d) => {
+        settings[d.item_id] = d.draft_data.value ?? d.draft_data;
+      });
+    }
+
+    return settings;
+  },
+
+  // ----------------------------------------------------
+  // Cancellations & Refunds
+  // ----------------------------------------------------
+  async requestRefund(bookingId: string, amount: number, reason: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("refunds")
+        .insert({
+          booking_id: bookingId,
+          amount: amount,
+          status: "requested",
+          reason: reason,
+        });
+      return !error;
+    }
+    const refunds = getLocalRefunds();
+    refunds.push({
+      id: `ref_${Date.now()}`,
+      booking_id: bookingId,
+      amount: amount,
+      status: "requested",
+      reason: reason,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    saveLocalRefunds(refunds);
+    return true;
+  },
+
+  async getRefunds(): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("refunds")
+        .select("*, booking:bookings(*)")
+        .order("created_at", { ascending: false });
+      return error ? [] : data;
+    }
+    const refunds = getLocalRefunds();
+    const bookings = getLocalBookings();
+    return refunds.map((r) => {
+      const b = bookings.find((bk) => bk.id === r.booking_id);
+      return {
+        ...r,
+        booking: b ? {
+          reference_code: b.referenceCode,
+          contact_name: b.contactName,
+          total_payable: b.totalPayable,
+          payment_status: b.paymentStatus,
+          status: b.status,
+        } : null
+      };
+    }).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  async getRefundById(id: string): Promise<any | null> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("refunds")
+        .select("*, booking:bookings(*)")
+        .eq("id", id)
+        .maybeSingle();
+      if (!error && data) return data;
+      return null;
+    }
+    const refunds = getLocalRefunds();
+    const r = refunds.find((ref) => ref.id === id);
+    if (!r) return null;
+    const bookings = getLocalBookings();
+    const b = bookings.find((bk) => bk.id === r.booking_id);
+    return {
+      ...r,
+      booking: b ? {
+        id: b.id,
+        reference_code: b.referenceCode,
+        contact_name: b.contactName,
+        total_payable: b.totalPayable,
+        payment_status: b.paymentStatus,
+        status: b.status,
+      } : null
+    };
+  },
+
+  async getRefundByBookingId(bookingId: string): Promise<any | null> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("refunds")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .maybeSingle();
+      if (!error && data) return data;
+      return null;
+    }
+    const refunds = getLocalRefunds();
+    return refunds.find((r) => r.booking_id === bookingId) || null;
+  },
+
+  async updateRefundStatus(refundId: string, status: string, notes?: string, razorpayRefundId?: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const updateData: any = { status, updated_at: new Date().toISOString() };
+      if (notes) updateData.admin_notes = notes;
+      if (razorpayRefundId) updateData.razorpay_refund_id = razorpayRefundId;
+
+      const { error } = await supabase
+        .from("refunds")
+        .update(updateData)
+        .eq("id", refundId);
+      return !error;
+    }
+    const refunds = getLocalRefunds();
+    const idx = refunds.findIndex((r) => r.id === refundId);
+    if (idx !== -1) {
+      refunds[idx].status = status;
+      if (notes) refunds[idx].admin_notes = notes;
+      if (razorpayRefundId) refunds[idx].razorpay_refund_id = razorpayRefundId;
+      refunds[idx].updated_at = new Date().toISOString();
+      saveLocalRefunds(refunds);
+      return true;
+    }
+    return false;
+  },
+
+  // ----------------------------------------------------
+  // Camera Maintenance System
+  // ----------------------------------------------------
+  async createMaintenanceRecord(record: {
+    inventoryUnitId: string;
+    conditionBefore: string;
+    maintenanceReason: string;
+    repairCost: number;
+    serviceProvider: string;
+    expectedReturnDate: string;
+  }): Promise<any> {
+    // Force set unit status to maintenance
+    await this.updateInventoryUnitStatus(record.inventoryUnitId, "maintenance");
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("maintenance_records")
+        .insert({
+          inventory_unit_id: record.inventoryUnitId,
+          condition_before: record.conditionBefore,
+          maintenance_reason: record.maintenanceReason,
+          repair_cost: record.repairCost,
+          service_provider: record.serviceProvider,
+          expected_return_date: record.expectedReturnDate,
+        })
+        .select("*")
+        .single();
+      return error ? null : data;
+    }
+
+    const records = getLocalMaintenance();
+    const newRecord = {
+      id: `maint_${Date.now()}`,
+      inventory_unit_id: record.inventoryUnitId,
+      condition_before: record.conditionBefore,
+      maintenance_reason: record.maintenanceReason,
+      repair_cost: record.repairCost,
+      service_provider: record.serviceProvider,
+      expected_return_date: record.expectedReturnDate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    records.push(newRecord);
+    saveLocalMaintenance(records);
+    return newRecord;
+  },
+
+  async getMaintenanceRecords(unitId?: string): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      let query = supabase.from("maintenance_records").select("*, inventory_units(*)");
+      if (unitId) {
+        query = query.eq("inventory_unit_id", unitId);
+      }
+      const { data, error } = await query.order("created_at", { ascending: false });
+      return error ? [] : data;
+    }
+    const records = getLocalMaintenance();
+    const units = await this.getInventoryUnits();
+    const filtered = unitId ? records.filter((r) => r.inventory_unit_id === unitId) : records;
+    return filtered.map((r) => {
+      const u = units.find((unit) => unit.id === r.inventory_unit_id);
+      return {
+        ...r,
+        inventory_units: u ? {
+          id: u.id,
+          serial_number: u.serialNumber,
+          status: u.status,
+        } : null
+      };
+    }).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  async completeMaintenance(recordId: string, actualReturnDate: string, repairCost: number, conditionAfter: string): Promise<boolean> {
+    let unitId = "";
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data: rec } = await supabase.from("maintenance_records").select("inventory_unit_id").eq("id", recordId).single();
+      if (rec) {
+        unitId = rec.inventory_unit_id;
+        const { error } = await supabase
+          .from("maintenance_records")
+          .update({
+            actual_return_date: actualReturnDate,
+            repair_cost: repairCost,
+            condition_after: conditionAfter,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", recordId);
+        
+        if (!error && unitId) {
+          await this.updateInventoryUnitStatus(unitId, "available");
+          // Update last inspected time
+          await supabase.from("inventory_units").update({ last_inspected: new Date().toISOString() }).eq("id", unitId);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const records = getLocalMaintenance();
+    const idx = records.findIndex((r) => r.id === recordId);
+    if (idx !== -1) {
+      records[idx].actual_return_date = actualReturnDate;
+      records[idx].repair_cost = repairCost;
+      records[idx].condition_after = conditionAfter;
+      records[idx].updated_at = new Date().toISOString();
+      unitId = records[idx].inventory_unit_id;
+      saveLocalMaintenance(records);
+
+      if (unitId) {
+        await this.updateInventoryUnitStatus(unitId, "available");
+        const units = await this.getInventoryUnits();
+        const uIdx = units.findIndex((u) => u.id === unitId);
+        if (uIdx !== -1) {
+          // in mock, check details lastInspectedAt
+          (units[uIdx] as any).lastInspectedAt = new Date().toISOString();
+          saveLocalInventoryUnits(units);
+        }
+      }
+      return true;
+    }
+    return false;
+  },
+
+  // ----------------------------------------------------
+  // Customer Support Centre
+  // ----------------------------------------------------
+  async createSupportTicket(ticket: {
+    profileId: string;
+    bookingId?: string;
+    subject: string;
+    description: string;
+    category: string;
+    priority: string;
+    assignedTo: string;
+  }): Promise<any> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .insert({
+          profile_id: ticket.profileId,
+          booking_id: ticket.bookingId || null,
+          subject: ticket.subject,
+          description: ticket.description,
+          category: ticket.category,
+          priority: ticket.priority,
+          assigned_to: ticket.assignedTo,
+          status: "open",
+        })
+        .select("*")
+        .single();
+      return error ? null : data;
+    }
+
+    const tickets = getLocalTickets();
+    const newTicket = {
+      id: `tkt_${Date.now()}`,
+      profile_id: ticket.profileId,
+      booking_id: ticket.bookingId || null,
+      subject: ticket.subject,
+      description: ticket.description,
+      category: ticket.category,
+      priority: ticket.priority,
+      assigned_to: ticket.assignedTo,
+      status: "open",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    tickets.push(newTicket);
+    saveLocalTickets(tickets);
+    return newTicket;
+  },
+
+  async getSupportTickets(profileId?: string): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      let query = supabase.from("support_tickets").select("*, bookings(*), profiles(*)");
+      if (profileId) {
+        query = query.eq("profile_id", profileId);
+      }
+      const { data, error } = await query.order("created_at", { ascending: false });
+      return error ? [] : data;
+    }
+    const tickets = getLocalTickets();
+    const bookings = getLocalBookings();
+    const profiles = [getLocalProfile()]; // assume single local user profile
+    const filtered = profileId ? tickets.filter((t) => t.profile_id === profileId) : tickets;
+    return filtered.map((t) => {
+      const b = bookings.find((bk) => bk.id === t.booking_id);
+      const p = profiles.find((prof) => prof.id === t.profile_id);
+      return {
+        ...t,
+        bookings: b ? { reference_code: b.referenceCode } : null,
+        profiles: p ? { full_name: p.fullName, email: p.email } : null
+      };
+    }).sort((a, b) => b.created_at.localeCompare(a.created_at));
+  },
+
+  async getSupportTicketById(id: string): Promise<any | null> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*, bookings(*), profiles(*)")
+        .eq("id", id)
+        .maybeSingle();
+      if (!error && data) return data;
+      return null;
+    }
+    const tickets = getLocalTickets();
+    const t = tickets.find((tix) => tix.id === id);
+    if (!t) return null;
+    const bookings = getLocalBookings();
+    const b = bookings.find((bk) => bk.id === t.booking_id);
+    const p = getLocalProfile();
+    return {
+      ...t,
+      bookings: b ? { reference_code: b.referenceCode } : null,
+      profiles: p ? { full_name: p.fullName, email: p.email } : null
+    };
+  },
+
+  async addTicketReply(reply: {
+    ticketId: string;
+    senderId: string;
+    message: string;
+  }): Promise<any> {
+    // Automatically update ticket status to Replied or open depending on actor
+    const ticket = await this.getSupportTicketById(reply.ticketId);
+    let nextStatus = "replied";
+    if (ticket && ticket.profile_id === reply.senderId) {
+      nextStatus = "open"; // customer replied, goes back to open for admin attention
+    }
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("ticket_replies")
+        .insert({
+          ticket_id: reply.ticketId,
+          sender_id: reply.senderId,
+          message: reply.message,
+        })
+        .select("*")
+        .single();
+      
+      if (!error) {
+        await supabase.from("support_tickets").update({ status: nextStatus, updated_at: new Date().toISOString() }).eq("id", reply.ticketId);
+      }
+      return error ? null : data;
+    }
+
+    const replies = getLocalReplies();
+    const newReply = {
+      id: `rep_${Date.now()}`,
+      ticket_id: reply.ticketId,
+      sender_id: reply.senderId,
+      message: reply.message,
+      created_at: new Date().toISOString(),
+    };
+    replies.push(newReply);
+    saveLocalReplies(replies);
+
+    const tickets = getLocalTickets();
+    const tIdx = tickets.findIndex((t) => t.id === reply.ticketId);
+    if (tIdx !== -1) {
+      tickets[tIdx].status = nextStatus;
+      tickets[tIdx].updated_at = new Date().toISOString();
+      saveLocalTickets(tickets);
+    }
+    return newReply;
+  },
+
+  async getTicketReplies(ticketId: string): Promise<any[]> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from("ticket_replies")
+        .select("*, profiles(*)")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+      return error ? [] : data;
+    }
+    const replies = getLocalReplies();
+    const profile = getLocalProfile();
+    return replies
+      .filter((r) => r.ticket_id === ticketId)
+      .map((r) => ({
+        ...r,
+        profiles: {
+          id: profile.id,
+          full_name: r.sender_id === profile.id ? profile.fullName : "Admin Support",
+          role: r.sender_id === profile.id ? "customer" : "admin"
+        }
+      })).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  },
+
+  async resolveSupportTicket(ticketId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("support_tickets")
+        .update({ status: "resolved", updated_at: new Date().toISOString() })
+        .eq("id", ticketId);
+      return !error;
+    }
+    const tickets = getLocalTickets();
+    const tIdx = tickets.findIndex((t) => t.id === ticketId);
+    if (tIdx !== -1) {
+      tickets[tIdx].status = "resolved";
+      tickets[tIdx].updated_at = new Date().toISOString();
+      saveLocalTickets(tickets);
+      return true;
+    }
+    return false;
+  },
+
+  // ----------------------------------------------------
+  // Checklist updates & Penalty links
+  // ----------------------------------------------------
+  async updateChecklists(bookingId: string, type: "pickup" | "return", checklist: any, remarks?: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const updateData: any = {};
+      if (type === "pickup") {
+        updateData.pickup_checklist = checklist;
+        if (remarks) updateData.pickup_remarks = remarks;
+      } else {
+        updateData.return_checklist = checklist;
+        if (remarks) updateData.return_remarks = remarks;
+      }
+
+      const { error } = await supabase
+        .from("bookings")
+        .update(updateData)
+        .eq("id", bookingId);
+      return !error;
+    }
+
+    const bookings = getLocalBookings();
+    const idx = bookings.findIndex((b) => b.id === bookingId);
+    if (idx !== -1) {
+      if (type === "pickup") {
+        (bookings[idx] as any).pickupChecklist = checklist;
+        if (remarks) bookings[idx].pickupRemarks = remarks;
+      } else {
+        (bookings[idx] as any).returnChecklist = checklist;
+        if (remarks) bookings[idx].returnRemarks = remarks;
+      }
+      saveLocalBookings(bookings);
+      return true;
+    }
+    return false;
+  },
+
+  async updatePenaltyPaymentUrl(bookingId: string, url: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      const { error } = await supabase
+        .from("bookings")
+        .update({ penalty_payment_url: url })
+        .eq("id", bookingId);
+      return !error;
+    }
+    const bookings = getLocalBookings();
+    const idx = bookings.findIndex((b) => b.id === bookingId);
+    if (idx !== -1) {
+      (bookings[idx] as any).penaltyPaymentUrl = url;
+      saveLocalBookings(bookings);
+      return true;
+    }
+    return false;
+  },
 };
+

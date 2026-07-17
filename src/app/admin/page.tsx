@@ -14,7 +14,7 @@ import {
   Check, X, ArrowUpRight, Loader2, Camera, User, Clock, Key, AlertTriangle,
   History, Sparkles, Calendar, CheckSquare, Eye, Menu, Tag, Users,
   BarChart2, Settings, LogOut, Package, ChevronRight, Lock, ShieldCheck,
-  TrendingUp, XCircle, CheckCircle,
+  TrendingUp, XCircle, CheckCircle, MessageCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
@@ -48,7 +48,8 @@ const CHART_COLORS = ["#D8B36A", "#B98A43", "#F5F1E8", "#9A9995", "#6B7280"];
 
 type AdminTab =
   | "overview" | "approval_queue" | "waitlist" | "pickups_today" | "returns_today"
-  | "active_rentals" | "overdue" | "inventory" | "coupons" | "customers" | "audit_logs";
+  | "active_rentals" | "overdue" | "inventory" | "coupons" | "customers" | "audit_logs"
+  | "cms" | "refunds" | "maintenance" | "support" | "reports";
 
 type BookingStatus = Booking["status"];
 
@@ -78,18 +79,157 @@ export default function AdminDashboard() {
   const [rejectingId, setRejectingId]     = useState<string | null>(null);
   const [rejectReason, setRejectReason]   = useState("");
 
-  // Return modal
+  // Return modal & checklists
   const [returningId, setReturningId]     = useState<string | null>(null);
   const [returnCondition, setReturnCondition] = useState<"good" | "damaged">("good");
   const [damageDesc, setDamageDesc]       = useState("");
   const [damageCost, setDamageCost]       = useState(0);
   const [returnRemarks, setReturnRemarks] = useState("");
+  const [lateFeeInput, setLateFeeInput]   = useState(0);
+  const [returnChecklist, setReturnChecklist] = useState<Record<string, boolean>>({
+    body: false, lens: false, battery: false, charger: false, memoryCard: false, bag: false, accessories: false
+  });
+
+  // Pickup checklist
+  const [pickupBookingId, setPickupBookingId] = useState<string | null>(null);
+  const [pickupOTPInput, setPickupOTPInput] = useState("");
+  const [pickupChecklist, setPickupChecklist] = useState<Record<string, boolean>>({
+    body: false, lens: false, battery: false, charger: false, memoryCard: false, bag: false, accessories: false
+  });
+  const [pickupRemarks, setPickupRemarks] = useState("");
 
   // OTP generation
   const [generatingOTP, setGeneratingOTP] = useState<string | null>(null);
 
+  // CMS States
+  const [announcementText, setAnnouncementText] = useState("");
+  const [announcementActive, setAnnouncementActive] = useState(true);
+  const [bannerTitle, setBannerTitle] = useState("");
+  const [bannerSubtitle, setBannerSubtitle] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [rentalTerms, setRentalTerms] = useState("");
+  const [previewMode, setPreviewMode] = useState(false);
+  const [cmsFaqs, setCmsFaqs] = useState<any[]>([]);
+  const [cmsTestimonials, setCmsTestimonials] = useState<any[]>([]);
+  const [camerasList, setCamerasList] = useState<any[]>([]);
+  const [selectedCameraForCms, setSelectedCameraForCms] = useState<any | null>(null);
+  const [cameraDraftName, setCameraDraftName] = useState("");
+  const [cameraDraftDesc, setCameraDraftDesc] = useState("");
+  const [cameraDraftPrice, setCameraDraftPrice] = useState(799);
+
+  // Refund states
+  const [refundRequests, setRefundRequests] = useState<any[]>([]);
+  const [refundsLoading, setRefundsLoading] = useState(false);
+  const [processingRefundId, setProcessingRefundId] = useState<string | null>(null);
+
+  // Maintenance states
+  const [maintenanceUnits, setMaintenanceUnits] = useState<any[]>([]);
+  const [isLoggingMaint, setIsLoggingMaint] = useState(false);
+  const [maintReasonInput, setMaintReasonInput] = useState("");
+  const [maintExpectedReturnInput, setMaintExpectedReturnInput] = useState("");
+  const [maintProviderInput, setMaintProviderInput] = useState("");
+  const [maintUnitId, setMaintUnitId] = useState("");
+  const [completingMaintRecord, setCompletingMaintRecord] = useState<any | null>(null);
+  const [maintCostInput, setMaintCostInput] = useState(0);
+  const [maintConditionAfter, setMaintConditionAfter] = useState<"excellent" | "good" | "fair" | "damaged">("excellent");
+
+  // Support desk states
+  const [adminTickets, setAdminTickets] = useState<any[]>([]);
+  const [supportLoading, setSupportLoading] = useState(false);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [adminReplies, setAdminReplies] = useState<any[]>([]);
+  const [adminReplyText, setAdminReplyText] = useState("");
+  const [sendingAdminReply, setSendingAdminReply] = useState(false);
+  const [resolvingTicketId, setResolvingTicketId] = useState<string | null>(null);
+
   const isOwner   = adminRole === "admin";
   const isAllowed = adminRole === "admin" || adminRole === "staff";
+
+  // Data fetching functions
+  const loadCmsData = useCallback(async () => {
+    try {
+      const allSettings = await db.getAllWebsiteSettings();
+      setAnnouncementText(allSettings.announcement_bar_text || "");
+      setAnnouncementActive(allSettings.announcement_bar_active === "true");
+      setBannerTitle(allSettings.homepage_banner_title || "");
+      setBannerSubtitle(allSettings.homepage_banner_subtitle || "");
+      setContactPhone(allSettings.contact_phone || "");
+      setContactEmail(allSettings.contact_email || "");
+      setRentalTerms(allSettings.rental_terms || "");
+      setPreviewMode(db.getPreviewMode());
+
+      const faqs = await db.getFAQs();
+      setCmsFaqs(faqs);
+      
+      const testimonials = await db.getTestimonials();
+      setCmsTestimonials(testimonials);
+
+      const cams = await db.getProducts();
+      setCamerasList(cams);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const loadRefundRequests = useCallback(async () => {
+    setRefundsLoading(true);
+    try {
+      const list = await db.getRefunds();
+      setRefundRequests(list);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRefundsLoading(false);
+    }
+  }, []);
+
+  const loadMaintenanceUnits = useCallback(async () => {
+    try {
+      const recs = await db.getMaintenanceRecords();
+      setMaintenanceUnits(recs);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const loadAdminTickets = useCallback(async () => {
+    setSupportLoading(true);
+    try {
+      const res = await fetch("/api/support");
+      const data = await res.json();
+      if (data.success) {
+        setAdminTickets(data.tickets);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSupportLoading(false);
+    }
+  }, []);
+
+  const loadAdminReplies = useCallback(async (ticketId: string) => {
+    try {
+      const res = await fetch(`/api/support/replies?ticketId=${ticketId}`);
+      const data = await res.json();
+      if (data.success) {
+        setAdminReplies(data.replies);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  // Sync state data on tab transition
+  useEffect(() => {
+    if (activeTab === "cms") loadCmsData();
+    if (activeTab === "refunds") loadRefundRequests();
+    if (activeTab === "maintenance") {
+      loadMaintenanceUnits();
+      db.getInventoryUnits().then(setInventoryUnits);
+    }
+    if (activeTab === "support") loadAdminTickets();
+  }, [activeTab, loadCmsData, loadRefundRequests, loadMaintenanceUnits, loadAdminTickets]);
 
   /* ─── Load data ──────────────────────────────────── */
   const loadData = useCallback(async () => {
@@ -279,6 +419,161 @@ export default function AdminDashboard() {
     setUpdatingId(null);
   };
 
+  const handleTogglePreviewMode = async () => {
+    const nextVal = !previewMode;
+    db.setPreviewMode(nextVal);
+    setPreviewMode(nextVal);
+    toast.success(nextVal ? "Preview mode activated. Draft content is now visible on front-end pages." : "Preview mode deactivated.");
+  };
+
+  const handleSaveAnnouncementDraft = async () => {
+    try {
+      await db.saveDraft("website_settings", "announcement_bar", {
+        announcement_bar_text: announcementText,
+        announcement_bar_active: String(announcementActive),
+      });
+      toast.success("Draft saved successfully. Toggle Preview mode to test, or click Publish to apply.");
+    } catch (err) {
+      toast.error("Failed to save draft.");
+    }
+  };
+
+  const handlePublishAnnouncement = async () => {
+    try {
+      await db.publishDraft("website_settings", "announcement_bar");
+      toast.success("Announcement published successfully.");
+      await loadCmsData();
+    } catch (err) {
+      toast.error("Failed to publish.");
+    }
+  };
+
+  const handleRollbackAnnouncement = async () => {
+    try {
+      await db.rollbackVersion("settings", "announcement_bar");
+      toast.success("Announcement rolled back to previous version.");
+      await loadCmsData();
+    } catch (err) {
+      toast.error("Failed to rollback.");
+    }
+  };
+
+  const handleProcessRefundRequest = async (refundId: string, action: "approve" | "reject") => {
+    setProcessingRefundId(refundId);
+    try {
+      const res = await fetch("/api/admin/refund", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refundId, action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Refund request successfully ${action}d.`);
+        await loadRefundRequests();
+      } else {
+        toast.error(data.error || "Failed to process refund.");
+      }
+    } catch (err) {
+      toast.error("Network error while processing refund.");
+    } finally {
+      setProcessingRefundId(null);
+    }
+  };
+
+  const handleSendToMaintenance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!maintUnitId || !maintReasonInput) return;
+    try {
+      await db.createMaintenanceRecord({
+        inventoryUnitId: maintUnitId,
+        maintenanceReason: maintReasonInput,
+        expectedReturnDate: maintExpectedReturnInput || new Date().toISOString().split("T")[0],
+        serviceProvider: maintProviderInput || "Internal Lab",
+        conditionBefore: "good",
+        repairCost: 0,
+      });
+      toast.success("Camera unit checked out into maintenance.");
+      setIsLoggingMaint(false);
+      setMaintReasonInput("");
+      setMaintExpectedReturnInput("");
+      setMaintProviderInput("");
+      setMaintUnitId("");
+      await loadMaintenanceUnits();
+      setInventoryUnits(await db.getInventoryUnits());
+    } catch (err) {
+      toast.error("Failed to log maintenance check out.");
+    }
+  };
+
+  const handleCompleteMaintenance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!completingMaintRecord) return;
+    try {
+      await db.completeMaintenance(
+        completingMaintRecord.id,
+        new Date().toISOString().split("T")[0],
+        maintCostInput,
+        maintConditionAfter
+      );
+      toast.success("Maintenance log closed. Camera unit marked as available.");
+      setCompletingMaintRecord(null);
+      setMaintCostInput(0);
+      await loadMaintenanceUnits();
+      setInventoryUnits(await db.getInventoryUnits());
+    } catch (err) {
+      toast.error("Failed to close maintenance check in.");
+    }
+  };
+
+  const handleSendAdminReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminReplyText.trim() || !activeTicketId) return;
+    setSendingAdminReply(true);
+    try {
+      const res = await fetch("/api/support/replies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketId: activeTicketId,
+          message: adminReplyText,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAdminReplyText("");
+        await loadAdminReplies(activeTicketId);
+      } else {
+        toast.error(data.error || "Failed to send reply.");
+      }
+    } catch (err) {
+      toast.error("Failed to send reply.");
+    } finally {
+      setSendingAdminReply(false);
+    }
+  };
+
+  const handleResolveTicket = async (ticketId: string) => {
+    setResolvingTicketId(ticketId);
+    try {
+      const res = await fetch("/api/support", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId, status: "resolved" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Support ticket marked as resolved.");
+        await loadAdminTickets();
+      } else {
+        toast.error(data.error || "Failed to resolve ticket.");
+      }
+    } catch (err) {
+      toast.error("Failed to resolve ticket.");
+    } finally {
+      setResolvingTicketId(null);
+    }
+  };
+
   const handleInventoryStatus = async (unitId: string, status: InventoryUnit["status"]) => {
     await db.updateInventoryUnitStatus(unitId, status);
     toast.success(`Camera ${status}.`);
@@ -324,6 +619,11 @@ export default function AdminDashboard() {
     { id: "active_rentals", label: "Active Rentals",   icon: <Camera size={14} />,      badge: stats.active },
     { id: "overdue",        label: "Overdue Alerts",   icon: <AlertTriangle size={14} />, badge: stats.overdue },
     { id: "inventory",      label: "Camera Inventory", icon: <Package size={14} /> },
+    { id: "cms",            label: "CMS & settings",   icon: <Settings size={14} />,     ownerOnly: true },
+    { id: "refunds",        label: "Refund Queue",     icon: <Coins size={14} />,        ownerOnly: true },
+    { id: "maintenance",    label: "Maintenance Lab",  icon: <Clock size={14} /> },
+    { id: "support",        label: "Support Desk",     icon: <MessageCircle size={14} />, badge: adminTickets.filter(t => t.status !== 'resolved').length },
+    { id: "reports",        label: "Reports Terminal",  icon: <FileSpreadsheet size={14} />, ownerOnly: true },
     { id: "coupons",        label: "Coupon Manager",   icon: <Tag size={14} />,         ownerOnly: true },
     { id: "customers",      label: "Customers",        icon: <Users size={14} /> },
     { id: "audit_logs",     label: "Audit Logs",       icon: <History size={14} /> },
@@ -742,7 +1042,7 @@ export default function AdminDashboard() {
                                   )}
                                   {/* Ready for pickup: confirm pickup */}
                                   {b.status === "ready_for_pickup" && (
-                                    <button onClick={() => handleConfirmPickup(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
+                                    <button onClick={() => setPickupBookingId(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 text-[10px] font-mono uppercase tracking-wider rounded-lg transition cursor-pointer">
                                       <Camera size={11} /> Mark Rented
                                     </button>
                                   )}
@@ -995,6 +1295,476 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                     )}
+
+                    {/* ── CMS & SETTINGS ── */}
+                    {activeTab === "cms" && isOwner && (
+                      <div className="space-y-6">
+                        {/* Preview Mode switch */}
+                        <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl">
+                          <div>
+                            <p className="text-xs font-semibold text-ivory">CMS Preview & Live Toggle</p>
+                            <p className="text-[10px] text-muted-gray">When enabled, draft website configurations will be rendered to clients for validation.</p>
+                          </div>
+                          <button
+                            onClick={handleTogglePreviewMode}
+                            className={`px-4 py-2 text-xs font-mono uppercase font-bold rounded-lg border transition cursor-pointer ${
+                              previewMode
+                                ? "bg-gold-champagne/20 border-gold-border text-gold-champagne shadow-[0_0_8px_rgba(184,139,67,0.3)]"
+                                : "border-white/10 text-muted-gray hover:text-ivory"
+                            }`}
+                          >
+                            {previewMode ? "Preview Mode: Active" : "Preview Mode: Off"}
+                          </button>
+                        </div>
+
+                        {/* Announcement Bar CMS */}
+                        <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-4">
+                          <h4 className="text-xs uppercase font-mono tracking-widest text-gold-champagne">Announcement Bar</h4>
+                          <div className="space-y-3">
+                            <div className="space-y-1.5">
+                              <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Announcement Content</label>
+                              <textarea
+                                rows={2}
+                                value={announcementText}
+                                onChange={(e) => setAnnouncementText(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-gold-champagne/45 text-ivory font-mono"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="annActive"
+                                checked={announcementActive}
+                                onChange={(e) => setAnnouncementActive(e.target.checked)}
+                                className="rounded bg-white/5 border-white/10 text-gold-champagne focus:ring-0 cursor-pointer"
+                              />
+                              <label htmlFor="annActive" className="text-[10px] uppercase font-mono text-muted-gray cursor-pointer">Active on Header Navigation</label>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={handleSaveAnnouncementDraft}
+                                className="px-3.5 py-1.5 bg-white/10 hover:bg-white/15 text-[10px] font-mono uppercase text-gold-champagne rounded transition cursor-pointer"
+                              >
+                                Save Draft
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handlePublishAnnouncement}
+                                className="px-3.5 py-1.5 bg-gold-champagne hover:bg-gold-warm text-[10px] font-bold uppercase text-obsidian rounded transition cursor-pointer"
+                              >
+                                Publish Live
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleRollbackAnnouncement}
+                                className="px-3.5 py-1.5 border border-white/10 hover:bg-white/5 text-[10px] font-mono uppercase text-muted-gray rounded transition cursor-pointer"
+                              >
+                                Rollback Version
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Testimonials List */}
+                        <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-4">
+                          <h4 className="text-xs uppercase font-mono tracking-widest text-muted-gray">Customer Testimonials</h4>
+                          <div className="space-y-3">
+                            {cmsTestimonials.map((t: any) => (
+                              <div key={t.id} className="p-3 bg-black/25 border border-white/5 rounded-lg space-y-1.5">
+                                <div className="flex justify-between items-center text-[10px] font-mono">
+                                  <span className="text-gold-champagne font-bold">{t.authorName}</span>
+                                  <span className="text-muted-gray/50">{t.role}</span>
+                                </div>
+                                <p className="text-xs text-ivory/80 italic font-light">"{t.quote}"</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* FAQ List */}
+                        <div className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 space-y-4">
+                          <h4 className="text-xs uppercase font-mono tracking-widest text-muted-gray">Frequently Asked Questions</h4>
+                          <div className="space-y-3">
+                            {cmsFaqs.map((faq: any) => (
+                              <div key={faq.id} className="p-3.5 bg-black/20 border border-white/5 rounded-lg space-y-1">
+                                <h5 className="text-xs font-semibold text-ivory font-mono">Q: {faq.question}</h5>
+                                <p className="text-xs text-muted-gray font-light">A: {faq.answer}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── REFUND QUEUE ── */}
+                    {activeTab === "refunds" && isOwner && (
+                      <div className="space-y-4">
+                        {refundsLoading ? (
+                          <div className="space-y-3">
+                            {[1,2].map(i => <div key={i} className="h-16 bg-white/5 rounded animate-pulse" />)}
+                          </div>
+                        ) : refundRequests.length === 0 ? (
+                          <div className="glass-panel border-white/5 rounded-xl p-12 text-center">
+                            <Coins size={28} className="text-muted-gray/30 mx-auto mb-2" />
+                            <p className="text-sm text-muted-gray">No refund transactions pending approval.</p>
+                          </div>
+                        ) : (
+                          refundRequests.map((r: any) => (
+                            <div key={r.id} className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-mono font-bold text-gold-champagne">REF-{r.id.slice(0, 8).toUpperCase()}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
+                                    r.status === "completed"
+                                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                      : r.status === "failed"
+                                      ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                                      : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                                  } border`}>
+                                    {r.status}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-gray mt-1.5 font-mono">Booking Ref: {r.booking_id} · Refund Source ID: {r.razorpay_refund_id || "Unresolved"}</p>
+                                {r.reason && <p className="text-[10px] text-rose-400 mt-1 italic">Reason: "{r.reason}"</p>}
+                              </div>
+
+                              <div className="flex items-center gap-4 text-right">
+                                <div>
+                                  <p className="text-[8px] uppercase font-mono text-muted-gray/60">Refund Amount</p>
+                                  <p className="text-sm font-semibold text-ivory">₹{r.amount.toLocaleString("en-IN")}</p>
+                                </div>
+                                {r.status === "pending" && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleProcessRefundRequest(r.id, "approve")}
+                                      disabled={processingRefundId === r.id}
+                                      className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-obsidian text-[10px] font-bold uppercase rounded-lg transition cursor-pointer"
+                                    >
+                                      {processingRefundId === r.id ? <Loader2 size={11} className="animate-spin" /> : "Approve Refund"}
+                                    </button>
+                                    <button
+                                      onClick={() => handleProcessRefundRequest(r.id, "reject")}
+                                      disabled={processingRefundId === r.id}
+                                      className="px-3.5 py-1.5 border border-rose-500/20 hover:bg-rose-500/5 text-rose-400 text-[10px] font-mono uppercase rounded-lg transition cursor-pointer"
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── MAINTENANCE LAB ── */}
+                    {activeTab === "maintenance" && (
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center bg-white/5 border border-white/5 rounded-xl p-4">
+                          <div>
+                            <p className="text-sm font-semibold text-ivory">Maintenance Checkouts & Lab Logs</p>
+                            <p className="text-xs text-muted-gray">Track camera inspections, repair logs, and restore units to inventory.</p>
+                          </div>
+                          {!isLoggingMaint && (
+                            <button
+                              onClick={() => setIsLoggingMaint(true)}
+                              className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded transition cursor-pointer"
+                            >
+                              Log Maintenance Checkout
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Log Maintenance Checkout Form */}
+                        {isLoggingMaint && (
+                          <div className="glass-panel border-amber-500/20 rounded-xl p-5 bg-amber-500/5">
+                            <h4 className="text-xs uppercase font-mono tracking-widest text-gold-champagne mb-4">Send Optics Unit to Maintenance</h4>
+                            <form onSubmit={handleSendToMaintenance} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Camera Unit</label>
+                                <select
+                                  required
+                                  value={maintUnitId}
+                                  onChange={(e) => setMaintUnitId(e.target.value)}
+                                  className="w-full bg-black/45 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none"
+                                >
+                                  <option value="">Select Unit...</option>
+                                  {inventoryUnits.filter(u => u.status === "available").map((unit) => (
+                                    <option key={unit.id} value={unit.id}>{unit.name} ({unit.serialNumber})</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Service Provider / Lab</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Canon Service Hub Bengaluru"
+                                  value={maintProviderInput}
+                                  onChange={(e) => setMaintProviderInput(e.target.value)}
+                                  className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none text-ivory"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Reason for Checkout</label>
+                                <input
+                                  type="text"
+                                  required
+                                  placeholder="e.g. Sensor cleaning, autofocus calibration"
+                                  value={maintReasonInput}
+                                  onChange={(e) => setMaintReasonInput(e.target.value)}
+                                  className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none text-ivory"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Expected Return Date</label>
+                                <input
+                                  type="date"
+                                  value={maintExpectedReturnInput}
+                                  onChange={(e) => setMaintExpectedReturnInput(e.target.value)}
+                                  className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none text-ivory font-mono"
+                                />
+                              </div>
+
+                              <div className="col-span-2 flex gap-2 pt-2">
+                                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-obsidian text-xs font-bold uppercase rounded-lg cursor-pointer">Check Out Unit</button>
+                                <button type="button" onClick={() => setIsLoggingMaint(false)} className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono uppercase rounded-lg cursor-pointer hover:text-ivory transition">Cancel</button>
+                              </div>
+                            </form>
+                          </div>
+                        )}
+
+                        {/* Maintenance Log Records List */}
+                        <div className="space-y-3">
+                          {maintenanceUnits.length === 0 ? (
+                            <div className="glass-panel border-white/5 rounded-xl p-12 text-center">
+                              <Clock size={28} className="text-muted-gray/30 mx-auto mb-2" />
+                              <p className="text-sm text-muted-gray">No camera units currently checked out for maintenance.</p>
+                            </div>
+                          ) : (
+                            maintenanceUnits.map((m: any) => (
+                              <div key={m.id} className="admin-card opacity-0 glass-panel border-white/5 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 bg-black/25">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-ivory">{m.inventory_units?.name || m.unitId}</span>
+                                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
+                                      m.status === "completed"
+                                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                        : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                                    } border`}>
+                                      {m.status === "completed" ? "inspected & ready" : "in repair"}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] text-muted-gray mt-1.5 font-mono">
+                                    Lab: {m.serviceProvider || "Internal"} · Checkout: {new Date(m.checkedOutAt || m.checked_out_at).toLocaleDateString("en-IN")}
+                                  </p>
+                                  <p className="text-[10px] text-amber-400 mt-1">Reason: "{m.reason || m.checkoutReason}"</p>
+                                </div>
+
+                                <div className="flex items-center gap-4 text-right">
+                                  {m.status === "active" ? (
+                                    <button
+                                      onClick={() => setCompletingMaintRecord(m)}
+                                      className="px-3 py-1.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-[10px] font-bold uppercase rounded-lg transition cursor-pointer"
+                                    >
+                                      Complete Service Check-In
+                                    </button>
+                                  ) : (
+                                    <div>
+                                      <p className="text-[8px] uppercase font-mono text-muted-gray/60">Service Cost</p>
+                                      <p className="text-sm font-semibold text-gold-champagne">₹{(m.cost || 0).toLocaleString("en-IN")}</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── SUPPORT DESK ── */}
+                    {activeTab === "support" && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Tickets List */}
+                          <div className="md:col-span-1 glass-panel border-white/5 rounded-xl p-4 space-y-3 bg-black/25">
+                            <h4 className="text-[10px] uppercase font-mono tracking-widest text-gold-champagne mb-3">Active Tickets</h4>
+                            {supportLoading ? (
+                              <div className="space-y-2">
+                                {[1,2,3].map(i => <div key={i} className="h-12 bg-white/5 rounded animate-pulse" />)}
+                              </div>
+                            ) : adminTickets.length === 0 ? (
+                              <p className="text-xs text-muted-gray italic py-4 text-center">No tickets found.</p>
+                            ) : (
+                              <div className="space-y-2 overflow-y-auto max-h-[500px] pr-1.5">
+                                {adminTickets.map((t: any) => (
+                                  <div
+                                    key={t.id}
+                                    onClick={async () => {
+                                      setActiveTicketId(t.id);
+                                      await loadAdminReplies(t.id);
+                                    }}
+                                    className={`p-3 rounded-lg border text-left transition cursor-pointer ${
+                                      activeTicketId === t.id
+                                        ? "bg-gold-champagne/10 border-gold-border/30 text-gold-champagne"
+                                        : "bg-white/3 border-white/5 hover:bg-white/5"
+                                    }`}
+                                  >
+                                    <div className="flex justify-between items-start gap-2">
+                                      <p className="text-xs font-semibold truncate leading-tight">{t.subject}</p>
+                                    </div>
+                                    <p className="text-[8px] font-mono text-muted-gray mt-1.5">
+                                      Assigned: {t.assigned_to.split("@")[0].toUpperCase()} · {t.status.toUpperCase()}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Conversation Thread */}
+                          <div className="md:col-span-2 glass-panel border-white/5 rounded-xl p-5 space-y-4">
+                            {activeTicketId ? (
+                              (() => {
+                                const ticket = adminTickets.find(t => t.id === activeTicketId);
+                                if (!ticket) return null;
+                                return (
+                                  <div className="space-y-4">
+                                    <div className="flex justify-between items-start border-b border-white/5 pb-3">
+                                      <div>
+                                        <span className="text-[8px] font-mono uppercase text-gold-champagne tracking-widest">Support Conversation Thread</span>
+                                        <h4 className="text-sm font-semibold text-ivory mt-0.5">{ticket.subject}</h4>
+                                        <p className="text-[10px] text-muted-gray mt-1 font-mono">Assigned to: {ticket.assigned_to} · Priority: {ticket.priority.toUpperCase()}</p>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        {ticket.status !== "resolved" && (
+                                          <button
+                                            onClick={() => handleResolveTicket(ticket.id)}
+                                            disabled={resolvingTicketId === ticket.id}
+                                            className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 text-[10px] font-mono uppercase rounded-lg transition cursor-pointer"
+                                          >
+                                            {resolvingTicketId === ticket.id ? <Loader2 size={11} className="animate-spin" /> : "Mark Resolved"}
+                                          </button>
+                                        )}
+                                        <span className={`px-2.5 py-1 text-[9px] font-mono uppercase tracking-wider rounded-lg border ${
+                                          ticket.status === "resolved"
+                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                                        }`}>
+                                          {ticket.status}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <p className="text-xs text-ivory/80 leading-relaxed bg-white/2 p-3 rounded border border-white/5 font-light">
+                                      {ticket.description}
+                                    </p>
+
+                                    {/* Replies */}
+                                    <div className="space-y-3 pl-4 border-l border-white/5 max-h-[300px] overflow-y-auto pr-1">
+                                      {adminReplies.length === 0 ? (
+                                        <p className="text-xs text-muted-gray italic">No conversation replies yet.</p>
+                                      ) : (
+                                        adminReplies.map((rep: any) => {
+                                          const isSupport = rep.sender_id !== ticket.profile_id;
+                                          return (
+                                            <div key={rep.id} className={`p-3 rounded-lg border text-xs max-w-lg ${
+                                              isSupport
+                                                ? "bg-gold-champagne/5 border-gold-border/20 self-end ml-auto"
+                                                : "bg-white/5 border-white/10"
+                                            }`}>
+                                              <div className="flex justify-between items-center text-[9px] text-muted-gray mb-1.5 font-mono gap-4">
+                                                <span className={isSupport ? "text-gold-champagne" : "text-ivory"}>
+                                                  {isSupport ? `Support Agent (${rep.profiles?.full_name || "Aurevia Staff"})` : "Customer"}
+                                                </span>
+                                                <span>{new Date(rep.created_at).toLocaleString("en-IN")}</span>
+                                              </div>
+                                              <p className="leading-relaxed text-ivory/95 font-light">{rep.message}</p>
+                                            </div>
+                                          );
+                                        })
+                                      )}
+                                    </div>
+
+                                    {/* Send reply */}
+                                    {ticket.status !== "resolved" && (
+                                      <form onSubmit={handleSendAdminReply} className="space-y-2 mt-4 pt-3 border-t border-white/5">
+                                        <textarea
+                                          rows={3}
+                                          required
+                                          placeholder="Type your reply to customer..."
+                                          value={adminReplyText}
+                                          onChange={(e) => setAdminReplyText(e.target.value)}
+                                          className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50 placeholder:text-muted-gray/40 resize-none"
+                                        />
+                                        <button
+                                          type="submit"
+                                          disabled={sendingAdminReply}
+                                          className="px-4 py-2 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded-lg transition cursor-pointer flex items-center gap-2"
+                                        >
+                                          {sendingAdminReply ? <Loader2 size={12} className="animate-spin" /> : "Send Ticket Reply"}
+                                        </button>
+                                      </form>
+                                    )}
+                                  </div>
+                                );
+                              })()
+                            ) : (
+                              <div className="text-center py-16 space-y-2">
+                                <MessageCircle size={32} className="text-muted-gray/25 mx-auto" />
+                                <p className="text-xs text-muted-gray">Select an active ticket from the left panel to open the conversation thread.</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── REPORTS TERMINAL ── */}
+                    {activeTab === "reports" && isOwner && (
+                      <div className="space-y-5">
+                        <div className="glass-panel border-white/5 rounded-xl p-6 bg-gold-champagne/5 relative overflow-hidden">
+                          <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-5">
+                            <FileSpreadsheet size={180} className="text-gold-champagne" />
+                          </div>
+                          <h3 className="text-xs uppercase font-mono tracking-widest text-gold-champagne mb-2">AUREVIA Reports & Metrics Terminal</h3>
+                          <p className="text-xs text-muted-gray leading-relaxed max-w-lg font-light">
+                            Generate and extract detailed audits of optics rentals, revenue cycles, repairs ledger, and coupon usage tracking. Select a metric stream below to download as CSV.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          {[
+                            { label: "Bookings & Revenue Ledger", desc: "Detailed summary of all camera bookings, status codes, and total payable fees.", type: "bookings" },
+                            { label: "Optics Maintenance Cycles", desc: "Service cost analysis, checked out logs, and condition history.", type: "maintenance" },
+                            { label: "Refund Transaction Ledger", desc: "Cancellations cutoff status, estimated refunds, and Razorpay logs.", type: "refunds" }
+                          ].map((rep) => (
+                            <a
+                              key={rep.type}
+                              href={`/api/admin/reports?type=${rep.type}`}
+                              download
+                              className="glass-panel border-white/5 hover:border-gold-border/30 rounded-xl p-5 flex flex-col justify-between gap-4 transition group cursor-pointer"
+                            >
+                              <div className="space-y-2">
+                                <div className="w-9 h-9 rounded-lg bg-gold-champagne/10 flex items-center justify-center text-gold-champagne group-hover:bg-gold-champagne/20 transition">
+                                  <FileSpreadsheet size={16} />
+                                </div>
+                                <h4 className="text-xs font-semibold text-ivory">{rep.label}</h4>
+                                <p className="text-[10px] text-muted-gray leading-relaxed font-light">{rep.desc}</p>
+                              </div>
+                              <div className="flex items-center gap-1 text-[9px] text-gold-champagne uppercase font-mono font-bold mt-2">
+                                <FileDown size={11} /> Download CSV
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </main>
@@ -1019,41 +1789,359 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* ── Return Processing Modal ── */}
-            {returningId && (
-              <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-6" onClick={() => setReturningId(null)}>
-                <div className="glass-panel border-purple-500/20 rounded-2xl p-6 max-w-sm w-full space-y-4" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="text-sm font-semibold text-ivory">Process Return</h3>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Camera Condition</label>
-                    <div className="flex gap-2">
-                      {(["good","damaged"] as const).map((c) => (
-                        <button key={c} onClick={() => setReturnCondition(c)} className={`flex-1 py-2 border text-[10px] font-mono uppercase rounded-lg transition cursor-pointer ${returnCondition === c ? (c === "good" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400") : "border-white/10 text-muted-gray"}`}>{c}</button>
+            {/* ── Pickup Handover Checklist Modal ── */}
+            {pickupBookingId && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="glass-panel border-white/10 rounded-xl max-w-md w-full p-6 space-y-6 relative bg-obsidian shadow-2xl">
+                  <button
+                    onClick={() => setPickupBookingId(null)}
+                    className="absolute right-4 top-4 text-muted-gray hover:text-ivory transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                  
+                  <div className="space-y-2 border-b border-white/5 pb-3">
+                    <span className="text-[8px] text-gold-champagne uppercase font-mono tracking-widest block">Digital Handover Checklist</span>
+                    <h3 className="serif-heading text-base font-light text-ivory">Pickup Handover Checklist</h3>
+                  </div>
+
+                  <div className="space-y-4 text-xs font-light">
+                    <p className="text-muted-gray leading-normal">Verify and check each item before handing over the gear unit to the customer.</p>
+                    
+                    <div className="space-y-2 bg-white/3 rounded-lg p-4 border border-white/5">
+                      {[
+                        { key: "body", label: "Camera Body (Serial matched physically)" },
+                        { key: "lens", label: "Optics / Lens Glass check (Clean, scratch-free)" },
+                        { key: "battery", label: "Batteries (Charged, tested)" },
+                        { key: "charger", label: "Power Adapter / Charger included" },
+                        { key: "memoryCard", label: "High-speed SD Card included" },
+                        { key: "bag", label: "Premium Carry Bag included" },
+                        { key: "accessories", label: "Straps, lens caps verified" }
+                      ].map((item) => (
+                        <div key={item.key} className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            id={`pkCheck-${item.key}`}
+                            checked={pickupChecklist[item.key]}
+                            onChange={(e) => setPickupChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                            className="rounded bg-white/5 border-white/10 text-gold-champagne focus:ring-0 cursor-pointer"
+                          />
+                          <label htmlFor={`pkCheck-${item.key}`} className="text-[11px] text-ivory font-mono cursor-pointer select-none">
+                            {item.label}
+                          </label>
+                        </div>
                       ))}
                     </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Customer Handover OTP</label>
+                      <input
+                        type="text"
+                        placeholder="Enter 6-digit OTP code"
+                        maxLength={6}
+                        value={pickupOTPInput}
+                        onChange={(e) => setPickupOTPInput(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/45 font-mono text-center tracking-[0.2em] text-lg font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Handover Remarks</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Scratches on lens hood, fully functional"
+                        value={pickupRemarks}
+                        onChange={(e) => setPickupRemarks(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none text-ivory"
+                      />
+                    </div>
                   </div>
-                  {returnCondition === "damaged" && (
-                    <>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Damage Description</label>
-                        <textarea rows={2} value={damageDesc} onChange={(e) => setDamageDesc(e.target.value)} className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-rose-500/30 resize-none transition" />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Damage Cost (₹)</label>
-                        <input type="number" value={damageCost} onChange={(e) => setDamageCost(Number(e.target.value))} className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-rose-500/30 transition" />
-                      </div>
-                    </>
-                  )}
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] uppercase font-mono tracking-wider text-muted-gray block">Return Remarks</label>
-                    <textarea rows={2} value={returnRemarks} onChange={(e) => setReturnRemarks(e.target.value)} placeholder="Optional notes..." className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-gold-champagne/30 resize-none transition" />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => returningId && handleReturn(returningId)} disabled={updatingId !== null} className="px-4 py-2 bg-purple-500/70 hover:bg-purple-500 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer disabled:opacity-50">
-                      {updatingId ? <Loader2 size={13} className="animate-spin" /> : "Complete Return"}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        const allChecked = Object.values(pickupChecklist).every(Boolean);
+                        if (!allChecked) {
+                          toast.error("Handover checklist error: Verify all equipment items before handover.");
+                          return;
+                        }
+                        if (pickupOTPInput.length < 6) {
+                          toast.error("Please enter the customer's 6-digit handover OTP.");
+                          return;
+                        }
+                        setUpdatingId(pickupBookingId);
+                        try {
+                          await db.confirmHandover(pickupBookingId || "", pickupOTPInput, pickupRemarks, true);
+                          toast.success("Optics gear successfully handed over — rental active.");
+                          setPickupBookingId(null);
+                          setPickupOTPInput("");
+                          setPickupRemarks("");
+                          setPickupChecklist({
+                            body: false, lens: false, battery: false, charger: false, memoryCard: false, bag: false, accessories: false
+                          });
+                          await loadData();
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to confirm handover.");
+                        } finally {
+                          setUpdatingId(null);
+                        }
+                      }}
+                      disabled={updatingId !== null}
+                      className="flex-1 py-2.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded-lg transition cursor-pointer text-center flex items-center justify-center gap-1.5"
+                    >
+                      {updatingId ? <Loader2 size={13} className="animate-spin" /> : "Confirm Handover & Start Rental"}
                     </button>
-                    <button onClick={() => setReturningId(null)} className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono rounded-lg cursor-pointer hover:text-ivory transition">Cancel</button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Return Checklist Return Modal ── */}
+            {returningId && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setReturningId(null)}>
+                <div className="glass-panel border-white/10 rounded-xl max-w-md w-full p-6 space-y-5 relative bg-obsidian shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setReturningId(null)}
+                    className="absolute right-4 top-4 text-muted-gray hover:text-ivory transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                  
+                  <div className="space-y-2 border-b border-white/5 pb-3">
+                    <span className="text-[8px] text-purple-400 uppercase font-mono tracking-widest block">Digital Return Inspection</span>
+                    <h3 className="serif-heading text-base font-light text-ivory">Return Checklist & Penalty Calculator</h3>
+                  </div>
+
+                  <div className="space-y-4 text-xs font-light">
+                    <div className="space-y-2 bg-white/3 rounded-lg p-3.5 border border-white/5">
+                      {[
+                        { key: "body", label: "Camera Body verified undamaged" },
+                        { key: "lens", label: "Optics / Lens Glass scratch-free" },
+                        { key: "battery", label: "Batteries returned" },
+                        { key: "charger", label: "Power Adapter / Charger returned" },
+                        { key: "memoryCard", label: "High-speed SD Card returned" },
+                        { key: "bag", label: "Premium Carry Bag returned" },
+                        { key: "accessories", label: "Straps, lens caps verified" }
+                      ].map((item) => (
+                        <div key={item.key} className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            id={`retCheck-${item.key}`}
+                            checked={returnChecklist[item.key]}
+                            onChange={(e) => setReturnChecklist(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                            className="rounded bg-white/5 border-white/10 text-gold-champagne focus:ring-0 cursor-pointer"
+                          />
+                          <label htmlFor={`retCheck-${item.key}`} className="text-[11px] text-ivory font-mono cursor-pointer select-none">
+                            {item.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Camera Condition</label>
+                      <div className="flex gap-2">
+                        {(["good", "damaged"] as const).map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setReturnCondition(c)}
+                            className={`flex-1 py-2 border text-[10px] font-mono uppercase rounded-lg transition cursor-pointer ${
+                              returnCondition === c
+                                ? (c === "good" ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-rose-500/50 bg-rose-500/10 text-rose-400")
+                                : "border-white/10 text-muted-gray hover:text-ivory"
+                            }`}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {returnCondition === "damaged" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-rose-500/5 border border-rose-500/10 rounded-lg animate-fadeIn">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] uppercase font-mono text-rose-400 block">Damage Description</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Scratched front glass element"
+                            value={damageDesc}
+                            onChange={(e) => setDamageDesc(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2 focus:outline-none text-ivory"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] uppercase font-mono text-rose-400 block">Damage Cost (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            min={0}
+                            value={damageCost}
+                            onChange={(e) => setDamageCost(Number(e.target.value))}
+                            className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2 focus:outline-none text-ivory font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 bg-white/3 rounded-lg p-4 font-mono text-[10px]">
+                      <p className="text-gold-champagne uppercase tracking-wider font-bold border-b border-white/5 pb-1 mb-2">Late Fee Calculator</p>
+                      {(() => {
+                        const booking = bookings.find(b => b.id === returningId);
+                        if (!booking) return null;
+                        const end = new Date(booking.endDate);
+                        const now = new Date();
+                        const diffTime = Math.max(0, now.getTime() - end.getTime());
+                        const lateDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        const recommendedLateFee = 799 * lateDays;
+                        return (
+                          <div className="space-y-1.5 text-muted-gray">
+                            <p>Booking End Date: <span className="text-ivory">{booking.endDate}</span></p>
+                            <p>Days Overdue: <span className="text-ivory">{lateDays} days</span></p>
+                            <p>Recommended Overdue Fee: <span className="text-ivory font-bold">₹{recommendedLateFee.toLocaleString("en-IN")}</span></p>
+                            <div className="space-y-1.5 pt-2 border-t border-white/5">
+                              <label className="text-[9px] uppercase font-mono text-muted-gray block">Override / Assessed Late Fee (₹)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={lateFeeInput}
+                                onChange={(e) => setLateFeeInput(Number(e.target.value))}
+                                className="w-full bg-black/45 border border-white/10 text-xs rounded-lg p-2 text-ivory focus:outline-none focus:border-gold-champagne/45 font-mono"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Return Remarks</label>
+                      <textarea
+                        rows={2}
+                        value={returnRemarks}
+                        onChange={(e) => setReturnRemarks(e.target.value)}
+                        placeholder="Optional return inspection notes..."
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 focus:outline-none focus:border-gold-champagne/45 text-ivory resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        const allChecked = Object.values(returnChecklist).every(Boolean);
+                        if (!allChecked) {
+                          toast.error("Return check error: All checklist items must be physically verified before check-in.");
+                          return;
+                        }
+                        setUpdatingId(returningId || "");
+                        try {
+                          await db.processReturn(returningId || "", returnCondition, damageDesc, damageCost, returnRemarks, lateFeeInput);
+                          const totalPenalty = (returnCondition === "damaged" ? damageCost : 0) + lateFeeInput;
+                          if (totalPenalty > 0) {
+                            const res = await fetch("/api/admin/penalty-link", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                bookingId: returningId,
+                                amount: totalPenalty,
+                                description: `Aurevia: Late Return (₹${lateFeeInput}) / Damage (₹${damageCost})`
+                              })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              toast.success(`Check-in completed. Penalty payment link generated & sent to renter.`);
+                            } else {
+                              toast.warning("Check-in completed, but failed to generate payment link.");
+                            }
+                          } else {
+                            toast.success("Optics gear successfully checked in — rental complete.");
+                          }
+                          setReturningId(null);
+                          setReturnCondition("good");
+                          setDamageDesc("");
+                          setDamageCost(0);
+                          setReturnRemarks("");
+                          setLateFeeInput(0);
+                          setReturnChecklist({
+                            body: false, lens: false, battery: false, charger: false, memoryCard: false, bag: false, accessories: false
+                          });
+                          await loadData();
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to process return.");
+                        } finally {
+                          setUpdatingId(null);
+                        }
+                      }}
+                      disabled={updatingId !== null}
+                      className="flex-1 py-2.5 bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer text-center font-semibold"
+                    >
+                      {updatingId ? <Loader2 size={13} className="animate-spin" /> : "Complete Inspection & Check-in"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReturningId(null)}
+                      className="px-4 py-2 border border-white/10 text-muted-gray text-xs font-mono uppercase rounded-lg cursor-pointer hover:text-ivory transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Complete Maintenance Inspection Modal ── */}
+            {completingMaintRecord && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="glass-panel border-white/10 rounded-xl max-w-sm w-full p-6 space-y-4 relative bg-obsidian shadow-2xl">
+                  <button
+                    onClick={() => setCompletingMaintRecord(null)}
+                    className="absolute right-4 top-4 text-muted-gray hover:text-ivory transition cursor-pointer"
+                  >
+                    <X size={16} />
+                  </button>
+                  
+                  <div className="space-y-1 pb-2 border-b border-white/5">
+                    <span className="text-[8px] text-gold-champagne uppercase font-mono tracking-widest">Maintenance Complete</span>
+                    <h3 className="serif-heading text-sm font-semibold text-ivory">Log Service Complete</h3>
+                  </div>
+
+                  <form onSubmit={handleCompleteMaintenance} className="space-y-4 text-xs font-light">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Service / Repair Cost (₹)</label>
+                      <input
+                        type="number"
+                        required
+                        min={0}
+                        value={maintCostInput}
+                        onChange={(e) => setMaintCostInput(Number(e.target.value))}
+                        className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/45 font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase font-mono text-muted-gray block">Unit Condition After Service</label>
+                      <select
+                        required
+                        value={maintConditionAfter}
+                        onChange={(e) => setMaintConditionAfter(e.target.value as any)}
+                        className="w-full bg-black/45 border border-white/10 text-xs rounded-lg p-2.5 text-ivory focus:outline-none focus:border-gold-champagne/50"
+                      >
+                        <option value="excellent" className="bg-obsidian">Excellent</option>
+                        <option value="good" className="bg-obsidian">Good</option>
+                        <option value="fair" className="bg-obsidian">Fair</option>
+                        <option value="damaged" className="bg-obsidian">Damaged</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase rounded-lg transition cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      Save Service Check-In
+                    </button>
+                  </form>
                 </div>
               </div>
             )}

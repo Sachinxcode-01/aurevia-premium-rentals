@@ -16,11 +16,15 @@ const getFrameUrl = (frameIndex: number) => {
 interface HeroScrollSequenceProps {
   onExploreClick?: () => void;
   onBookClick?: () => void;
+  title?: string;
+  subtitle?: string;
 }
 
 export default function HeroScrollSequence({
   onExploreClick,
   onBookClick,
+  title,
+  subtitle,
 }: HeroScrollSequenceProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -524,11 +528,17 @@ export default function HeroScrollSequence({
                   Premium Camera Rentals
                 </span>
                 <h1 className="serif-heading text-4xl sm:text-5xl lg:text-7xl font-light text-ivory leading-[1.1] tracking-tight">
-                  Professional Gear.<br />
-                  <span className="text-gold">Extraordinary Stories.</span>
+                  {title ? (
+                    <span>{title}</span>
+                  ) : (
+                    <>
+                      Professional Gear.<br />
+                      <span className="text-gold">Extraordinary Stories.</span>
+                    </>
+                  )}
                 </h1>
                 <p className="text-sm sm:text-base text-muted-gray max-w-md font-light leading-relaxed">
-                  Rent professional cameras, cinema gear and premium lenses for every story worth capturing. Experienced by industry masters.
+                  {subtitle || "Rent professional cameras, cinema gear and premium lenses for every story worth capturing. Experienced by industry masters."}
                 </p>
                 <div className="flex flex-wrap gap-4 pt-2">
                   <button
@@ -618,11 +628,17 @@ export default function HeroScrollSequence({
               Premium Camera Rentals
             </span>
             <h2 className="serif-heading text-4xl sm:text-5xl lg:text-7xl font-light text-ivory leading-[1.1] tracking-tight">
-              Professional Gear.<br />
-              <span className="text-gold">Extraordinary Stories.</span>
+              {title ? (
+                <span>{title}</span>
+              ) : (
+                <>
+                  Professional Gear.<br />
+                  <span className="text-gold">Extraordinary Stories.</span>
+                </>
+              )}
             </h2>
             <p className="text-xs sm:text-sm text-muted-gray max-w-md font-light leading-relaxed">
-              Rent professional cameras, cinema gear and premium lenses for every story worth capturing.
+              {subtitle || "Rent professional cameras, cinema gear and premium lenses for every story worth capturing."}
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <button

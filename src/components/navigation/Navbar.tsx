@@ -24,6 +24,25 @@ export default function Navbar({
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [announcementText, setAnnouncementText] = useState("");
+  const [announcementActive, setAnnouncementActive] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    import("@/lib/db/store").then(({ db }) => {
+      if (!active) return;
+      db.getWebsiteSetting("announcement_bar_text").then((val) => {
+        if (val && active) setAnnouncementText(val);
+      });
+      db.getWebsiteSetting("announcement_bar_active").then((val) => {
+        if (active) setAnnouncementActive(val === "true");
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
 
   // Magnetic Button Refs
   const bookBtnRef = useRef<HTMLButtonElement>(null);
@@ -136,13 +155,19 @@ export default function Navbar({
 
   return (
     <>
+      {announcementActive && announcementText && (
+        <div className="fixed top-0 left-0 w-full bg-[#D8B36A] text-[#080808] text-[9px] md:text-[10px] font-bold h-[32px] flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
+          <span>{announcementText}</span>
+        </div>
+      )}
       <header
         ref={navbarRef}
-        className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 h-[86px] flex items-center border-b ${
+        className={`fixed left-0 w-full z-40 transition-all duration-300 h-[86px] flex items-center border-b ${
           scrolled
             ? "bg-[#080808]/85 backdrop-blur-xl border-[#D8B36A]/15 shadow-lg shadow-black/80"
             : "bg-[#080808]/30 backdrop-blur-md border-white/5"
         }`}
+        style={{ top: announcementActive && announcementText ? "32px" : "0" }}
       >
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-full">
           {/* Brand Logo & Premium Badge */}
