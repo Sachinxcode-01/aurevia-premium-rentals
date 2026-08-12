@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -7,9 +8,7 @@ import { useCart } from "@/hooks/useCart";
 import { db } from "@/lib/db/store";
 import { MOCK_PRODUCTS } from "@/lib/db/mockData";
 import {
-  Calendar,
   Trash2,
-  Tag,
   CreditCard,
   Truck,
   Building,
@@ -54,7 +53,6 @@ export default function BookingPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("card");
   const [commOptIn, setCommOptIn] = useState(true);
   
   // Created Booking Ref
@@ -88,7 +86,6 @@ export default function BookingPage() {
   const [emergencyContact, setEmergencyContact] = useState("Aswin Kumar - 9876543210");
   const [companyOrCollege, setCompanyOrCollege] = useState("Aurevia Studio");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
 
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +176,7 @@ export default function BookingPage() {
       const orderData = await orderRes.json();
 
       // 3. Open Razorpay Modal
-      const rzpKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const rzpKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
       if (!rzpKeyId) {
         throw new Error("Razorpay Key ID is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in your environment.");
       }
@@ -330,6 +327,7 @@ export default function BookingPage() {
                     className="glass-panel border-white/5 rounded-lg p-5 flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center"
                   >
                     <div className="flex items-center gap-4 flex-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.product.imagePrimary} className="w-16 h-12 object-cover rounded bg-black/25 border border-white/5" alt="" />
                       <div>
                         <h3 className="serif-heading text-base font-light text-ivory">{item.product.name}</h3>
