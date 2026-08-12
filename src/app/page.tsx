@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navigation/Navbar";
-import HeroScrollSequence from "@/components/hero/HeroScrollSequence";
+import CanonScrollSequence from "@/components/cinematic/CanonScrollSequence";
 import CameraShowroom from "@/components/three/CameraShowroom";
 import Timeline from "@/components/features/Timeline";
 import AnimatedAccordion from "@/components/ui/AnimatedAccordion";
@@ -24,7 +24,6 @@ import {
   Star,
   Eye,
   CheckCircle2,
-  ChevronDown,
   ChevronUp,
   Phone,
   MessageCircle,
@@ -43,14 +42,12 @@ export default function Home() {
 
   const [faqsList, setFaqsList] = React.useState<FAQ[]>([]);
   const [productsList, setProductsList] = React.useState<Product[]>([]);
-  const [settings, setSettings] = React.useState<Record<string, string>>({});
   const [showScrollTop, setShowScrollTop] = React.useState(false);
 
   React.useEffect(() => {
     db.getReviews(undefined, true).then(setReviewsList);
     db.getFAQs().then(setFaqsList);
     db.getProducts().then(setProductsList);
-    db.getAllWebsiteSettings().then(setSettings);
 
     const handleScrollBtn = () => {
       if (window.scrollY > 600) {
@@ -307,13 +304,8 @@ export default function Home() {
       {/* 1. Header Navigation */}
       <Navbar cartItemCount={cart.length} />
 
-      {/* 2. Scroll Sequence Hero */}
-      <HeroScrollSequence
-        onExploreClick={() => router.push("/explore")}
-        onBookClick={() => router.push("/booking")}
-        title={settings.homepage_banner_title}
-        subtitle={settings.homepage_banner_subtitle}
-      />
+      {/* 2. Flagship Canon Cinematic Scroll Sequence */}
+      <CanonScrollSequence onExploreClick={() => router.push("/explore")} />
 
       {/* Brand Highlights Ribbon */}
       <section data-reveal className="reveal-section relative border-t border-b border-gold-border/20 bg-gradient-to-r from-obsidian via-rich-black-lux to-obsidian z-20 overflow-hidden">
