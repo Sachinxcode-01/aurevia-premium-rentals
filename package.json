@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:admin": "cd admin && npm install && npm run dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
