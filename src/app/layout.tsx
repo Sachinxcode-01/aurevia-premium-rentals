@@ -11,6 +11,7 @@ import { PWARegister } from "@/components/pwa/PWARegister";
 import { Analytics } from "@vercel/analytics/next";
 import Spotlight from "@/components/effects/Spotlight";
 import AmbientParticles from "@/components/effects/AmbientParticles";
+import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -124,9 +125,10 @@ export default function RootLayout({
               <div className="flex-1 flex flex-col">
                 {children}
               </div>
-              {/* Floating AI Chatbot overlay */}
+              {/* Floating AI Chatbot overlay & Floating WhatsApp trigger */}
               <FloatingChatLauncher />
               <ChatWindow />
+              <FloatingWhatsApp />
             </ChatbotProvider>
           </CartProvider>
         </ToastProvider>

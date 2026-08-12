@@ -377,6 +377,23 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Sticky Booking Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-charcoal/95 backdrop-blur-xl border-t border-gold-champagne/20 p-4 z-40 flex items-center justify-between shadow-2xl">
+        <div>
+          <span className="text-[10px] text-muted-gray uppercase block font-mono">Total ({rentalDays} Days)</span>
+          <span className="text-base font-bold text-gold-champagne font-mono">
+            ₹{estimatedCost.toLocaleString("en-IN")}
+          </span>
+        </div>
+        <button
+          onClick={handleBookNow}
+          disabled={!isAvailable || checkingStock}
+          className="px-6 py-3 rounded-lg bg-gold-champagne text-obsidian font-bold text-xs uppercase tracking-wider shadow-lg hover:bg-gold-champagne/90 transition-colors disabled:opacity-50"
+        >
+          Book Now
+        </button>
+      </div>
     </main>
   );
 }

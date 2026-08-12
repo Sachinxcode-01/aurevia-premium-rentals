@@ -8,6 +8,8 @@ import { Logo } from "@/components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
 import MagneticButton from "@/components/motion/MagneticButton";
 
+import SearchModal from "@/components/ui/SearchModal";
+
 interface NavbarProps {
   cartItemCount?: number;
   onCartClick?: () => void;
@@ -16,11 +18,13 @@ interface NavbarProps {
 
 export default function Navbar({
   cartItemCount = 0,
+  onSearchClick,
 }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
@@ -81,8 +85,17 @@ export default function Navbar({
     { name: "Contact", href: "/contact" },
   ];
 
+  const handleOpenSearch = () => {
+    if (onSearchClick) {
+      onSearchClick();
+    } else {
+      setSearchModalOpen(true);
+    }
+  };
+
   return (
     <>
+      <SearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
       {announcementActive && announcementText && (
         <div className="fixed top-0 left-0 w-full bg-gold-champagne text-obsidian text-[9px] md:text-[10px] font-bold h-[32px] flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
           <span>{announcementText}</span>
@@ -131,19 +144,20 @@ export default function Navbar({
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3 xl:gap-5 shrink-0 h-full">
-            {/* Quick Search */}
-            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
-              <input
-                type="text"
-                placeholder="Search gear..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white/5 border border-white/10 text-xs xl:text-sm text-ivory rounded-full px-4 h-10 xl:h-11 pr-8 xl:pr-10 focus:outline-none focus:border-gold-champagne/50 w-24 xl:w-44 focus:w-36 xl:focus:w-56 transition-all duration-300 placeholder:text-muted-gray/50 leading-none"
-              />
-              <button type="submit" className="absolute right-3 text-muted-gray hover:text-gold-champagne transition-colors cursor-pointer flex items-center justify-center">
-                <Search size={14} className="stroke-[2]" />
-              </button>
-            </form>
+            {/* Global Search Modal Trigger */}
+            <button
+              id="global-search-trigger"
+              onClick={handleOpenSearch}
+              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-xs xl:text-sm text-muted-gray hover:text-ivory rounded-full px-4 h-10 xl:h-11 flex items-center justify-between w-36 xl:w-52 transition-all duration-300 cursor-pointer group"
+            >
+              <div className="flex items-center gap-2">
+                <Search size={14} className="stroke-[2] text-gold-champagne" />
+                <span className="text-[11px] xl:text-xs">Search gear...</span>
+              </div>
+              <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
+                ⌘K
+              </kbd>
+            </button>
 
             {/* Cart Icon */}
             <Link
@@ -175,7 +189,15 @@ export default function Navbar({
           </div>
 
           {/* Mobile Header Actions (Visible on screens < lg) */}
-          <div className="flex lg:hidden items-center gap-4">
+          <div className="flex lg:hidden items-center gap-3">
+            {/* Mobile Search Trigger */}
+            <button
+              onClick={handleOpenSearch}
+              className="text-ivory/80 hover:text-gold-champagne transition flex items-center p-1.5 cursor-pointer"
+              aria-label="Search gear"
+            >
+              <Search size={19} className="stroke-[2] text-gold-champagne" />
+            </button>
             {/* Mobile Cart */}
             <Link
               href="/booking"
