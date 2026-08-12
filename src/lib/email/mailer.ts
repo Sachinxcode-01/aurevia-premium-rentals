@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import nodemailer from "nodemailer";
 
 interface EmailPayload {
@@ -101,103 +102,69 @@ export async function sendEmail({
 }
 
 function getBrandedTemplate(title: string, bodyContent: string): string {
-  const replyEmail = process.env.EMAIL_REPLY_TO || "premmundargi135@gmail.com";
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0b0c10;
-            color: #f5f1e8;
-            margin: 0;
-            padding: 0;
-          }
-          .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #12131c;
-            border: 1px solid #d8b36a;
-            border-radius: 8px;
-            overflow: hidden;
-          }
-          .header {
-            background-color: #0b0c10;
-            text-align: center;
-            padding: 24px;
-            border-bottom: 1px solid rgba(216, 179, 106, 0.2);
-          }
-          .logo {
-            color: #d8b36a;
-            font-size: 22px;
-            font-weight: 300;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            margin: 0;
-          }
-          .content {
-            padding: 36px;
-            line-height: 1.6;
-            font-size: 14px;
-            color: #f5f1e8;
-          }
-          .content h2 {
-            color: #d8b36a;
-            font-size: 18px;
-            font-weight: 400;
-            margin-top: 0;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
-          .btn {
-            display: inline-block;
-            background-color: #d8b36a;
-            color: #0b0c10;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 20px;
-          }
-          .footer {
-            background-color: #0b0c10;
-            padding: 20px;
-            text-align: center;
-            font-size: 10px;
-            color: #6b7280;
-            border-top: 1px solid rgba(216, 179, 106, 0.1);
-          }
-          .footer a {
-            color: #d8b36a;
-            text-decoration: none;
-          }
-        </style>
-      </head>
-      <body>
-        <div style="background-color: #0b0c10; padding: 20px;">
-          <div class="container">
-            <div class="header">
-              <h1 class="logo">AUREVIA</h1>
-            </div>
-            <div class="content">
-              <h2>${title}</h2>
-              ${bodyContent}
-            </div>
-            <div class="footer">
-              <p>Protected by Supabase Auth · AUREVIA © 2026</p>
-              <p>For support or help with rentals, email <a href="mailto:${replyEmail}">${replyEmail}</a></p>
-            </div>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
+  const replyEmail = process.env.EMAIL_REPLY_TO || "sachiii8827@gmail.com";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aurevia-premium-rentals.vercel.app";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} — AUREVIA</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;border:1px solid #e4e4e7;">
+
+          <!-- Logo Header -->
+          <tr>
+            <td style="padding:32px 40px 24px;border-bottom:1px solid #e4e4e7;">
+              <table cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin:0;font-size:20px;font-weight:700;letter-spacing:0.15em;color:#0a0a0a;text-transform:uppercase;font-family:Georgia,serif;">AUREVIA</p>
+                    <p style="margin:4px 0 0;font-size:10px;color:#71717a;letter-spacing:0.08em;text-transform:uppercase;">Premium Camera Rentals</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding:36px 40px;">
+              <p style="margin:0 0 20px;font-size:15px;font-weight:600;color:#0a0a0a;">${title}</p>
+              <div style="font-size:14px;line-height:1.7;color:#3f3f46;">
+                ${bodyContent}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 40px;">
+              <hr style="border:none;border-top:1px solid #e4e4e7;margin:0;">
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px;">
+              <p style="margin:0;font-size:11px;color:#a1a1aa;line-height:1.6;">
+                AUREVIA Premium Rentals &nbsp;·&nbsp; <a href="${appUrl}" style="color:#a1a1aa;text-decoration:underline;">${appUrl.replace("https://","")}</a>
+                <br>Questions? Reply to this email or contact <a href="mailto:${replyEmail}" style="color:#a1a1aa;text-decoration:underline;">${replyEmail}</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 }
 
 // ─── TRANSACTIONS / BRANDED EMAILS ───────────────────────────────────
@@ -207,8 +174,8 @@ export async function sendEmailVerification(email: string, token: string) {
   const html = getBrandedTemplate("Verify Your Email", `
     <p>Welcome to AUREVIA Premium Rentals.</p>
     <p>Please click the button below to verify your email address and activate your account access.</p>
-    <a href="${verifyUrl}" class="btn">Verify Account</a>
-    <p style="margin-top: 25px; font-size: 11px; color: #6b7280;">If the button doesn't work, copy this link into your browser: <br>${verifyUrl}</p>
+    <p><a href="${verifyUrl}" style="display:inline-block;background-color:#0a0a0a;color:#ffffff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">Verify Account →</a></p>
+    <p style="margin-top:20px;font-size:11px;color:#a1a1aa;">If the button doesn't work, copy this link into your browser:<br>${verifyUrl}</p>
   `);
   const text = `Welcome to AUREVIA.\n\nPlease verify your email using this link:\n${verifyUrl}`;
   
@@ -225,10 +192,9 @@ export async function sendEmailVerification(email: string, token: string) {
 export async function sendPasswordReset(email: string, token: string) {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
   const html = getBrandedTemplate("Reset Your Password", `
-    <p>We received a request to reset your password for your AUREVIA vault account.</p>
-    <p>Please click the button below to establish a new password.</p>
-    <a href="${resetUrl}" class="btn">Reset Password</a>
-    <p style="margin-top: 25px; font-size: 11px; color: #6b7280;">If you did not request a password reset, you can safely ignore this email.</p>
+    <p>We received a request to reset your password for your AUREVIA account.</p>
+    <p><a href="${resetUrl}" style="display:inline-block;background-color:#0a0a0a;color:#ffffff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;">Reset Password →</a></p>
+    <p style="margin-top:20px;font-size:11px;color:#a1a1aa;">If you did not request a password reset, you can safely ignore this email.</p>
   `);
   const text = `Reset your password using this link:\n${resetUrl}`;
   
@@ -267,14 +233,13 @@ export async function sendPaymentReceived(booking: any) {
     notificationType: "payment_received_customer"
   });
 
-  // 2. Notify Prem (Business Owner)
-  const premEmail = process.env.EMAIL_REPLY_TO || "premmundargi135@gmail.com";
-  const htmlOwner = getBrandedTemplate("New Booking Checkout Payment", `
-    <p>Hello Prem,</p>
+  // 2. Notify Owner
+  const premEmail = process.env.EMAIL_REPLY_TO || "sachiii8827@gmail.com";
+  const htmlOwner = getBrandedTemplate("New Booking Payment Received", `
     <p>A new payment of <strong>₹${total.toLocaleString("en-IN")}</strong> has been received from <strong>${booking.contactName || "Customer"}</strong> for booking reference <strong>${refCode}</strong>.</p>
     <p>Please log in to the admin panel to review and approve this booking request.</p>
   `);
-  const textOwner = `Hello Prem,\n\nNew payment of ₹${total.toLocaleString("en-IN")} received from ${booking.contactName || "Customer"} for booking ${refCode}. Please review in the admin panel.`;
+  const textOwner = `New payment of ₹${total.toLocaleString("en-IN")} received from ${booking.contactName || "Customer"} for booking ${refCode}. Please review in the admin panel.`;
   
   await sendEmail({
     to: premEmail,
@@ -294,9 +259,9 @@ export async function sendBookingApproved(booking: any) {
 
   const html = getBrandedTemplate("Booking Approved", `
     <p>Dear ${booking.contactName || "Customer"},</p>
-    <p>Good news! Your booking request <strong>${refCode}</strong> has been **approved** by our administration.</p>
+    <p>Your booking request <strong>${refCode}</strong> has been approved.</p>
     <p>Please log in to your dashboard to sign the digital rental agreement. Once signed, your pick-up OTP will be generated.</p>
-    <a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard" class="btn">Go to Dashboard</a>
+    <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard" style="display:inline-block;background-color:#0a0a0a;color:#ffffff;padding:10px 22px;text-decoration:none;border-radius:6px;font-size:13px;font-weight:600;letter-spacing:0.03em;">Go to Dashboard →</a></p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour booking ${refCode} has been approved. Please log in to sign the digital agreement:\n${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/dashboard`;
   
@@ -366,10 +331,10 @@ export async function sendPickupOTP(booking: any, otp: string) {
   const html = getBrandedTemplate("Equipment Handover OTP", `
     <p>Dear ${booking.contactName || "Customer"},</p>
     <p>Thank you for signing the rental agreement. Your equipment pickup OTP has been generated.</p>
-    <div style="background-color: #0b0c10; padding: 20px; text-align: center; border: 1px dashed #d8b36a; border-radius: 4px; margin: 20px 0;">
-      <span style="font-size: 28px; font-family: monospace; letter-spacing: 0.25em; color: #d8b36a; font-weight: bold;">${otp}</span>
+    <div style="background-color:#f4f4f5;padding:20px 24px;text-align:center;border-radius:6px;margin:24px 0;">
+      <span style="font-size:32px;font-family:monospace;letter-spacing:0.3em;color:#0a0a0a;font-weight:700;">${otp}</span>
     </div>
-    <p>Please present this OTP code to Prem Mundargi at the checkout counter to collect your gear.</p>
+    <p>Present this OTP at the checkout counter to collect your gear. This code is valid for this booking only.</p>
   `);
   const text = `Dear ${booking.contactName || "Customer"},\n\nYour pickup OTP code is: ${otp}. Present it at checkout to collect your gear.`;
   
