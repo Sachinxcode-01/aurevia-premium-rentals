@@ -33,10 +33,10 @@ export default function FloatingChatLauncher() {
         setPosition({ x, y });
       } catch (e) {
         // Fallback default
-        setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+        setPosition({ x: window.innerWidth - 72, y: window.innerHeight - 72 });
       }
     } else {
-      setPosition({ x: window.innerWidth - 80, y: window.innerHeight - 80 });
+      setPosition({ x: window.innerWidth - 72, y: window.innerHeight - 72 });
     }
     setIsReady(true);
   }, []);
@@ -155,8 +155,8 @@ export default function FloatingChatLauncher() {
 
   const resetPosition = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const defaultX = window.innerWidth - 80;
-    const defaultY = window.innerHeight - 80;
+    const defaultX = window.innerWidth - 72;
+    const defaultY = window.innerHeight - 72;
     
     if (launcherRef.current) {
       animate(launcherRef.current, {

@@ -16,24 +16,28 @@ export default function FloatingWhatsApp({
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
   return (
-    <motion.a
-      href={whatsappUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.08 }}
-      whileTap={{ scale: 0.95 }}
-      className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full shadow-2xl border border-emerald-400/30 transition-all duration-300 group cursor-pointer"
-      title="Enquire on WhatsApp"
-    >
-      <div className="relative">
-        <MessageCircle className="w-5 h-5 fill-current" />
-        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-300 rounded-full animate-ping" />
-      </div>
-      <span className="hidden sm:inline-block text-xs font-semibold tracking-wider font-mono uppercase">
-        Rent Enquiry
-      </span>
-    </motion.a>
+    <div className="fixed bottom-[88px] right-6 z-40 flex items-center pointer-events-auto select-none">
+      <motion.a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        className="relative w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xl border border-emerald-400/30 flex items-center justify-center transition-all duration-300 group cursor-pointer"
+        aria-label="Enquire on WhatsApp"
+      >
+        <MessageCircle className="w-6 h-6 fill-current shrink-0" />
+        
+        {/* Pulsing online status indicator */}
+        <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-300 rounded-full border-2 border-obsidian animate-pulse" />
+
+        {/* Hover Tooltip (Expands to the left) */}
+        <span className="absolute right-16 px-3 py-1.5 bg-charcoal/95 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-xl pointer-events-none">
+          WhatsApp Concierge
+        </span>
+      </motion.a>
+    </div>
   );
 }
