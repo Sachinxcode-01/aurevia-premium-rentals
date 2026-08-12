@@ -295,6 +295,7 @@ function printInvoice(booking: Record<string, unknown>, profile: Record<string, 
         <div class="meta-item"><label>Customer Name</label><span>${customerName}</span></div>
         <div class="meta-item"><label>Contact Phone</label><span>${customerPhone}</span></div>
         <div class="meta-item"><label>Customer Email</label><span>${customerEmail}</span></div>
+        <div class="meta-item"><label>Payment Status</label><span style="color: #27ae60;">${paymentStr || "PAID"}</span></div>
         <div class="meta-item"><label>Booking Status</label><span style="color: #D8B36A;">${statusStr}</span></div>
       </div>
 
