@@ -996,10 +996,10 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Floating Scroll to Top Widget */}
+      {/* Floating Scroll to Top Widget (Positioned on the Left to avoid right-side action triggers) */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-8 right-8 z-40 p-3.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/30 text-gold-champagne backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-gold-champagne hover:text-obsidian shadow-xl ${showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
+        className={`fixed bottom-8 left-8 z-40 p-3.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/30 text-gold-champagne backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-gold-champagne hover:text-obsidian shadow-xl ${showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
           }`}
         aria-label="Scroll to top"
       >
