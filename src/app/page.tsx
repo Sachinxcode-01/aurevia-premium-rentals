@@ -36,7 +36,22 @@ export default function Home() {
   const router = useRouter();
   const { cart, addToCart } = useCart();
 
-  const [reviewsList, setReviewsList] = React.useState<Review[]>([]);
+  const [reviewsList, setReviewsList] = React.useState<Review[]>(() => {
+    if (typeof window === "undefined") return [];
+    const approved = engagementStore.getApprovedReviews();
+    if (approved.length > 0) {
+      return approved.map((r: CustomerReview) => ({
+        id: r.id,
+        productId: r.productName,
+        authorName: r.customerName,
+        quote: r.comment,
+        rating: r.rating,
+        isApproved: true,
+        createdAt: r.createdAt,
+      }));
+    }
+    return [];
+  });
   const [revName, setRevName] = React.useState("");
   const [revQuote, setRevQuote] = React.useState("");
   const [revRating, setRevRating] = React.useState(5);
@@ -50,23 +65,12 @@ export default function Home() {
     db.getFAQs().then(setFaqsList);
     db.getProducts().then(setProductsList);
 
-    // Initial load of approved reviews
-    const approved = engagementStore.getApprovedReviews();
-    if (approved.length > 0) {
-      setReviewsList(
-        approved.map((r: CustomerReview) => ({
-          id: r.id,
-          productId: r.productName,
-          authorName: r.customerName,
-          quote: r.comment,
-          rating: r.rating,
-          isApproved: true,
-          createdAt: r.createdAt,
-        }))
-      );
-    } else {
-      db.getReviews(undefined, true).then(setReviewsList);
-    }
+    db.getReviews(undefined, true).then((fallbackReviews) => {
+      const approved = engagementStore.getApprovedReviews();
+      if (approved.length === 0 && fallbackReviews.length > 0) {
+        setReviewsList(fallbackReviews);
+      }
+    });
 
     // Live Real-Time Subscription: Updates public website immediately when Admin approves/rejects a review!
     const unsubReview = realtimeHub.subscribe("REVIEW_MODERATED", () => {
