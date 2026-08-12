@@ -1,30 +1,41 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useChatbot } from "./ChatbotProvider";
 import { RefreshCw } from "lucide-react";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 
+const emptySubscribe = () => () => {};
+
+function useIsMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
+
+function getInitialPosition(): { x: number; y: number } {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("aurevia_chat_position");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+      }
+    }
+    return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+  }
+  return { x: 0, y: 0 };
+}
+
 export default function FloatingChatLauncher() {
   const { toggleChat, isOpen, unreadCount } = useChatbot();
+  const isMounted = useIsMounted();
   
-  // Position state with lazy initializer (defaults to bottom-right)
-  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("aurevia_chat_position");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
-        }
-      }
-      return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
-    }
-    return { x: 0, y: 0 };
-  });
-  const [isReady] = useState(() => typeof window !== "undefined");
+  const [position, setPosition] = useState<{ x: number; y: number }>(getInitialPosition);
   const launcherRef = useRef<HTMLButtonElement>(null);
   
   // Drag state
@@ -39,7 +50,7 @@ export default function FloatingChatLauncher() {
 
   // Update position on window resize to prevent leaving viewport
   useEffect(() => {
-    if (!isReady) return;
+    if (!isMounted) return;
     const handleResize = () => {
       setPosition((prev) => {
         const maxX = window.innerWidth - 70;
@@ -51,18 +62,18 @@ export default function FloatingChatLauncher() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isReady]);
+  }, [isMounted]);
 
   // Save position when it changes
   useEffect(() => {
-    if (isReady) {
+    if (isMounted && position.x > 0 && position.y > 0) {
       localStorage.setItem("aurevia_chat_position", JSON.stringify(position));
     }
-  }, [position, isReady]);
+  }, [position, isMounted]);
 
   // Breathing animation on idle
   useEffect(() => {
-    if (!isReady || isOpen || !launcherRef.current) return;
+    if (!isMounted || isOpen || !launcherRef.current) return;
     
     const pulse = animate(launcherRef.current, {
       scale: [1, 1.05, 1],
@@ -79,7 +90,7 @@ export default function FloatingChatLauncher() {
     return () => {
       pulse.pause();
     };
-  }, [isReady, isOpen]);
+  }, [isMounted, isOpen]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     // Left click or touch only
@@ -167,7 +178,7 @@ export default function FloatingChatLauncher() {
     }
   };
 
-  if (!isReady) return null;
+  if (!isMounted) return null;
 
   return (
     <div 

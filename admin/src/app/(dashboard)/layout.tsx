@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "motion/react";
 interface NavItem {
   name: string;
   href: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   badge?: string;
   badgeColor?: string;
 }

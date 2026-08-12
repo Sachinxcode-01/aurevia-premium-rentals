@@ -116,14 +116,14 @@ export default function Navbar({
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-3.5 xl:gap-7 h-full">
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-5 2xl:gap-7 h-full">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`group relative py-1 text-[11px] xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                  className={`group relative py-1 text-[10px] lg:text-[11px] xl:text-[13px] uppercase tracking-normal lg:tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
                     isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
                   }`}
                 >
@@ -143,12 +143,12 @@ export default function Navbar({
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-3 xl:gap-5 shrink-0 h-full">
+          <div className="hidden lg:flex items-center gap-2.5 xl:gap-5 shrink-0 h-full">
             {/* Global Search Modal Trigger */}
             <button
               id="global-search-trigger"
               onClick={handleOpenSearch}
-              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-xs xl:text-sm text-muted-gray hover:text-ivory rounded-full px-4 h-10 xl:h-11 flex items-center justify-between w-36 xl:w-52 transition-all duration-300 cursor-pointer group"
+              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-xs xl:text-sm text-muted-gray hover:text-ivory rounded-full px-3 xl:px-4 h-9 xl:h-11 flex items-center justify-between w-28 lg:w-32 xl:w-52 transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center gap-2">
                 <Search size={14} className="stroke-[2] text-gold-champagne" />

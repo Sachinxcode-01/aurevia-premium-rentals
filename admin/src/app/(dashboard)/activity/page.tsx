@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
-import { Activity, ShieldCheck, Lock, User, Clock } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { Activity, RefreshCw } from "lucide-react";
+import { adminApiClient } from "@/lib/api-client";
 
 interface AuditLog {
   id: string;
@@ -20,16 +21,52 @@ const MOCK_AUDITS: AuditLog[] = [
 ];
 
 export default function AdminActivityPage() {
+  const [logs, setLogs] = useState<AuditLog[]>(MOCK_AUDITS);
+  const [loading, setLoading] = useState(false);
+
+  const loadLogs = useCallback(async () => {
+    setLoading(true);
+    const res = await adminApiClient.audit.list(50);
+    if (res.success && res.data && res.data.length > 0) {
+      const mapped = res.data.map((l: any) => ({
+        id: l.id ? `AUD-${l.id.slice(0, 4)}` : "AUD-101",
+        actor: l.actor_email || "System Admin",
+        role: "ADMIN",
+        action: l.action ? String(l.action).replace(/\./g, " ").toUpperCase() : "SYSTEM ACTION",
+        target: `${l.resource} #${l.resource_id || ""}`,
+        timestamp: l.created_at ? new Date(l.created_at).toLocaleString() : "Just now",
+        ip: l.ip_address || "127.0.0.1",
+      }));
+      setLogs(mapped);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
+
   return (
     <div className="space-y-6 pb-12">
-      <div className="border-b border-white/5 pb-6">
-        <h1 className="text-2xl font-light text-[#f5f1e8] font-serif flex items-center gap-3">
-          <Activity className="text-[#d8b36a]" size={24} />
-          System Audit &amp; Security Logs
-        </h1>
-        <p className="text-xs text-[#9a9995] font-light mt-1">
-          Immutable audit trails of staff actions, security authentication, and status overrides.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+        <div>
+          <h1 className="text-2xl font-light text-[#f5f1e8] font-serif flex items-center gap-3">
+            <Activity className="text-[#d8b36a]" size={24} />
+            System Audit &amp; Security Logs
+          </h1>
+          <p className="text-xs text-[#9a9995] font-light mt-1">
+            Immutable audit trails of staff actions, security authentication, and status overrides.
+          </p>
+        </div>
+
+        <button
+          onClick={() => loadLogs()}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={`text-[#d8b36a] ${loading ? "animate-spin" : ""}`} />
+          <span>Sync Audit Trail</span>
+        </button>
       </div>
 
       <div className="admin-card rounded-2xl overflow-hidden border border-white/10">
@@ -46,7 +83,7 @@ export default function AdminActivityPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5 text-[#f5f1e8] font-mono">
-            {MOCK_AUDITS.map((log) => (
+            {logs.map((log) => (
               <tr key={log.id} className="hover:bg-white/5 transition">
                 <td className="p-4 text-[#d8b36a]">{log.id}</td>
                 <td className="p-4 font-sans font-medium">{log.actor}</td>

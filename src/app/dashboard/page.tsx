@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -9,17 +10,17 @@ import { SkeletonDashboard } from "@/components/ui/SkeletonLoader";
 import { cancelBookingAction } from "@/lib/actions/bookings";
 import { updateProfileAction, getCurrentUserAction, changePasswordAction, signOutAction } from "@/lib/actions/auth";
 import {
-  User, ShoppingBag, Settings, Camera, Calendar, Clock, CheckCircle,
-  XCircle, Loader2, ShieldCheck, FileText, Download, Key, LogOut,
+  User, ShoppingBag, Settings, Camera, Calendar, CheckCircle,
+  XCircle, Loader2, FileText, Download, Key, LogOut,
   ChevronRight, AlertTriangle, Menu, X, RefreshCw, Lock, Eye, EyeOff,
-  Phone, Mail, MapPin, MessageCircle, TrendingUp, Tag, CreditCard, Star,
+  Phone, Mail, MessageCircle, TrendingUp, Tag, CreditCard, Star,
 } from "lucide-react";
 import { animate, stagger } from "animejs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { db } from "@/lib/db/store";
 import { Logo } from "@/components/ui/Logo";
-import { MOCK_PRODUCTS } from "@/lib/db/mockData";
+import { MOCK_PRODUCTS, Product } from "@/lib/db/mockData";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -68,7 +69,7 @@ function canCancel(status: string) {
 }
 
 /* ─── Print invoice helper ───────────────────────────────────── */
-function printInvoice(booking: any, profile: any) {
+function printInvoice(booking: Record<string, unknown>, profile: Record<string, unknown> | null) {
   const w = window.open("", "_blank");
   if (!w) return;
   w.document.write(`
@@ -93,21 +94,21 @@ function printInvoice(booking: any, profile: any) {
     </div>
     <div class="meta">
       <div class="meta-item"><label>Invoice No.</label>${booking.referenceCode || booking.reference_code}</div>
-      <div class="meta-item"><label>Date</label>${new Date(booking.createdAt || booking.created_at).toLocaleDateString("en-IN")}</div>
+      <div class="meta-item"><label>Date</label>${new Date((booking.createdAt || booking.created_at) as string).toLocaleDateString("en-IN")}</div>
       <div class="meta-item"><label>Customer</label>${profile?.full_name || "—"}</div>
       <div class="meta-item"><label>Email</label>${profile?.email || booking.contactEmail || booking.contact_email || "—"}</div>
       <div class="meta-item"><label>Phone</label>${profile?.phone || booking.contactPhone || booking.contact_phone || "—"}</div>
-      <div class="meta-item"><label>Status</label>${(booking.status || "").replace(/_/g, " ").toUpperCase()}</div>
+      <div class="meta-item"><label>Status</label>${(String(booking.status || "")).replace(/_/g, " ").toUpperCase()}</div>
       <div class="meta-item"><label>Rental Period</label>${booking.startDate || booking.start_date} → ${booking.endDate || booking.end_date}</div>
-      <div class="meta-item"><label>Payment</label>${(booking.paymentStatus || booking.payment_status || "").replace(/_/g, " ").toUpperCase()}</div>
+      <div class="meta-item"><label>Payment</label>${(String(booking.paymentStatus || booking.payment_status || "")).replace(/_/g, " ").toUpperCase()}</div>
     </div>
     <table>
       <thead><tr><th>Item</th><th>Days</th><th style="text-align:right">Amount</th></tr></thead>
       <tbody>
-        <tr><td>Camera Rental</td><td>${Math.max(1, Math.ceil((new Date(booking.endDate || booking.end_date).getTime() - new Date(booking.startDate || booking.start_date).getTime()) / 86400000))}</td><td style="text-align:right">₹${(booking.totalRentalFee || booking.total_rental_fee || 0).toLocaleString("en-IN")}</td></tr>
-        ${(booking.discountAmount || booking.discount_amount) ? `<tr><td>Coupon Discount (${booking.couponApplied || booking.coupon_applied || ""})</td><td>—</td><td style="text-align:right; color:#e74c3c">−₹${((booking.discountAmount || booking.discount_amount) || 0).toLocaleString("en-IN")}</td></tr>` : ""}
+        <tr><td>Camera Rental</td><td>${Math.max(1, Math.ceil((new Date((booking.endDate || booking.end_date) as string).getTime() - new Date((booking.startDate || booking.start_date) as string).getTime()) / 86400000))}</td><td style="text-align:right">₹${Number(booking.totalRentalFee || booking.total_rental_fee || 0).toLocaleString("en-IN")}</td></tr>
+        ${(booking.discountAmount || booking.discount_amount) ? `<tr><td>Coupon Discount (${booking.couponApplied || booking.coupon_applied || ""})</td><td>—</td><td style="text-align:right; color:#e74c3c">−₹${(Number(booking.discountAmount || booking.discount_amount) || 0).toLocaleString("en-IN")}</td></tr>` : ""}
       </tbody>
-      <tfoot><tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">₹${((booking.totalPayable ?? booking.total_payable) || 0).toLocaleString("en-IN")}</td></tr></tfoot>
+      <tfoot><tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">₹${(Number(booking.totalPayable ?? booking.total_payable) || 0).toLocaleString("en-IN")}</td></tr></tfoot>
     </table>
     <div class="footer">
       AUREVIA Camera Rentals · by Prem Mundargi · aurevia.in<br/>
@@ -126,7 +127,7 @@ export default function CustomerDashboard() {
   const { cart, addToCart } = useCart();
   const toast = useToast();
 
-  const [profile, setProfile]           = useState<Record<string, unknown> | null>(null);
+  const [profile, setProfile]           = useState<any | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [bookings, setBookings]         = useState<any[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
@@ -147,11 +148,11 @@ export default function CustomerDashboard() {
   const [filterEndDate, setFilterEndDate] = useState("");
 
   // Favorites & Recently viewed states
-  const [favoritesList, setFavoritesList] = useState<any[]>([]);
-  const [recentlyViewedList, setRecentlyViewedList] = useState<any[]>([]);
+  const [favoritesList, setFavoritesList] = useState<Product[]>([]);
+  const [recentlyViewedList, setRecentlyViewedList] = useState<Product[]>([]);
 
   // Post-rental review states
-  const [reviewModalProduct, setReviewModalProduct] = useState<any | null>(null);
+  const [reviewModalProduct, setReviewModalProduct] = useState<Product | null>(null);
   const [reviewComment, setReviewComment] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -238,7 +239,7 @@ export default function CustomerDashboard() {
       } else {
         toast.error(data.error || "Failed to create ticket.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to submit support request.");
     } finally {
       setSubmittingTicket(false);
@@ -266,7 +267,7 @@ export default function CustomerDashboard() {
       } else {
         toast.error(data.error || "Failed to send reply.");
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to send reply.");
     } finally {
       setSendingReply(false);
@@ -281,7 +282,7 @@ export default function CustomerDashboard() {
       const viewed = JSON.parse(localStorage.getItem("recently_viewed") || "[]") as string[];
       
       const favProducts = MOCK_PRODUCTS.filter((p) => favorites.includes(p.id));
-      const viewProducts = viewed.map((id) => MOCK_PRODUCTS.find((p) => p.id === id)).filter(Boolean);
+      const viewProducts = viewed.map((id) => MOCK_PRODUCTS.find((p) => p.id === id)).filter(Boolean) as Product[];
       
       setFavoritesList(favProducts);
       setRecentlyViewedList(viewProducts);
@@ -289,7 +290,10 @@ export default function CustomerDashboard() {
   }, []);
 
   useEffect(() => {
-    loadFavoritesAndRecentlyViewed();
+    const handle = requestAnimationFrame(() => {
+      loadFavoritesAndRecentlyViewed();
+    });
+    return () => cancelAnimationFrame(handle);
   }, [activeTab, loadFavoritesAndRecentlyViewed]);
 
   const loadBookings = useCallback(async () => {
@@ -303,7 +307,7 @@ export default function CustomerDashboard() {
       } else {
         const profileId = (profile?.id as string) ?? "usr-prem";
         const local = await db.getBookings(profileId);
-        setBookings(local as any[]);
+        setBookings(local as Record<string, any>[]);
       }
     } catch {
       toast.error("Failed to load bookings.");
@@ -340,8 +344,11 @@ export default function CustomerDashboard() {
   // Load bookings and tickets after profile
   useEffect(() => {
     if (!profileLoading) {
-      loadBookings();
-      loadTickets();
+      const handle = requestAnimationFrame(() => {
+        loadBookings();
+        loadTickets();
+      });
+      return () => cancelAnimationFrame(handle);
     }
   }, [profileLoading, loadBookings, loadTickets]);
 
@@ -462,9 +469,10 @@ export default function CustomerDashboard() {
   if (searchTerm) {
     const term = searchTerm.toLowerCase();
     filteredBookings = filteredBookings.filter((b) => {
-      const ref = (b.referenceCode || b.reference_code || "").toLowerCase();
-      const nameMatch = (b.booking_items || b.items || []).some((item: any) => {
-        const prodName = item.product?.name || item.name || item.productId || "";
+      const ref = (String(b.referenceCode || b.reference_code || "")).toLowerCase();
+      const itemsList = (b.booking_items || b.items || []) as any[];
+      const nameMatch = itemsList.some((item: any) => {
+        const prodName = String(item.product?.name || item.name || item.productId || "");
         return prodName.toLowerCase().includes(term);
       });
       return ref.includes(term) || nameMatch;
@@ -501,11 +509,11 @@ export default function CustomerDashboard() {
           />
         )}
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pt-28 pb-16 flex gap-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 pt-32 md:pt-36 lg:pt-40 pb-16 flex gap-6">
 
           {/* Sidebar */}
           <aside className={`fixed lg:relative top-0 left-0 h-full lg:h-auto z-50 lg:z-auto w-64 lg:w-56 xl:w-64 bg-obsidian lg:bg-transparent border-r border-white/5 lg:border-none pt-20 lg:pt-0 px-4 lg:px-0 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} shrink-0`}>
-            <div className="glass-panel border-white/5 rounded-xl p-4 space-y-1 sticky top-28">
+            <div className="glass-panel border-white/5 rounded-xl p-4 space-y-1 sticky top-32 md:top-36">
               {/* Brand Wordmark */}
               <div className="px-2 pt-1 pb-3 border-b border-white/5 mb-2 flex justify-center">
                 <Logo variant="wordmark" theme="light" width={120} height={32} />
@@ -979,7 +987,7 @@ export default function CustomerDashboard() {
                                 {Number(b.damage_cost || b.damageCost) > 0 && (
                                   <p>• Damage Assessment: <span className="text-ivory font-semibold">₹{Number(b.damage_cost || b.damageCost).toLocaleString("en-IN")}</span></p>
                                 )}
-                                <p>• Notes: <span className="italic text-ivory">"{b.damage_description || b.damageDescription || 'No description provided'}"</span></p>
+                                <p>• Notes: <span className="italic text-ivory">&quot;{b.damage_description || b.damageDescription || 'No description provided'}&quot;</span></p>
                                 <p className="text-[10px] text-rose-400/80 font-mono mt-1">Total Payable: ₹{(Number(b.late_fee || b.lateFee || 0) + Number(b.damage_cost || b.damageCost || 0)).toLocaleString("en-IN")}</p>
                               </div>
                               {b.penalty_payment_url || b.penaltyPaymentUrl ? (
@@ -1024,10 +1032,10 @@ export default function CustomerDashboard() {
                                     referenceCode: b.referenceCode || b.reference_code,
                                     contactName: b.contactName || b.contact_name,
                                     contactPhone: b.contactPhone || b.contact_phone,
-                                  } as any;
+                                  } as Record<string, unknown>;
                                   
                                   import("@/lib/utils/ical").then((u) => {
-                                    u.downloadCalendarFile(mappedBooking, productName);
+                                    u.downloadCalendarFile(mappedBooking as any, productName as string);
                                     toast.success("Calendar invite downloaded successfully!");
                                   });
                                 }}
@@ -1578,20 +1586,7 @@ export default function CustomerDashboard() {
                 onClick={async () => {
                   const bid = cancelPolicyTarget.id;
                   setCancelPolicyTarget(null);
-                  setCancellingId(bid);
-                  try {
-                    const res = await cancelBookingAction(bid);
-                    if (res.success) {
-                      toast.success("Booking cancelled & refund request queued.");
-                      await loadBookings();
-                    } else {
-                      toast.error(res.error || "Cancellation failed.");
-                    }
-                  } catch {
-                    toast.error("Cancellation failed.");
-                  } finally {
-                    setCancellingId(null);
-                  }
+                  await handleCancel(bid);
                 }}
                 className="flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold uppercase rounded-lg transition cursor-pointer text-center"
               >
