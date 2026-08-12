@@ -42,46 +42,122 @@ export async function signInAction(email: string, password: string): Promise<Aut
   return { success: true, role: profile?.role ?? "customer" };
 }
 
-// ─── Sign Up ─────────────────────────────────────────────────
+// In-memory Signup OTP Store
+const signupOtpStore = new Map<string, {
+  otp: string;
+  password: string;
+  fullName: string;
+  phone: string;
+  expiresAt: number;
+}>();
+
+// ─── Sign Up (Step 1: Request 6-Digit Email OTP) ──────────────
+export async function requestSignUpOTPAction(
+  email: string,
+  password: string,
+  fullName: string,
+  phone: string
+): Promise<AuthResult> {
+  if (!email || !email.includes("@")) {
+    return { success: false, error: "Please enter a valid email address." };
+  }
+  if (!password || password.length < 6) {
+    return { success: false, error: "Password must be at least 6 characters." };
+  }
+  if (!fullName) {
+    return { success: false, error: "Full name is required." };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+
+  signupOtpStore.set(cleanEmail, {
+    otp,
+    password,
+    fullName,
+    phone,
+    expiresAt,
+  });
+
+  try {
+    const { sendAccountVerificationOTP } = await import("@/lib/email/mailer");
+    await sendAccountVerificationOTP(cleanEmail, fullName, otp);
+    return { success: true, needsVerification: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to send verification email.";
+    return { success: false, error: msg };
+  }
+}
+
+// ─── Sign Up (Step 2: Verify 6-Digit OTP & Create Account) ───
+export async function verifySignUpOTPAction(
+  email: string,
+  otp: string
+): Promise<AuthResult> {
+  if (!email || !otp) {
+    return { success: false, error: "Email and OTP verification code are required." };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const cleanOtp = otp.trim();
+  const record = signupOtpStore.get(cleanEmail);
+
+  if (!record || record.otp !== cleanOtp) {
+    return { success: false, error: "Invalid 6-digit verification code." };
+  }
+
+  if (Date.now() > record.expiresAt) {
+    signupOtpStore.delete(cleanEmail);
+    return { success: false, error: "Verification code has expired. Please request a new code." };
+  }
+
+  try {
+    const serviceSupabase = await createServiceSupabaseClient();
+
+    // Create & auto-confirm user in Supabase
+    const { data: newUser, error: createErr } = await serviceSupabase.auth.admin.createUser({
+      email: cleanEmail,
+      password: record.password,
+      email_confirm: true,
+      user_metadata: { full_name: record.fullName },
+    });
+
+    if (createErr) {
+      if (createErr.message.toLowerCase().includes("already registered") || createErr.message.toLowerCase().includes("already exists")) {
+        return { success: false, error: "An account with this email already exists. Please sign in." };
+      }
+      return { success: false, error: createErr.message };
+    }
+
+    if (newUser?.user) {
+      await serviceSupabase.from("profiles").upsert([{
+        id: newUser.user.id,
+        full_name: record.fullName,
+        email: cleanEmail,
+        phone: record.phone,
+        role: "customer",
+        avatar_url: null,
+      }] as never[]);
+    }
+
+    // Clean up OTP
+    signupOtpStore.delete(cleanEmail);
+    revalidatePath("/");
+    return { success: true, role: "customer" };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to verify account creation.";
+    return { success: false, error: msg };
+  }
+}
+
 export async function signUpAction(
   email: string,
   password: string,
   fullName: string,
   phone: string
 ): Promise<AuthResult> {
-  const supabase = await createServerSupabaseClient();
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: fullName },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
-    },
-  });
-
-  if (error) {
-    if (error.message.toLowerCase().includes("already registered")) {
-      return { success: false, error: "An account with this email already exists. Please sign in." };
-    }
-    return { success: false, error: error.message };
-  }
-  if (!data.user) return { success: false, error: "User creation failed." };
-
-  // Upsert profile (may already exist from DB trigger)
-  await supabase.from("profiles").upsert([{
-    id: data.user.id,
-    full_name: fullName,
-    email,
-    phone,
-    role: "customer",
-    avatar_url: null,
-  }] as never[]);
-
-  revalidatePath("/");
-  // If session is null, email confirmation is required
-  const needsVerification = !data.session;
-  return { success: true, role: "customer", needsVerification };
+  return requestSignUpOTPAction(email, password, fullName, phone);
 }
 
 // ─── Sign Out ────────────────────────────────────────────────

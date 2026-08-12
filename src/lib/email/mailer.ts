@@ -169,6 +169,27 @@ function getBrandedTemplate(title: string, bodyContent: string): string {
 
 // ─── TRANSACTIONS / BRANDED EMAILS ───────────────────────────────────
 
+export async function sendAccountVerificationOTP(email: string, name: string, otp: string) {
+  const html = getBrandedTemplate("Verify Your Account", `
+    <p>Welcome to AUREVIA Premium Rentals, ${name || "Valued Member"}.</p>
+    <p>Please enter the 6-digit verification code below on the website to activate your account:</p>
+    <div style="background-color:#f4f4f5;padding:20px 24px;text-align:center;border-radius:6px;margin:24px 0;">
+      <span style="font-size:32px;font-family:monospace;letter-spacing:0.3em;color:#0a0a0a;font-weight:700;">${otp}</span>
+    </div>
+    <p style="font-size:12px;color:#71717a;">This code will expire in 10 minutes. If you did not create an account, you can safely ignore this email.</p>
+  `);
+  const text = `Welcome to AUREVIA. Your Account Verification Code is: ${otp}\n\nEnter this code on the website to activate your account.`;
+
+  await sendEmail({
+    to: email,
+    subject: `Your AUREVIA Account Verification Code: ${otp}`,
+    html,
+    text,
+    idempotencyKey: `verify-otp-${email}-${Date.now()}`,
+    notificationType: "account_verification_otp"
+  });
+}
+
 export async function sendEmailVerification(email: string, token: string) {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
   const html = getBrandedTemplate("Verify Your Email", `

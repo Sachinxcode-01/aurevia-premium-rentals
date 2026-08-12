@@ -7,10 +7,10 @@ import { useToast } from "@/hooks/useToast";
 import { useRouter } from "next/navigation";
 import {
   Lock, Mail, User, Phone, CheckCircle, Loader2,
-  Eye, EyeOff, ArrowRight, ShieldCheck
+  Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound
 } from "lucide-react";
 import Link from "next/link";
-import { signUpAction } from "@/lib/actions/auth";
+import { requestSignUpOTPAction, verifySignUpOTPAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 
@@ -19,16 +19,17 @@ export default function RegisterPage() {
   const toast = useToast();
   const router = useRouter();
 
-  const [name, setName]           = useState("");
-  const [email, setEmail]         = useState("");
-  const [phone, setPhone]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [confirm, setConfirm]     = useState("");
-  const [showPw, setShowPw]       = useState(false);
-  const [showCfm, setShowCfm]     = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [success, setSuccess]     = useState(false);
-  const [needsVerif, setNeedsVerif] = useState(false);
+  const [step, setStep] = useState<"details" | "otp">("details");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showCfm, setShowCfm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     animate(".auth-panel", {
@@ -37,7 +38,7 @@ export default function RegisterPage() {
       duration: 700,
       easing: "easeOutQuart",
     });
-  }, []);
+  }, [step]);
 
   const pwStrength = (() => {
     if (password.length === 0) return 0;
@@ -52,7 +53,8 @@ export default function RegisterPage() {
   const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][pwStrength];
   const strengthColor = ["", "bg-rose-500", "bg-amber-500", "bg-teal-500", "bg-emerald-500"][pwStrength];
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Step 1: Request OTP
+  const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters.");
@@ -60,34 +62,40 @@ export default function RegisterPage() {
     }
     if (password !== confirm) {
       toast.error("Passwords do not match.");
-      animate(".auth-panel", {
-        translateX: [0, -8, 8, -6, 6, 0],
-        duration: 500,
-        easing: "easeInOutSine",
-      });
       return;
     }
     setLoading(true);
 
-    const result = await signUpAction(email, password, name, phone);
+    const result = await requestSignUpOTPAction(email, password, name, phone);
+    setLoading(false);
+
+    if (result.success) {
+      toast.success("6-digit verification OTP code sent to your email!");
+      setStep("otp");
+    } else {
+      toast.error(result.error ?? "Registration failed. Please try again.");
+    }
+  };
+
+  // Step 2: Verify OTP & Create Account
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) {
+      toast.error("Please enter the 6-digit OTP code.");
+      return;
+    }
+    setLoading(true);
+
+    const result = await verifySignUpOTPAction(email, otp);
+    setLoading(false);
 
     if (result.success) {
       setSuccess(true);
-      if (result.needsVerification) {
-        setNeedsVerif(true);
-      } else {
-        toast.success("Account created! Redirecting...");
-        setTimeout(() => router.push("/dashboard"), 1500);
-      }
+      toast.success("Account created & verified! Redirecting to sign in...");
+      setTimeout(() => router.push("/login"), 1800);
     } else {
-      toast.error(result.error ?? "Registration failed. Please try again.");
-      animate(".auth-panel", {
-        translateX: [0, -8, 8, -6, 6, 0],
-        duration: 500,
-        easing: "easeInOutSine",
-      });
+      toast.error(result.error ?? "Invalid verification code.");
     }
-    setLoading(false);
   };
 
   return (
@@ -106,35 +114,24 @@ export default function RegisterPage() {
             <div className="flex justify-center mb-3">
               <Logo variant="wordmark" theme="light" width={160} height={44} />
             </div>
-            <span className="text-[9px] uppercase tracking-[0.2em] text-gold-champagne font-mono block">Club Membership</span>
-            <p className="text-[11px] text-muted-gray">Premium camera rental — by Prem</p>
+            <span className="text-[9px] uppercase tracking-[0.2em] text-gold-champagne font-mono block">
+              {step === "details" ? "Club Membership" : "Step 2 of 2 · Email OTP"}
+            </span>
+            <p className="text-[11px] text-muted-gray">
+              {step === "details" ? "Premium camera rental — by Prem" : `Enter the 6-digit code sent to ${email}`}
+            </p>
           </div>
 
-          {/* Verification required state */}
-          {needsVerif && (
-            <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-lg space-y-2 text-center">
-              <ShieldCheck size={22} className="text-teal-400 mx-auto" />
-              <p className="text-teal-400 text-xs font-semibold">Verify your email to continue</p>
-              <p className="text-[11px] text-muted-gray leading-relaxed">
-                We sent a verification link to <span className="text-ivory font-mono">{email}</span>.
-                Click the link in the email to activate your account.
-              </p>
-              <Link href="/login" className="block mt-2 text-[11px] text-gold-champagne hover:underline">
-                Back to Sign In
-              </Link>
+          {/* Success state */}
+          {success ? (
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono rounded-lg flex flex-col items-center gap-2 text-center">
+              <CheckCircle size={24} />
+              <span>Account Created & Verified!</span>
+              <span className="text-[10px] text-muted-gray">Redirecting to sign in...</span>
             </div>
-          )}
-
-          {/* Success (no verification required) */}
-          {success && !needsVerif && (
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono rounded-lg flex items-center gap-1.5 justify-center">
-              <CheckCircle size={13} /> Profile Created. Redirecting...
-            </div>
-          )}
-
-          {/* Form */}
-          {!needsVerif && (
-            <form onSubmit={handleRegister} className="space-y-4">
+          ) : step === "details" ? (
+            /* STEP 1: Registration Details Form */
+            <form onSubmit={handleRequestOTP} className="space-y-4">
               {/* Full Name */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Full Name</label>
@@ -193,7 +190,6 @@ export default function RegisterPage() {
                     {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
-                {/* Strength bar */}
                 {password.length > 0 && (
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1 flex-1">
@@ -229,16 +225,50 @@ export default function RegisterPage() {
 
               <button
                 type="submit" id="reg-submit"
-                disabled={loading || success}
+                disabled={loading}
                 className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2 mt-2"
               >
-                {loading ? <><Loader2 size={13} className="animate-spin" /> Creating Account...</> : <><ArrowRight size={13} /> Create Account</>}
+                {loading ? <><Loader2 size={13} className="animate-spin" /> Sending Code...</> : <><ArrowRight size={13} /> Send Verification OTP</>}
               </button>
+            </form>
+          ) : (
+            /* STEP 2: Verify 6-Digit OTP Form */
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">6-Digit Verification Code</label>
+                <div className="relative">
+                  <KeyRound size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold-champagne pointer-events-none" />
+                  <input
+                    type="text" required maxLength={6} id="reg-otp"
+                    placeholder="e.g. 739102"
+                    value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    className="w-full bg-white/5 border border-gold-border text-center tracking-[0.3em] font-mono text-sm font-bold text-gold-champagne rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne transition placeholder-white/20"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit" id="verify-otp-submit"
+                disabled={loading}
+                className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                {loading ? <><Loader2 size={13} className="animate-spin" /> Verifying...</> : <><ShieldCheck size={13} /> Verify & Create Account</>}
+              </button>
+
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep("details")}
+                  className="text-[10px] text-muted-gray hover:text-gold-champagne transition cursor-pointer"
+                >
+                  Change Email / Resend Code
+                </button>
+              </div>
             </form>
           )}
 
           {/* Footer */}
-          {!needsVerif && (
+          {!success && (
             <p className="text-center text-[11px] text-muted-gray">
               Already a member?{" "}
               <Link href="/login" className="text-gold-champagne hover:underline font-medium">Sign in</Link>
