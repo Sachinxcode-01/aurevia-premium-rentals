@@ -133,13 +133,27 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Footer Security Badges */}
-        <div className="pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-[#9a9995]/60">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            RBAC ENFORCED
-          </span>
-          <span>SSL 256-BIT ENCRYPTED</span>
+        {/* Footer Security Badges & Quick Demo Fill */}
+        <div className="space-y-3 pt-4 border-t border-white/5">
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("admin@aurevia.com");
+              setPassword("admin123");
+            }}
+            className="w-full py-2 px-3 bg-[#070707] hover:bg-white/5 border border-[#d8b36a]/30 rounded-lg text-left text-[11px] font-mono text-[#d8b36a] flex items-center justify-between cursor-pointer transition"
+          >
+            <span>Fill Demo Credentials (admin@aurevia.com)</span>
+            <span className="text-[10px] text-white/50">Click to fill</span>
+          </button>
+
+          <div className="flex items-center justify-between text-[10px] font-mono text-[#9a9995]/60">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              RBAC ENFORCED
+            </span>
+            <span>SSL 256-BIT ENCRYPTED</span>
+          </div>
         </div>
       </motion.div>
     </div>
