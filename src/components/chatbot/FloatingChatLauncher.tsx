@@ -2,16 +2,29 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useChatbot } from "./ChatbotProvider";
-import { MessageSquare, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 
 export default function FloatingChatLauncher() {
   const { toggleChat, isOpen, unreadCount } = useChatbot();
   
-  // Position state (defaults to bottom-right)
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isReady, setIsReady] = useState(false);
+  // Position state with lazy initializer (defaults to bottom-right)
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("aurevia_chat_position");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+        }
+      }
+      return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+    }
+    return { x: 0, y: 0 };
+  });
+  const [isReady] = useState(() => typeof window !== "undefined");
   const launcherRef = useRef<HTMLButtonElement>(null);
   
   // Drag state
@@ -23,23 +36,6 @@ export default function FloatingChatLauncher() {
     startPosY: 0,
     hasMoved: false,
   });
-
-  // Load saved position
-  useEffect(() => {
-    const saved = localStorage.getItem("aurevia_chat_position");
-    if (saved) {
-      try {
-        const { x, y } = JSON.parse(saved);
-        setPosition({ x, y });
-      } catch (e) {
-        // Fallback default
-        setPosition({ x: window.innerWidth - 72, y: window.innerHeight - 72 });
-      }
-    } else {
-      setPosition({ x: window.innerWidth - 72, y: window.innerHeight - 72 });
-    }
-    setIsReady(true);
-  }, []);
 
   // Update position on window resize to prevent leaving viewport
   useEffect(() => {
