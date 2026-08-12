@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, CustomerReview } from "@/lib/db/engagementStore";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<CustomerReview[]>([]);
@@ -37,6 +38,7 @@ export default function AdminReviewsPage() {
     setActionLoading(id);
     setTimeout(() => {
       engagementStore.updateReviewStatus(id, status, note || adminNoteInput);
+      realtimeHub.broadcast("REVIEW_MODERATED", { id, status }, "admin");
       loadReviews();
       setActionLoading(null);
       if (selectedReview?.id === id) {

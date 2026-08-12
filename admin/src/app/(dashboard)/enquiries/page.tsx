@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 export default function AdminEnquiriesPage() {
   const [enquiries, setEnquiries] = useState<OnlineEnquiry[]>([]);
@@ -42,12 +43,13 @@ export default function AdminEnquiriesPage() {
 
     setSendingEmail(true);
     try {
-      // Send via backend API to trigger Gmail SMTP email dispatch
       const res = await adminApiClient.enquiries.respond(
         selectedEnquiry.id,
         responseText.trim(),
         "AUREVIA Concierge Team"
       );
+
+      realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: selectedEnquiry.id, status: "resolved" }, "admin");
 
       if (res.success) {
         loadEnquiries();
@@ -56,7 +58,6 @@ export default function AdminEnquiriesPage() {
         setResponseText("");
         showToast(`Email response sent to ${selectedEnquiry.customerEmail} & enquiry marked as Resolved!`);
       } else {
-        // Fallback to local store response
         engagementStore.respondToEnquiry(selectedEnquiry.id, responseText.trim());
         loadEnquiries();
         const updated = engagementStore.getEnquiries().find((e) => e.id === selectedEnquiry.id);
@@ -66,6 +67,7 @@ export default function AdminEnquiriesPage() {
       }
     } catch {
       engagementStore.respondToEnquiry(selectedEnquiry.id, responseText.trim());
+      realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: selectedEnquiry.id, status: "resolved" }, "admin");
       loadEnquiries();
       setResponseText("");
       showToast("Response recorded locally.");

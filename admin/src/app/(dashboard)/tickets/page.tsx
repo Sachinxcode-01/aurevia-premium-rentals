@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, SupportTicket } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 export default function AdminSupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -42,12 +43,13 @@ export default function AdminSupportTicketsPage() {
 
     setSendingReply(true);
     try {
-      // Call backend API to trigger email notification to customer
       const res = await adminApiClient.tickets.reply(
         selectedTicket.id,
         replyText.trim(),
         "AUREVIA Support Team"
       );
+
+      realtimeHub.broadcast("TICKET_UPDATED", { ticketId: selectedTicket.id }, "admin");
 
       if (res.success) {
         loadTickets();
@@ -65,6 +67,7 @@ export default function AdminSupportTicketsPage() {
       }
     } catch {
       engagementStore.replyToTicket(selectedTicket.id, replyText.trim());
+      realtimeHub.broadcast("TICKET_UPDATED", { ticketId: selectedTicket.id }, "admin");
       loadTickets();
       setReplyText("");
       showToast("Reply saved locally.");

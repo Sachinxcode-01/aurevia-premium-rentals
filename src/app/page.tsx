@@ -14,6 +14,8 @@ import { MOCK_PRODUCTS, MOCK_FAQS, MOCK_BRANDS } from "@/lib/db/mockData";
 import type { FAQ, Product } from "@/lib/db/mockData";
 import { db } from "@/lib/db/store";
 import type { Review } from "@/lib/db/store";
+import { engagementStore, CustomerReview } from "@/lib/db/engagementStore";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import {
@@ -45,9 +47,48 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = React.useState(false);
 
   React.useEffect(() => {
-    db.getReviews(undefined, true).then(setReviewsList);
     db.getFAQs().then(setFaqsList);
     db.getProducts().then(setProductsList);
+
+    // Initial load of approved reviews
+    const approved = engagementStore.getApprovedReviews();
+    if (approved.length > 0) {
+      setReviewsList(
+        approved.map((r: CustomerReview) => ({
+          id: r.id,
+          productId: r.productName,
+          authorName: r.customerName,
+          quote: r.comment,
+          rating: r.rating,
+          isApproved: true,
+          createdAt: r.createdAt,
+        }))
+      );
+    } else {
+      db.getReviews(undefined, true).then(setReviewsList);
+    }
+
+    // Live Real-Time Subscription: Updates public website immediately when Admin approves/rejects a review!
+    const unsubReview = realtimeHub.subscribe("REVIEW_MODERATED", () => {
+      const liveApproved = engagementStore.getApprovedReviews();
+      if (liveApproved.length > 0) {
+        setReviewsList(
+          liveApproved.map((r: CustomerReview) => ({
+            id: r.id,
+            productId: r.productName,
+            authorName: r.customerName,
+            quote: r.comment,
+            rating: r.rating,
+            isApproved: true,
+            createdAt: r.createdAt,
+          }))
+        );
+      }
+    });
+
+    const unsubInventory = realtimeHub.subscribe("INVENTORY_UPDATED", () => {
+      db.getProducts().then(setProductsList);
+    });
 
     const handleScrollBtn = () => {
       if (window.scrollY > 600) {
@@ -57,7 +98,11 @@ export default function Home() {
       }
     };
     window.addEventListener("scroll", handleScrollBtn, { passive: true });
-    return () => window.removeEventListener("scroll", handleScrollBtn);
+    return () => {
+      unsubReview();
+      unsubInventory();
+      window.removeEventListener("scroll", handleScrollBtn);
+    };
   }, []);
 
   useEffect(() => {
