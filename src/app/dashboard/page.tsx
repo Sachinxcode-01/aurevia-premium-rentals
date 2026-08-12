@@ -72,51 +72,302 @@ function canCancel(status: string) {
 function printInvoice(booking: Record<string, unknown>, profile: Record<string, unknown> | null) {
   const w = window.open("", "_blank");
   if (!w) return;
+
+  const invoiceNo = String(booking.referenceCode || booking.reference_code || "INV-001");
+  const createdDate = new Date((booking.createdAt || booking.created_at || Date.now()) as string).toLocaleDateString("en-IN", {
+    day: "numeric", month: "short", year: "numeric"
+  });
+  const customerName = String(profile?.full_name || booking.contactName || booking.contact_name || "Valued Customer");
+  const customerEmail = String(profile?.email || booking.contactEmail || booking.contact_email || "—");
+  const customerPhone = String(profile?.phone || booking.contactPhone || booking.contact_phone || "—");
+  const statusStr = String(booking.status || "").replace(/_/g, " ").toUpperCase();
+  const startDateStr = String(booking.startDate || booking.start_date || "—");
+  const endDateStr = String(booking.endDate || booking.end_date || "—");
+  const paymentStr = String(booking.paymentStatus || booking.payment_status || "").replace(/_/g, " ").toUpperCase();
+
+  const rentalDays = Math.max(1, Math.ceil(
+    (new Date(endDateStr !== "—" ? endDateStr : Date.now()).getTime() - new Date(startDateStr !== "—" ? startDateStr : Date.now()).getTime()) / 86400000
+  ));
+  const rentalFee = Number(booking.totalRentalFee || booking.total_rental_fee || 0);
+  const discountFee = Number(booking.discountAmount || booking.discount_amount || 0);
+  const couponCode = String(booking.couponApplied || booking.coupon_applied || "");
+  const totalPaid = Number(booking.totalPayable ?? booking.total_payable ?? rentalFee - discountFee);
+
   w.document.write(`
-    <html><head><title>AUREVIA Invoice ${booking.referenceCode || booking.reference_code}</title>
-    <style>
-      body { font-family: 'Georgia', serif; background: #fff; color: #111; padding: 40px; max-width: 680px; margin: auto; }
-      h1 { font-size: 28px; letter-spacing: 6px; color: #B98A43; margin-bottom: 4px; }
-      .sub { font-size: 11px; letter-spacing: 2px; color: #666; text-transform: uppercase; }
-      table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-      th { text-align: left; border-bottom: 1px solid #ddd; padding: 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #888; }
-      td { padding: 8px 4px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-      .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #B98A43; color: #B98A43; }
-      .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 24px 0; font-size: 12px; }
-      .meta-item label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 2px; }
-      .footer { margin-top: 40px; font-size: 11px; color: #aaa; border-top: 1px solid #eee; padding-top: 16px; }
-    </style></head><body>
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #B98A43; padding-bottom: 12px; margin-bottom: 16px;">
-      <div>
-        <img src="${window.location.origin}/readme/aurevia-logo.png" alt="AUREVIA" style="height: 40px; filter: invert(1) brightness(0.2); object-fit: contain;" />
-        <div class="sub" style="margin-top: 4px;">Premium Camera Rentals · Invoice</div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>AUREVIA Invoice — ${invoiceNo}</title>
+      <style>
+        @media print {
+          body { padding: 0; }
+          @page { margin: 15mm; }
+        }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background: #ffffff;
+          color: #1a1a1a;
+          padding: 36px;
+          max-width: 720px;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+        .header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 2px solid #D8B36A;
+          padding-bottom: 18px;
+          margin-bottom: 24px;
+        }
+        .brand-block {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+        .brand-icon {
+          width: 44px;
+          height: 44px;
+          flex-shrink: 0;
+        }
+        .brand-text-title {
+          font-family: 'Georgia', serif;
+          font-size: 24px;
+          font-weight: 700;
+          letter-spacing: 5px;
+          color: #111111;
+          text-transform: uppercase;
+          line-height: 1;
+        }
+        .brand-text-sub {
+          font-size: 10px;
+          letter-spacing: 2px;
+          color: #D8B36A;
+          text-transform: uppercase;
+          margin-top: 4px;
+          font-weight: 700;
+        }
+        .invoice-badge-block {
+          text-align: right;
+        }
+        .invoice-title {
+          font-family: 'Georgia', serif;
+          font-size: 22px;
+          font-weight: 700;
+          color: #D8B36A;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+        }
+        .invoice-no {
+          font-size: 11px;
+          color: #555555;
+          font-mono: monospace;
+          margin-top: 3px;
+          font-weight: 600;
+        }
+        .meta-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px 24px;
+          background: #fcfbfa;
+          border: 1px solid #f0e6d6;
+          border-radius: 8px;
+          padding: 18px 20px;
+          margin-bottom: 24px;
+        }
+        .meta-item label {
+          display: block;
+          font-size: 9px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #777777;
+          font-weight: 700;
+          margin-bottom: 2px;
+        }
+        .meta-item span {
+          font-size: 13px;
+          font-weight: 600;
+          color: #111111;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 28px;
+        }
+        th {
+          text-align: left;
+          border-bottom: 2px solid #D8B36A;
+          padding: 10px 8px;
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #444444;
+          font-weight: 700;
+        }
+        td {
+          padding: 12px 8px;
+          font-size: 13px;
+          border-bottom: 1px solid #eeeeee;
+          color: #222222;
+        }
+        .total-row td {
+          font-weight: 700;
+          font-size: 16px;
+          border-top: 2px solid #D8B36A;
+          color: #D8B36A;
+          padding-top: 14px;
+        }
+        .footer-grid {
+          margin-top: 40px;
+          border-top: 1px solid #e5e5e5;
+          padding-top: 20px;
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 20px;
+          font-size: 11px;
+        }
+        .contact-box {
+          background: #faf8f5;
+          border-left: 3.5px solid #D8B36A;
+          padding: 14px 16px;
+          border-radius: 0 8px 8px 0;
+        }
+        .contact-title {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #D8B36A;
+          font-weight: 700;
+          margin-bottom: 8px;
+        }
+        .contact-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 5px;
+          font-size: 12px;
+          color: #111111;
+          font-weight: 500;
+        }
+        .contact-row strong {
+          color: #666;
+          font-size: 10px;
+          text-transform: uppercase;
+          width: 80px;
+          display: inline-block;
+        }
+        .terms-box {
+          font-size: 10px;
+          color: #777777;
+          line-height: 1.6;
+        }
+      </style>
+    </head>
+    <body>
+      <!-- Perfectly Aligned Header with Brand Logo SVG -->
+      <div class="header-row">
+        <div class="brand-block">
+          <svg class="brand-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="44" stroke="#D8B36A" stroke-width="4.5" fill="#111"/>
+            <circle cx="50" cy="50" r="22" stroke="#D8B36A" stroke-width="3.5" fill="none"/>
+            <circle cx="50" cy="50" r="10" fill="#D8B36A"/>
+            <path d="M50 6 L50 28" stroke="#D8B36A" stroke-width="3.5"/>
+            <path d="M50 72 L50 94" stroke="#D8B36A" stroke-width="3.5"/>
+            <path d="M6 50 L28 50" stroke="#D8B36A" stroke-width="3.5"/>
+            <path d="M72 50 L94 50" stroke="#D8B36A" stroke-width="3.5"/>
+          </svg>
+          <div>
+            <div class="brand-text-title">AUREVIA</div>
+            <div class="brand-text-sub">Premium Camera Rentals • Invoice</div>
+          </div>
+        </div>
+        <div class="invoice-badge-block">
+          <div class="invoice-title">Tax Invoice</div>
+          <div class="invoice-no">No. ${invoiceNo}</div>
+        </div>
       </div>
-    </div>
-    <div class="meta">
-      <div class="meta-item"><label>Invoice No.</label>${booking.referenceCode || booking.reference_code}</div>
-      <div class="meta-item"><label>Date</label>${new Date((booking.createdAt || booking.created_at) as string).toLocaleDateString("en-IN")}</div>
-      <div class="meta-item"><label>Customer</label>${profile?.full_name || "—"}</div>
-      <div class="meta-item"><label>Email</label>${profile?.email || booking.contactEmail || booking.contact_email || "—"}</div>
-      <div class="meta-item"><label>Phone</label>${profile?.phone || booking.contactPhone || booking.contact_phone || "—"}</div>
-      <div class="meta-item"><label>Status</label>${(String(booking.status || "")).replace(/_/g, " ").toUpperCase()}</div>
-      <div class="meta-item"><label>Rental Period</label>${booking.startDate || booking.start_date} → ${booking.endDate || booking.end_date}</div>
-      <div class="meta-item"><label>Payment</label>${(String(booking.paymentStatus || booking.payment_status || "")).replace(/_/g, " ").toUpperCase()}</div>
-    </div>
-    <table>
-      <thead><tr><th>Item</th><th>Days</th><th style="text-align:right">Amount</th></tr></thead>
-      <tbody>
-        <tr><td>Camera Rental</td><td>${Math.max(1, Math.ceil((new Date((booking.endDate || booking.end_date) as string).getTime() - new Date((booking.startDate || booking.start_date) as string).getTime()) / 86400000))}</td><td style="text-align:right">₹${Number(booking.totalRentalFee || booking.total_rental_fee || 0).toLocaleString("en-IN")}</td></tr>
-        ${(booking.discountAmount || booking.discount_amount) ? `<tr><td>Coupon Discount (${booking.couponApplied || booking.coupon_applied || ""})</td><td>—</td><td style="text-align:right; color:#e74c3c">−₹${(Number(booking.discountAmount || booking.discount_amount) || 0).toLocaleString("en-IN")}</td></tr>` : ""}
-      </tbody>
-      <tfoot><tr class="total-row"><td colspan="2">Total Paid</td><td style="text-align:right">₹${(Number(booking.totalPayable ?? booking.total_payable) || 0).toLocaleString("en-IN")}</td></tr></tfoot>
-    </table>
-    <div class="footer">
-      AUREVIA Camera Rentals · by Prem Mundargi · aurevia.in<br/>
-      Payment via Razorpay · All rentals subject to Terms &amp; Conditions<br/>
-      Thank you for choosing AUREVIA.
-    </div>
-    </body></html>
+
+      <!-- Booking Metadata Grid -->
+      <div class="meta-grid">
+        <div class="meta-item"><label>Invoice Date</label><span>${createdDate}</span></div>
+        <div class="meta-item"><label>Rental Period</label><span>${startDateStr} → ${endDateStr} (${rentalDays} Days)</span></div>
+        <div class="meta-item"><label>Customer Name</label><span>${customerName}</span></div>
+        <div class="meta-item"><label>Contact Phone</label><span>${customerPhone}</span></div>
+        <div class="meta-item"><label>Customer Email</label><span>${customerEmail}</span></div>
+        <div class="meta-item"><label>Booking Status</label><span style="color: #D8B36A;">${statusStr}</span></div>
+      </div>
+
+      <!-- Pricing Breakdown Table -->
+      <table>
+        <thead>
+          <tr>
+            <th>Item &amp; Rental Description</th>
+            <th style="text-align: center;">Duration</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Camera Equipment Rental</strong><br/>
+              <span style="font-size: 11px; color: #666;">High-Performance Cinema/Mirrorless Rig Package</span>
+            </td>
+            <td style="text-align: center;">${rentalDays} Days</td>
+            <td style="text-align: right;">₹${rentalFee.toLocaleString("en-IN")}</td>
+          </tr>
+          ${discountFee > 0 ? `
+          <tr>
+            <td>
+              <strong>Promotional Coupon Discount</strong><br/>
+              <span style="font-size: 11px; color: #e74c3c;">Applied Code: ${couponCode}</span>
+            </td>
+            <td style="text-align: center;">—</td>
+            <td style="text-align: right; color: #e74c3c;">−₹${discountFee.toLocaleString("en-IN")}</td>
+          </tr>
+          ` : ""}
+        </tbody>
+        <tfoot>
+          <tr class="total-row">
+            <td colspan="2">Total Amount Paid</td>
+            <td style="text-align: right;">₹${totalPaid.toLocaleString("en-IN")}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Footer with Prominent Contact Numbers -->
+      <div class="footer-grid">
+        <div class="contact-box">
+          <div class="contact-title">Direct Contact &amp; Support</div>
+          <div class="contact-row">
+            <strong>Owner / Line</strong>
+            <span>Prem Mundargi</span>
+          </div>
+          <div class="contact-row">
+            <strong>Phone</strong>
+            <span style="font-weight: 700; color: #111;">+91 96869 09048</span>
+          </div>
+          <div class="contact-row">
+            <strong>WhatsApp</strong>
+            <span style="color: #25D366; font-weight: 600;">+91 96869 09048</span>
+          </div>
+          <div class="contact-row">
+            <strong>Email</strong>
+            <span>premmundargi135@gmail.com</span>
+          </div>
+        </div>
+
+        <div class="terms-box">
+          <strong style="color: #444; text-transform: uppercase; letter-spacing: 1px;">Terms &amp; Verification</strong><br/>
+          • All rentals subject to KYC identity verification.<br/>
+          • Online payments powered securely by Razorpay.<br/>
+          • Technical maintenance support: <em>sachiii8827@gmail.com</em>
+        </div>
+      </div>
+    </body>
+    </html>
   `);
+
   w.document.close();
   w.print();
 }
