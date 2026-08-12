@@ -10,6 +10,7 @@ import { useCart } from "@/hooks/useCart";
 import { Search, SlidersHorizontal, Heart, RefreshCw, Info, ArrowRight, Eye, X } from "lucide-react";
 import Link from "next/link";
 import { animate, stagger } from "animejs";
+import HoverCard from "@/components/motion/HoverCard";
 
 function ExplorePageContent() {
   const searchParams = useSearchParams();
@@ -266,9 +267,9 @@ function ExplorePageContent() {
                 const isAvailable = product.inventoryQty > 0;
 
                 return (
-                  <div
+                  <HoverCard
                     key={product.id}
-                    className="gear-card opacity-0 group glass-panel border border-white/5 hover:border-gold-champagne/40 rounded-xl overflow-hidden flex flex-col h-[470px] relative transition-all duration-500 hover:shadow-2xl hover:shadow-gold-champagne/10 hover-gold-glow"
+                    className="gear-card opacity-0 group flex flex-col h-[470px] relative shadow-2xl"
                   >
                     {/* Reflection sweep overlay */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none z-10" />
@@ -370,7 +371,7 @@ function ExplorePageContent() {
                           
                           <button
                             onClick={() => handleBookNow(product)}
-                            className="py-2 bg-gold-champagne text-obsidian text-[9px] font-bold uppercase tracking-wider rounded-lg hover:bg-gold-warm transition flex items-center justify-center gap-1 cursor-pointer shadow-lg shadow-gold-champagne/10"
+                            className="py-2 bg-gold-champagne text-obsidian text-[9px] font-bold uppercase tracking-wider rounded-lg hover:bg-gold-champagne/90 transition flex items-center justify-center gap-1 cursor-pointer shadow-lg shadow-gold-champagne/10"
                           >
                             Book Now
                             <ArrowRight size={10} />
@@ -378,7 +379,7 @@ function ExplorePageContent() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </HoverCard>
                 );
               })}
             </div>

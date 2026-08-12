@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navigation/Navbar";
 import HeroScrollSequence from "@/components/hero/HeroScrollSequence";
 import CameraShowroom from "@/components/three/CameraShowroom";
+import Timeline from "@/components/features/Timeline";
+import AnimatedAccordion from "@/components/ui/AnimatedAccordion";
 import { useCart } from "@/hooks/useCart";
 import { MOCK_PRODUCTS, MOCK_FAQS, MOCK_BRANDS } from "@/lib/db/mockData";
 import type { FAQ, Product } from "@/lib/db/mockData";
@@ -861,31 +863,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 13. How It Works Timeline */}
+      <Timeline />
+
       {/* 14. FAQ Accordion */}
-      <section data-reveal className="reveal-section py-24 px-6 md:px-12 bg-rich-black/30 border-t border-b border-white/5 relative z-20">
+      <section data-reveal className="reveal-section py-24 px-6 md:px-12 bg-charcoal/30 border-t border-b border-white/5 relative z-20">
         <div className="max-w-4xl mx-auto space-y-12">
           <div className="text-center space-y-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">
               Got Questions?
             </span>
             <h2 className="serif-heading text-3xl md:text-4xl font-light text-ivory">
-              Frequently Asked <span className="text-gold">Questions</span>
+              Frequently Asked <span className="text-gold-champagne font-normal">Questions</span>
             </h2>
           </div>
 
-          <div className="space-y-4">
-            {(faqsList.length > 0 ? faqsList : MOCK_FAQS).map((faq) => (
-              <details key={faq.id} className="group glass-panel border-white/5 rounded-lg p-5 [&_summary::-webkit-details-marker]:hidden transition-all duration-300">
-                <summary className="flex justify-between items-center font-semibold text-xs uppercase tracking-wider text-ivory cursor-pointer select-none">
-                  {faq.question}
-                  <ChevronDown aria-hidden="true" size={18} className="shrink-0 text-gold-champagne group-open:rotate-180 transition-transform duration-300" />
-                </summary>
-                <p className="text-xs text-muted-gray leading-relaxed font-light mt-3 pt-3 border-t border-white/5">
-                  {faq.answer}
-                </p>
-              </details>
-            ))}
-          </div>
+          <AnimatedAccordion items={faqsList.length > 0 ? faqsList : MOCK_FAQS} />
         </div>
       </section>
 

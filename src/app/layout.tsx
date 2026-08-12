@@ -9,7 +9,8 @@ import FloatingChatLauncher from "@/components/chatbot/FloatingChatLauncher";
 import ChatWindow from "@/components/chatbot/ChatWindow";
 import { PWARegister } from "@/components/pwa/PWARegister";
 import { Analytics } from "@vercel/analytics/next";
-
+import Spotlight from "@/components/effects/Spotlight";
+import AmbientParticles from "@/components/effects/AmbientParticles";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -26,7 +27,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Aurevia Premium Camera Rentals | Professional Cameras & Lenses for Rent",
   description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
-  metadataBase: new URL("http://localhost:3000"),
+  metadataBase: new URL("https://aurevia-premium-rentals.vercel.app"),
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -109,6 +110,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-obsidian text-ivory font-sans selection:bg-gold-champagne/20 selection:text-ivory">
         {/* Cinematic noise film grain */}
         <div className="film-grain" />
+
+        {/* Ambient Effects */}
+        <Spotlight />
+        <AmbientParticles />
 
         {/* Global providers: Toast → Cart → Chatbot → Page */}
         <ToastProvider>
