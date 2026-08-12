@@ -112,18 +112,18 @@ export default function Navbar({
         <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-full">
           {/* Brand Logo & Premium Badge */}
           <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0" aria-label="AUREVIA Premium Camera Rentals">
-            <Logo variant="wordmark" theme="light" width={140} height={38} />
+            <Logo variant="wordmark" theme="light" width={130} height={35} />
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-2 xl:gap-5 2xl:gap-7 h-full">
+          <nav className="hidden lg:flex items-center gap-2.5 xl:gap-5 2xl:gap-7 h-full mx-auto">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`group relative py-1 text-[10px] lg:text-[11px] xl:text-[13px] uppercase tracking-normal lg:tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                  className={`group relative py-1 text-[11px] xl:text-[12px] 2xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
                     isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
                   }`}
                 >
@@ -143,18 +143,19 @@ export default function Navbar({
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-2.5 xl:gap-5 shrink-0 h-full">
-            {/* Global Search Modal Trigger */}
+          <div className="hidden lg:flex items-center gap-2.5 xl:gap-4 2xl:gap-5 shrink-0 h-full">
+            {/* Global Search Modal Trigger - Icon on lg, full bar on xl */}
             <button
               id="global-search-trigger"
               onClick={handleOpenSearch}
-              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-xs xl:text-sm text-muted-gray hover:text-ivory rounded-full px-3 xl:px-4 h-9 xl:h-11 flex items-center justify-between w-28 lg:w-32 xl:w-52 transition-all duration-300 cursor-pointer group"
+              aria-label="Search gear"
+              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 xl:w-44 2xl:w-52 px-2.5 xl:px-3.5 flex items-center justify-center xl:justify-between transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center gap-2">
-                <Search size={14} className="stroke-[2] text-gold-champagne" />
-                <span className="text-[11px] xl:text-xs">Search gear...</span>
+                <Search size={15} className="stroke-[2] text-gold-champagne shrink-0" />
+                <span className="hidden xl:inline text-[11px] 2xl:text-xs">Search gear...</span>
               </div>
-              <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
+              <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[8px] 2xl:text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
                 ⌘K
               </kbd>
             </button>
@@ -162,11 +163,11 @@ export default function Navbar({
             {/* Cart Icon */}
             <Link
               href="/booking"
-              className="relative text-ivory/80 hover:text-gold-champagne transition duration-300 flex items-center p-1"
+              className="relative text-ivory/80 hover:text-gold-champagne transition duration-300 flex items-center p-1.5"
             >
-              <ShoppingCart className="w-[18px] h-[18px] xl:w-[20px] xl:h-[20px] stroke-[2]" />
+              <ShoppingCart className="w-[18px] h-[18px] xl:w-[19px] xl:h-[19px] stroke-[2]" />
               {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 bg-gold-champagne text-obsidian text-[8px] xl:text-[9px] font-bold w-3.5 h-3.5 xl:w-4 xl:h-4 rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute top-0.5 right-0.5 bg-gold-champagne text-obsidian text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
@@ -175,14 +176,14 @@ export default function Navbar({
             {/* Customer Account Dashboard */}
             <Link
               href="/dashboard"
-              className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1 flex items-center"
+              className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center"
             >
-              <User className="w-[18px] h-[18px] xl:w-[20px] xl:h-[20px] stroke-[2]" />
+              <User className="w-[18px] h-[18px] xl:w-[19px] xl:h-[19px] stroke-[2]" />
             </Link>
 
             {/* Magnetic CTA Book Now */}
             <MagneticButton onClick={() => router.push("/booking")}>
-              <div className="h-10 xl:h-11 px-4 xl:px-6 bg-gold-champagne text-obsidian text-[11px] xl:text-[13px] font-bold uppercase tracking-wider xl:tracking-widest rounded shadow hover:bg-gold-champagne/90 transition-colors duration-300 cursor-pointer flex items-center justify-center shrink-0">
+              <div className="h-9 xl:h-10 px-3.5 xl:px-5 bg-gold-champagne text-obsidian text-[10px] xl:text-[11px] 2xl:text-[12px] font-bold uppercase tracking-wider xl:tracking-widest rounded shadow hover:bg-gold-champagne/90 transition-colors duration-300 cursor-pointer flex items-center justify-center shrink-0">
                 Book Now
               </div>
             </MagneticButton>
