@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarCheck, Camera, Users, ShieldAlert,
   RotateCcw, CreditCard, RefreshCw, Ticket, BarChart3, FileSpreadsheet,
   Bell, Activity, UserCog, Settings, LogOut, ChevronLeft, ChevronRight,
-  Search, ShieldCheck, Command, Menu, X, Sparkles, User, Star, HelpCircle, LifeBuoy
+  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -86,7 +86,29 @@ export default function AdminDashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const handleLogout = () => {
+  React.useEffect(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
+      import("@supabase/supabase-js").then(({ createClient }) => {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        supabase.auth.getUser().then(({ data }) => {
+          if (!data.user) {
+            router.push("/admin-login");
+          }
+        });
+      });
+    }
+  }, [router]);
+
+  const handleLogout = async () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      await supabase.auth.signOut();
+    }
     router.push("/admin-login");
   };
 

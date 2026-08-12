@@ -35,11 +35,10 @@ export function OnlineStatusBanner() {
     }
   }, [isOnline]);
 
-  if (isOnline && prevOnline.current) return null;
-
   return (
     <div
       ref={bannerRef}
+      style={{ display: isOnline && prevOnline.current ? "none" : "flex" }}
       className={`fixed top-0 left-0 right-0 z-[10000] flex items-center justify-center gap-2 py-2 text-[11px] font-mono uppercase tracking-widest opacity-0 ${
         isOnline
           ? "bg-emerald-500/90 text-white"

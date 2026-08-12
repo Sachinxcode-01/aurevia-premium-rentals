@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { verifyApiAuth } from "@/lib/auth/rbac";
@@ -107,24 +106,31 @@ export async function GET(req: NextRequest) {
     };
 
     const statusDistribution = [
-      { name: "Active Rentals", value: statusCounts["Active Rentals"] || 14, color: "#818cf8" },
-      { name: "Ready Pickup", value: statusCounts["Ready Pickup"] || 6, color: "#34d399" },
-      { name: "Approval Pending", value: statusCounts["Approval Pending"] || 4, color: "#fbbf24" },
-      { name: "Returned", value: statusCounts["Returned"] || 7, color: "#c084fc" },
-      { name: "Completed", value: statusCounts["Completed"] || 18, color: "#9ca3af" },
-      { name: "Overdue", value: statusCounts["Overdue"] || 1, color: "#f87171" },
+      { name: "Active Rentals", value: statusCounts["Active Rentals"] || 0, color: "#818cf8" },
+      { name: "Ready Pickup", value: statusCounts["Ready Pickup"] || 0, color: "#34d399" },
+      { name: "Approval Pending", value: statusCounts["Approval Pending"] || 0, color: "#fbbf24" },
+      { name: "Returned", value: statusCounts["Returned"] || 0, color: "#c084fc" },
+      { name: "Completed", value: statusCounts["Completed"] || 0, color: "#9ca3af" },
+      { name: "Overdue", value: statusCounts["Overdue"] || 0, color: "#f87171" },
     ];
 
-    // Compute Flagship Equipment Utilization
+    // Compute Flagship Equipment Utilization from database
+    const totalInventoryUnits = inventoryUnits?.length || 0;
+    const rentedUnitsCount = (inventoryUnits || []).filter((u: any) => u.status === "rented").length;
+    const fleetUtilization = totalInventoryUnits > 0 ? Math.round((rentedUnitsCount / totalInventoryUnits) * 100) : 0;
+
     const mostRentedGear = MOCK_PRODUCTS.slice(0, 4).map((p: any) => {
-      const unitCount = (inventoryUnits || []).filter((u: any) => u.product_id === p.id).length || 5;
-      const rentedUnits = (inventoryUnits || []).filter((u: any) => u.product_id === p.id && u.status === "rented").length || 4;
-      const utilization = Math.round((rentedUnits / Math.max(1, unitCount)) * 100) || 82;
+      const unitCount = (inventoryUnits || []).filter((u: any) => u.product_id === p.id).length;
+      const rentedUnits = (inventoryUnits || []).filter((u: any) => u.product_id === p.id && u.status === "rented").length;
+      const utilization = unitCount > 0 ? Math.round((rentedUnits / unitCount) * 100) : 0;
+      const productBookings = allBookings.filter((b: any) =>
+        b.booking_items?.some((bi: any) => bi.product_id === p.id)
+      ).length;
       return {
         id: p.id,
         name: p.name,
-        count: 12 + Math.floor(Math.random() * 8),
-        revenue: p.dailyPrice * 18,
+        count: productBookings,
+        revenue: p.dailyPrice * productBookings,
         utilization,
         image: "imageUrl" in p ? String(p.imageUrl) : "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400",
       };
@@ -136,9 +142,9 @@ export async function GET(req: NextRequest) {
       customer: b.contact_name || "Customer",
       gear: b.booking_items?.[0]?.product?.name || "Cinema Camera Package",
       dates: `${b.start_date} - ${b.end_date}`,
-      amount: Number(b.total_payable) || 14997,
-      payment: b.payment_status?.toUpperCase() || "PAID",
-      status: b.status || "ready_for_pickup",
+      amount: Number(b.total_payable) || 0,
+      payment: b.payment_status?.toUpperCase() || "UNPAID",
+      status: b.status || "pending",
     }));
 
     // Format Activity Feed
@@ -151,19 +157,19 @@ export async function GET(req: NextRequest) {
 
     return successResponse({
       kpis: {
-        totalRevenue: totalRevenue || 284240,
-        todaysRevenue: todaysRevenue || 14800,
-        todayTxCount: todayTxCount || 5,
-        activeRentals: activeRentals || 14,
-        fleetUtilization: 82,
-        pendingKYC: pendingKYC || 4,
-        overdueCount: overdueCount || 1,
+        totalRevenue,
+        todaysRevenue,
+        todayTxCount,
+        activeRentals,
+        fleetUtilization,
+        pendingKYC,
+        overdueCount,
       },
       revenueTimeSeries,
       statusDistribution,
       mostRentedGear,
-      recentBookings: recentBookings.length > 0 ? recentBookings : undefined,
-      activityFeed: activityFeed.length > 0 ? activityFeed : undefined,
+      recentBookings: recentBookings.length > 0 ? recentBookings : [],
+      activityFeed: activityFeed.length > 0 ? activityFeed : [],
     }, "Admin dashboard metrics retrieved");
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to load dashboard metrics";

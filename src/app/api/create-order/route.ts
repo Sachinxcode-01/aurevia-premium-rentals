@@ -56,15 +56,30 @@ export async function POST(request: Request) {
       };
     }
 
-    // 3. Centralized pricing calculation
+    // 3. Fetch authoritative product pricing from database
+    const { createServiceSupabaseClient } = await import("@/lib/supabase/server");
+    const supabase = await createServiceSupabaseClient();
+    const productIds = items.map((i: { productId: string }) => i.productId);
+    const { data: dbProducts } = await supabase
+      .from("products")
+      .select("id, daily_price, daily_rate")
+      .in("id", productIds);
+
+    const pricingItems = items.map((i: { productId: string; quantity?: number; dailyPrice?: number }) => {
+      const match = dbProducts?.find((p: { id: string; daily_price?: number; daily_rate?: number }) => p.id === i.productId);
+      const actualPrice = match?.daily_price || match?.daily_rate || i.dailyPrice || 799;
+      return {
+        productId: i.productId,
+        dailyPrice: Number(actualPrice),
+        quantity: i.quantity || 1,
+      };
+    });
+
+    // Centralized pricing calculation
     const pricing = calculateBookingPrice({
       startDate,
       endDate,
-      items: items.map((i: { productId: string; quantity?: number }) => ({
-        productId: i.productId,
-        dailyPrice: 799, // default base daily rate
-        quantity: i.quantity || 1,
-      })),
+      items: pricingItems,
       coupon: couponObj,
       deliveryMethod,
     });

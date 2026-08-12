@@ -18,7 +18,6 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      // Authenticate with server action / Supabase
       if (!email.includes("@")) {
         throw new Error("Please enter a valid administrative email address.");
       }
@@ -26,8 +25,41 @@ export default function AdminLoginPage() {
         throw new Error("Password must be at least 6 characters.");
       }
 
-      // Simulate secure sign-in check & role validation
-      await new Promise((res) => setTimeout(res, 800));
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl || !supabaseKey || supabaseUrl.includes("your-project-id")) {
+        // Fallback for local demo mode when Supabase is not connected
+        await new Promise((res) => setTimeout(res, 600));
+        router.push("/");
+        return;
+      }
+
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authErr || !authData.user) {
+        throw new Error(authErr?.message || "Invalid administrative credentials.");
+      }
+
+      // Verify User Role from profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", authData.user.id)
+        .single();
+
+      const role = profile?.role || authData.user.user_metadata?.role || "customer";
+
+      if (!["admin", "staff", "super_admin"].includes(role)) {
+        await supabase.auth.signOut();
+        throw new Error("Access Denied: Your account does not have administrative privileges.");
+      }
 
       // Redirect to Admin Dashboard
       router.push("/");

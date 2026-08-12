@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { engagementStore } from "@/lib/db/engagementStore";
 import { sendEmail } from "@/lib/email/mailer";
+import { verifyApiAuth } from "@/lib/auth/rbac";
 
 export async function GET(req: NextRequest) {
   try {
+    const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
+    if (response || !user) return response!;
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
@@ -24,6 +28,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
+    if (response || !user) return response!;
+
     const body = await req.json();
     const { enquiryId, responseText, respondedBy } = body;
 
@@ -84,6 +91,9 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
+    if (response || !user) return response!;
+
     const body = await req.json();
     const { id, status, adminNotes } = body;
 

@@ -5,6 +5,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 async function fetchAdminApi<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data?: T; error?: { code: string; message: string }; message?: string }> {
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...options.headers,

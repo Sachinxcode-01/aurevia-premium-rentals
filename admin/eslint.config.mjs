@@ -15,13 +15,11 @@ const eslintConfig = defineConfig([
       "prefer-const": "warn",
     },
   },
-  // Override default ignores of eslint-config-next.
   globalIgnores([
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "admin/**",
   ]),
 ]);
 

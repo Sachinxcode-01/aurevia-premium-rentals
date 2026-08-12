@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   TrendingUp, DollarSign, Camera,
-  ShieldAlert, RotateCcw, AlertCircle, CheckCircle2,
+  ShieldAlert, AlertCircle, CheckCircle2,
   RefreshCw, ArrowRight, Sparkles
 } from "lucide-react";
 import {
@@ -16,7 +16,6 @@ import { useAdminRealtime } from "@/lib/realtime";
 
 export default function AdminOverviewDashboard() {
   const [timeRange, setTimeRange] = useState("30D");
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,78 +36,47 @@ export default function AdminOverviewDashboard() {
     activityFeed: any[];
   }>({
     kpis: {
-      totalRevenue: 284240,
-      todaysRevenue: 14800,
-      todayTxCount: 5,
-      activeRentals: 14,
-      fleetUtilization: 82,
-      pendingKYC: 4,
-      overdueCount: 1,
+      totalRevenue: 0,
+      todaysRevenue: 0,
+      todayTxCount: 0,
+      activeRentals: 0,
+      fleetUtilization: 0,
+      pendingKYC: 0,
+      overdueCount: 0,
     },
-    revenueTimeSeries: [
-      { date: "Aug 1", revenue: 8400, bookings: 2 },
-      { date: "Aug 2", revenue: 12200, bookings: 3 },
-      { date: "Aug 3", revenue: 9500, bookings: 2 },
-      { date: "Aug 4", revenue: 16800, bookings: 4 },
-      { date: "Aug 5", revenue: 21000, bookings: 5 },
-      { date: "Aug 6", revenue: 18400, bookings: 4 },
-      { date: "Aug 7", revenue: 24500, bookings: 6 },
-      { date: "Aug 8", revenue: 19800, bookings: 5 },
-      { date: "Aug 9", revenue: 28900, bookings: 7 },
-      { date: "Aug 10", revenue: 31200, bookings: 8 },
-      { date: "Aug 11", revenue: 26400, bookings: 6 },
-      { date: "Aug 12", revenue: 14800, bookings: 5 },
-    ],
-    statusDistribution: [
-      { name: "Active Rentals", value: 14, color: "#818cf8" },
-      { name: "Ready Pickup", value: 6, color: "#34d399" },
-      { name: "Confirmed", value: 8, color: "#38bdf8" },
-      { name: "Approval Pending", value: 4, color: "#fbbf24" },
-      { name: "Returned", value: 7, color: "#c084fc" },
-      { name: "Completed", value: 18, color: "#9ca3af" },
-      { name: "Overdue", value: 1, color: "#f87171" },
-    ],
-    mostRentedGear: [
-      { id: "canon-eos-r5-c", name: "Canon EOS R5 C Cinema Camera", count: 18, revenue: 89820, utilization: 88, image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400" },
-      { id: "sony-fx6", name: "Sony FX6 Full-Frame Cinema Camera", count: 15, revenue: 82500, utilization: 82, image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=400" },
-      { id: "red-komodo-6k", name: "RED Komodo 6K Digital Cinema", count: 12, revenue: 78000, utilization: 75, image: "https://images.unsplash.com/photo-1589872737418-202b8015e378?q=80&w=400" },
-      { id: "canon-rf-24-70mm", name: "Canon RF 24-70mm f/2.8L IS USM", count: 24, revenue: 47760, utilization: 92, image: "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?q=80&w=400" },
-    ],
-    recentBookings: [
-      { id: "AUR-1042", customer: "Rahul Verma", gear: "Canon EOS R5 C", dates: "12 Aug - 15 Aug", amount: 14997, payment: "PAID", status: "ready_for_pickup" },
-      { id: "AUR-1041", customer: "Ananya Sharma", gear: "Sony FX6 Cinema Package", dates: "13 Aug - 16 Aug", amount: 16500, payment: "PAID", status: "approval_pending" },
-      { id: "AUR-1040", customer: "Vikramaditya Rao", gear: "RED Komodo 6K Rig", dates: "10 Aug - 14 Aug", amount: 26000, payment: "PAID", status: "rented" },
-      { id: "AUR-1039", customer: "Priya Nair", gear: "Canon RF 70-200mm f/2.8L", dates: "11 Aug - 12 Aug", amount: 2499, payment: "PAID", status: "returned" },
-      { id: "AUR-1038", customer: "Siddharth Malhotra", gear: "ARRI Alexa Mini LF", dates: "08 Aug - 11 Aug", amount: 45000, payment: "PAID", status: "completed" },
-    ],
-    activityFeed: [
-      { id: 1, type: "payment", text: "Payment of ₹14,997 received for Booking #AUR-1042", time: "5 minutes ago", icon: DollarSign, color: "text-emerald-400 bg-emerald-500/10" },
-      { id: 2, type: "kyc", text: "KYC Verification submitted by Rahul Verma", time: "12 minutes ago", icon: ShieldAlert, color: "text-amber-400 bg-amber-500/10" },
-      { id: 3, type: "return", text: "Equipment returned for Booking #AUR-1039 in good condition", time: "1 hour ago", icon: RotateCcw, color: "text-purple-400 bg-purple-500/10" },
-      { id: 4, type: "overdue", text: "Rental #AUR-1035 is now 4 hours overdue", time: "2 hours ago", icon: AlertCircle, color: "text-red-400 bg-red-500/10" },
-    ],
+    revenueTimeSeries: [],
+    statusDistribution: [],
+    mostRentedGear: [],
+    recentBookings: [],
+    activityFeed: [],
   });
 
   const loadDashboard = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoading(true);
     setError(null);
 
     const res = await adminApiClient.dashboard(timeRange);
     if (res.success && res.data) {
-      setData((prev) => ({
-        kpis: res.data.kpis || prev.kpis,
-        revenueTimeSeries: res.data.revenueTimeSeries?.length ? res.data.revenueTimeSeries : prev.revenueTimeSeries,
-        statusDistribution: res.data.statusDistribution?.length ? res.data.statusDistribution : prev.statusDistribution,
-        mostRentedGear: res.data.mostRentedGear?.length ? res.data.mostRentedGear : prev.mostRentedGear,
-        recentBookings: res.data.recentBookings?.length ? res.data.recentBookings : prev.recentBookings,
-        activityFeed: res.data.activityFeed?.length ? res.data.activityFeed : prev.activityFeed,
-      }));
+      setData({
+        kpis: res.data.kpis || {
+          totalRevenue: 0,
+          todaysRevenue: 0,
+          todayTxCount: 0,
+          activeRentals: 0,
+          fleetUtilization: 0,
+          pendingKYC: 0,
+          overdueCount: 0,
+        },
+        revenueTimeSeries: res.data.revenueTimeSeries || [],
+        statusDistribution: res.data.statusDistribution || [],
+        mostRentedGear: res.data.mostRentedGear || [],
+        recentBookings: res.data.recentBookings || [],
+        activityFeed: res.data.activityFeed || [],
+      });
     } else if (res.error) {
       setError(res.error.message || "Failed to sync real-time data");
     }
 
-    setLoading(false);
     setRefreshing(false);
   }, [timeRange]);
 
