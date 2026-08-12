@@ -1,0 +1,18 @@
+{
+  "name": "Aurevia Premium Rentals",
+  "short_name": "AUREVIA",
+  "description": "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Champagne Gold Gradient -->
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5F1E8" />
+      <stop offset="50%" stop-color="#D8B36A" />
+      <stop offset="100%" stop-color="#B98A43" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle matching AUREVIA obsidian -->
+  <circle cx="50" cy="50" r="48" fill="#080808" />
+  <!-- Thin Gold Border -->
+  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#goldGrad)" stroke-width="3" />
+  <!-- Stylized Serif "A" Monogram in Playfair/Georgia styling -->
+  <text x="50" y="68" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="url(#goldGrad)" text-anchor="middle">A</text>
+</svg>
