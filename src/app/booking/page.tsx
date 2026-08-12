@@ -170,10 +170,14 @@ export default function BookingPage() {
 
       if (!orderRes.ok) {
         const errData = await orderRes.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to initiate Razorpay order on the server.");
+        const errMsg = typeof errData.error === "string" 
+          ? errData.error 
+          : (errData.error?.message || errData.message || "Failed to initiate Razorpay order on the server.");
+        throw new Error(errMsg);
       }
 
-      const orderData = await orderRes.json();
+      const orderJson = await orderRes.json();
+      const orderData = orderJson.data || orderJson;
 
       // 3. Open Razorpay Modal
       const rzpKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;

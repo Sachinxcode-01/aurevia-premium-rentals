@@ -37,10 +37,16 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Refresh session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Skip middleware for API routes — API routes perform their own auth verification
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  // Refresh session with a 2-second timeout to prevent hanging middleware
+  const user = await Promise.race([
+    supabase.auth.getUser().then((res) => res.data?.user || null).catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
+  ]);
 
   const isProtectedCustomer = PROTECTED_CUSTOMER.some((p) =>
     pathname.startsWith(p)
