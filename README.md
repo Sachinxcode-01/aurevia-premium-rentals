@@ -42,6 +42,9 @@
 
 - [Project Overview](#project-overview)
 - [Key Features](#key-features)
+- [6-Digit Email OTP Authentication](#6-digit-email-otp-authentication)
+- [Admin Customer Engagement Suite](#admin-customer-engagement-suite)
+- [Real-Time Cross-App Sync Hub](#real-time-cross-app-sync-hub)
 - [Hero Scroll Animation](#hero-scroll-animation)
 - [Interactive 3D Optics Showroom](#interactive-3d-optics-showroom)
 - [Rental & Booking Workflow](#rental--booking-workflow)
@@ -69,7 +72,7 @@
 
 **AUREVIA** is a premium full-stack camera-rental platform crafted for professional photographers, cinematographers, and production houses. It provides an immersive, cinematic interface to browse, compare, book, and manage high-end cameras, cinema lenses, gimbals, professional lighting, audio equipment, and production accessories.
 
-Built on **Next.js 16** with a **React 19 + TypeScript** architecture, AUREVIA delivers a luxury editorial experience through a **canvas-based scroll animation**, a **photorealistic Three.js camera showroom**, an **advanced booking engine**, a **customer rental dashboard**, and a comprehensive **admin analytics panel** — all backed by a production-ready **Supabase PostgreSQL** database schema.
+Built on **Next.js 16** with a **React 19 + TypeScript** architecture, AUREVIA delivers a luxury editorial experience through a **canvas-based scroll animation**, a **photorealistic Three.js camera showroom**, a **6-digit email OTP authentication system**, a **customer rental dashboard**, an **Admin Customer Engagement Suite** (Reviews Moderation, Online Enquiries, Support Tickets), and a **Real-Time Cross-App Sync Engine** — all backed by a production-ready **Supabase PostgreSQL** database schema.
 
 **Designed for:**
 
@@ -84,17 +87,93 @@ Built on **Next.js 16** with a **React 19 + TypeScript** architecture, AUREVIA d
 
 | Feature | Details |
 |---|---|
+| 🔑 **6-Digit Email OTP Auth** | 100% on-website OTP verification for Registration and Password Reset via Gmail SMTP (zero link redirects) |
+| ⭐ **Customer Reviews Moderation** | Admin review approval queue (`/reviews`); approved reviews auto-publish to live public website |
+| 📩 **Online Enquiry Control** | Inquiry resolution center (`/enquiries`); direct email response to customers via Gmail SMTP |
+| 🎧 **Support Ticket Desk** | Threaded customer support ticket management (`/tickets`) with direct email notification triggers |
+| ⚡ **Real-Time Cross-App Sync** | Live event bus (`realtimeHub`) syncing Admin (`:3002`) and Public Site (`:3000`) instantly |
 | 🎬 **Canon Image Sequence Hero** | Scroll-mapped 210-frame canvas animation with progressive preloading and MP4 mobile fallback |
 | 🔭 **Interactive 3D Showroom** | Photorealistic Canon EOS R5 model with swappable lenses, hotspot inspection, and orbit controls |
 | 🎯 **3D Motion Cards** | GPU-accelerated parallax tilt cards with dynamic shadows, gloss sheen, and magnetic buttons |
 | 🛒 **Rental Cart & Booking** | Multi-item cart, accessory add-ons, date selection, availability checking, and checkout |
-| 📋 **Customer Dashboard** | Active rentals, booking history, wishlist, and profile management |
+| 📋 **Customer Dashboard** | Active rentals, booking history, wishlist, support tickets, and profile management |
 | 📊 **Admin Analytics** | Revenue charts, inventory status, booking pipeline, and advanced reporting via Recharts |
-| 🔐 **Secure Auth** | Supabase Auth with email/password, session management, and role-based access |
+| 🔐 **Secure Auth & RBAC** | Supabase Auth + custom RBAC middleware, 256-bit SSL, and rate-limited email dispatches |
 | 📱 **Fully Responsive** | Mobile-first design with touch interactions, swipe carousels, and simplified animations |
-| ♿ **Accessibility First** | `prefers-reduced-motion` support, keyboard navigation, semantic HTML, and screen-reader labels |
 | 🚀 **SEO Optimized** | Metadata API, Open Graph, Twitter cards, dynamic sitemap, and robots.txt |
-| 💬 **WhatsApp Enquiry** | Direct rental enquiry via configured WhatsApp business number |
+
+---
+
+## 6-Digit Email OTP Authentication
+
+AUREVIA uses a **100% on-website 6-Digit Email OTP Authentication Engine** powered by Gmail SMTP (`Nodemailer`). Email verification links and external page redirects have been completely eliminated for maximum security and user conversion.
+
+### Features & Workflow
+
+```
+1. Account Registration (/register)
+   └─ Enter Name, Email, Phone, Password → Click "Send Verification OTP"
+   └─ Receive branded email with 6-digit OTP code (e.g. 739102)
+   └─ Enter OTP directly on website → Account verified instantly!
+
+2. Forgot Password (/forgot-password)
+   └─ Enter Email → Receive branded email with 6-digit OTP code (e.g. 482910)
+   └─ Enter OTP on website → Prompted to enter New Password
+   └─ Password updated securely on website!
+```
+
+- **Clean Email Styling**: Minimalist, high-deliverability HTML email templates with logo header and no unnecessary markup.
+- **Idempotency & Expiry**: 6-digit OTP codes expire automatically in 10 minutes and support resend rate-limiting.
+
+> **Files:** [`src/lib/email/mailer.ts`](src/lib/email/mailer.ts) &nbsp;·&nbsp; [`src/lib/actions/auth.ts`](src/lib/actions/auth.ts)
+
+---
+
+## Admin Customer Engagement Suite
+
+The **AUREVIA Admin Application** (`http://localhost:3002`) includes a dedicated **Customer Engagement & Operations Suite** for managing reviews, enquiries, and support tickets:
+
+### 1. ⭐ Customer Reviews Moderation (`/reviews`)
+- **Moderation Queue**: Inspect, approve, or reject customer ratings before they publish to the live site.
+- **Live Publishing**: Only **Approved** reviews populate the homepage Testimonials section.
+- **KPI Metrics**: Average Rating (e.g. 4.9 ★), Total Submissions, Pending Queue, and Approved Public Reviews.
+- **Admin Notes**: Attach internal moderation rationale or feedback notes.
+
+### 2. 📩 Online Enquiry Control (`/enquiries`)
+- **Query Resolution Center**: Track all online customer enquiries (`ENQ-9082`, etc.) with equipment of interest and rental dates.
+- **Direct Email Response**: Compose an admin reply directly inside the modal and click **"Send Email Response"** to dispatch a branded email to the customer via Gmail SMTP and mark the query `Resolved`.
+- **Priority & Status**: Filter by Priority (`High`, `Medium`, `Low`) and Status (`New`, `In Progress`, `Resolved`).
+
+### 3. 🎧 Support Ticket Center (`/tickets`)
+- **Concierge Desk**: View technical, billing, and pickup/delivery tickets (`TCK-4091`, etc.).
+- **Threaded History**: View full chronological message logs between customer and concierge.
+- **Instant Email Trigger**: Admin replies update the ticket thread and send an email notification to the customer.
+
+> **Files:** [`admin/src/app/(dashboard)/reviews/page.tsx`](admin/src/app/(dashboard)/reviews/page.tsx) &nbsp;·&nbsp; [`admin/src/app/(dashboard)/enquiries/page.tsx`](admin/src/app/(dashboard)/enquiries/page.tsx) &nbsp;·&nbsp; [`admin/src/app/(dashboard)/tickets/page.tsx`](admin/src/app/(dashboard)/tickets/page.tsx)
+
+---
+
+## Real-Time Cross-App Sync Hub
+
+AUREVIA features a **Real-Time Cross-App Event Synchronization Engine** (`realtimeHub`) that connects the **Admin App** (`:3002`) and **Public Website** (`:3000`) live:
+
+```
+┌───────────────────────────────────────┐            ┌───────────────────────────────────────┐
+│              ADMIN APP                │            │            PUBLIC WEBSITE             │
+│        (http://localhost:3002)        │            │        (http://localhost:3000)        │
+├───────────────────────────────────────┤            ├───────────────────────────────────────┤
+│ 1. Admin approves a Review            │ ─────────► │ 1. Immediately receives               │
+│ 2. Admin responds to Enquiry          │ Broadcast  │    "REVIEW_MODERATED" event           │
+│ 3. Admin replies to Support Ticket    │ Channel &  │ 2. Public Testimonials section        │
+│ 4. Admin updates Booking/Inventory    │ Local      │    updates live on screen without     │
+│                                       │ Storage    │    reloading the page!                │
+└───────────────────────────────────────┘            └───────────────────────────────────────┘
+```
+
+- **Architecture**: `BroadcastChannel("aurevia_realtime_sync_channel")` + `window.addEventListener("storage")` fallback for seamless cross-port communication.
+- **Event Types**: `REVIEW_MODERATED`, `ENQUIRY_UPDATED`, `TICKET_UPDATED`, `BOOKING_UPDATED`, `INVENTORY_UPDATED`.
+
+> **Files:** [`src/lib/realtime/realtimeHub.ts`](src/lib/realtime/realtimeHub.ts) &nbsp;·&nbsp; [`admin/src/lib/realtime/realtimeHub.ts`](admin/src/lib/realtime/realtimeHub.ts)
 
 ---
 
