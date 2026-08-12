@@ -27,10 +27,12 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      const target = next.startsWith("/") ? `${origin}${next}` : `${origin}/${next}`;
+      return NextResponse.redirect(target);
     }
   }
 
-  // If exchange failed, redirect to login with error
-  return NextResponse.redirect(`${origin}/login?error=verification_failed`);
+  // Fallback redirect
+  const fallbackTarget = next && next.startsWith("/") ? `${origin}${next}` : `${origin}/login?error=verification_failed`;
+  return NextResponse.redirect(fallbackTarget);
 }
