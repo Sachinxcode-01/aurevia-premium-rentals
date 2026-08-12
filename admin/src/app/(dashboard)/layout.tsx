@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarCheck, Camera, Users, ShieldAlert,
   RotateCcw, CreditCard, RefreshCw, Ticket, BarChart3, FileSpreadsheet,
   Bell, Activity, UserCog, Settings, LogOut, ChevronLeft, ChevronRight,
-  Search, ShieldCheck, Command, Menu, X, Sparkles, User
+  Search, ShieldCheck, Command, Menu, X, Sparkles, User, Star, HelpCircle, LifeBuoy
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -39,6 +39,14 @@ const NAV_SECTIONS: NavSection[] = [
       { name: "Customers", href: "/customers", icon: Users },
       { name: "KYC Center", href: "/kyc", icon: ShieldAlert, badge: "4", badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
       { name: "Returns", href: "/returns", icon: RotateCcw, badge: "2", badgeColor: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+    ],
+  },
+  {
+    title: "CUSTOMER ENGAGEMENT",
+    items: [
+      { name: "Reviews Moderation", href: "/reviews", icon: Star, badge: "2", badgeColor: "bg-[#d8b36a]/20 text-[#d8b36a] border-[#d8b36a]/30" },
+      { name: "Online Enquiries", href: "/enquiries", icon: HelpCircle, badge: "1", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+      { name: "Support Tickets", href: "/tickets", icon: LifeBuoy, badge: "1", badgeColor: "bg-rose-500/20 text-rose-400 border-rose-500/30" },
     ],
   },
   {
