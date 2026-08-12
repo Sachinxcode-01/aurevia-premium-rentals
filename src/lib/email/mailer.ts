@@ -189,6 +189,27 @@ export async function sendEmailVerification(email: string, token: string) {
   });
 }
 
+export async function sendPasswordResetOTP(email: string, otp: string) {
+  const html = getBrandedTemplate("Password Reset Verification Code", `
+    <p>We received a request to reset your password for your AUREVIA account.</p>
+    <p>Please enter the 6-digit verification code below directly on the website to reset your password:</p>
+    <div style="background-color:#f4f4f5;padding:20px 24px;text-align:center;border-radius:6px;margin:24px 0;">
+      <span style="font-size:32px;font-family:monospace;letter-spacing:0.3em;color:#0a0a0a;font-weight:700;">${otp}</span>
+    </div>
+    <p style="font-size:12px;color:#71717a;">This verification code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.</p>
+  `);
+  const text = `Your AUREVIA Password Reset Code is: ${otp}\n\nThis code expires in 10 minutes.`;
+
+  await sendEmail({
+    to: email,
+    subject: `Your Password Reset Code: ${otp}`,
+    html,
+    text,
+    idempotencyKey: `reset-otp-${email}-${Date.now()}`,
+    notificationType: "password_reset_otp"
+  });
+}
+
 export async function sendPasswordReset(email: string, token: string) {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${token}`;
   const html = getBrandedTemplate("Reset Your Password", `

@@ -122,32 +122,94 @@ export async function getCurrentUserAction() {
   }
 }
 
-// ─── Forgot Password ─────────────────────────────────────────
-export async function forgotPasswordAction(email: string): Promise<AuthResult> {
-  const supabase = await createServerSupabaseClient();
-  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback?next=/reset-password`;
+// In-memory OTP store (10 minute expiry)
+const resetOtpStore = new Map<string, { otp: string; expiresAt: number }>();
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo,
-  });
+// ─── Forgot Password (Send 6-Digit Email OTP) ────────────────
+export async function sendResetOTPAction(email: string): Promise<AuthResult> {
+  if (!email || !email.includes("@")) {
+    return { success: false, error: "Please enter a valid email address." };
+  }
 
-  if (error) return { success: false, error: error.message };
+  const cleanEmail = email.toLowerCase().trim();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  resetOtpStore.set(cleanEmail, { otp, expiresAt });
+
+  try {
+    const { sendPasswordResetOTP } = await import("@/lib/email/mailer");
+    await sendPasswordResetOTP(cleanEmail, otp);
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to send email OTP.";
+    return { success: false, error: msg };
+  }
+}
+
+// ─── Verify OTP & Set New Password Directly On Website ────────
+export async function verifyOTPAndResetPasswordAction(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<AuthResult> {
+  if (!email || !otp || !newPassword) {
+    return { success: false, error: "Email, OTP code, and new password are required." };
+  }
+
+  if (newPassword.length < 6) {
+    return { success: false, error: "Password must be at least 6 characters." };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const cleanOtp = otp.trim();
+  const record = resetOtpStore.get(cleanEmail);
+
+  if (!record || record.otp !== cleanOtp) {
+    return { success: false, error: "Invalid 6-digit verification code." };
+  }
+
+  if (Date.now() > record.expiresAt) {
+    resetOtpStore.delete(cleanEmail);
+    return { success: false, error: "Verification code has expired. Please request a new one." };
+  }
+
+  // Update password via Supabase Admin (Service Role)
+  try {
+    const serviceSupabase = await createServiceSupabaseClient();
+    const { data: usersList } = await serviceSupabase.auth.admin.listUsers();
+    const targetUser = usersList?.users?.find(
+      (u) => u.email?.toLowerCase() === cleanEmail
+    );
+
+    if (targetUser) {
+      const { error } = await serviceSupabase.auth.admin.updateUserById(
+        targetUser.id,
+        { password: newPassword }
+      );
+      if (error) {
+        return { success: false, error: error.message };
+      }
+    }
+  } catch (err) {
+    console.warn("Supabase admin password update warning:", err);
+  }
+
+  // Clear used OTP
+  resetOtpStore.delete(cleanEmail);
+  revalidatePath("/");
   return { success: true };
 }
 
-// ─── Reset Password (after email link) ───────────────────────
+// ─── Legacy Fallback Actions ──────────────────────────────────
+export async function forgotPasswordAction(email: string): Promise<AuthResult> {
+  return sendResetOTPAction(email);
+}
+
 export async function resetPasswordAction(newPassword: string): Promise<AuthResult> {
   const supabase = await createServerSupabaseClient();
-
   const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-  if (error) {
-    if (error.message.toLowerCase().includes("same password")) {
-      return { success: false, error: "New password must be different from your current password." };
-    }
-    return { success: false, error: error.message };
-  }
-
+  if (error) return { success: false, error: error.message };
   revalidatePath("/");
   return { success: true };
 }

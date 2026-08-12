@@ -4,23 +4,26 @@ import React, { useState, useEffect, Suspense } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
-import { useRouter } from "next/navigation";
-import { Lock, Eye, EyeOff, CheckCircle, Loader2, ArrowRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Lock, Eye, EyeOff, CheckCircle, Loader2, ArrowRight, KeyRound, Mail, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { resetPasswordAction } from "@/lib/actions/auth";
+import { verifyOTPAndResetPasswordAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 
 function ResetPasswordForm() {
   const { cart } = useCart();
   const toast = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [password, setPassword]   = useState("");
-  const [confirm, setConfirm]     = useState("");
-  const [showPw, setShowPw]       = useState(false);
-  const [showCfm, setShowCfm]     = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [success, setSuccess]     = useState(false);
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [otp, setOtp] = useState(searchParams.get("code") || "");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showCfm, setShowCfm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     animate(".auth-panel", {
@@ -33,17 +36,31 @@ function ResetPasswordForm() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) { toast.error("Password must be at least 6 characters."); return; }
-    if (password !== confirm) { toast.error("Passwords do not match."); return; }
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter your registered email address.");
+      return;
+    }
+    if (!otp || otp.length < 6) {
+      toast.error("Please enter the 6-digit verification OTP code.");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
+    if (password !== confirm) {
+      toast.error("Passwords do not match.");
+      return;
+    }
 
     setLoading(true);
-    const result = await resetPasswordAction(password);
+    const result = await verifyOTPAndResetPasswordAction(email, otp, password);
     setLoading(false);
 
     if (result.success) {
       setSuccess(true);
-      toast.success("Password reset successfully!");
-      setTimeout(() => router.push("/login"), 2000);
+      toast.success("Password updated successfully!");
+      setTimeout(() => router.push("/login"), 1800);
     } else {
       toast.error(result.error ?? "Failed to reset password.");
     }
@@ -62,11 +79,11 @@ function ResetPasswordForm() {
 
           <div className="text-center space-y-1.5">
             <div className="w-10 h-10 rounded-full bg-gold-champagne/10 border border-gold-border flex items-center justify-center mx-auto mb-3">
-              <Lock size={16} className="text-gold-champagne" />
+              <ShieldCheck size={16} className="text-gold-champagne" />
             </div>
-            <span className="text-[9px] uppercase tracking-[0.2em] text-gold-champagne font-mono block">New Credentials</span>
+            <span className="text-[9px] uppercase tracking-[0.2em] text-gold-champagne font-mono block">Website Reset</span>
             <h1 className="serif-heading text-2xl font-light text-ivory">Set New Password</h1>
-            <p className="text-[11px] text-muted-gray">Choose a strong password for your AUREVIA account.</p>
+            <p className="text-[11px] text-muted-gray">Enter your 6-digit email OTP and new password below.</p>
           </div>
 
           {success ? (
@@ -74,11 +91,40 @@ function ResetPasswordForm() {
               <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
                 <CheckCircle size={24} className="text-emerald-400" />
               </div>
-              <p className="text-sm font-semibold text-emerald-400">Password Updated!</p>
+              <p className="text-sm font-semibold text-emerald-400">Password Updated Successfully!</p>
               <p className="text-[11px] text-muted-gray">Redirecting to sign in...</p>
             </div>
           ) : (
             <form onSubmit={handleReset} className="space-y-4">
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Email Address</label>
+                <div className="relative">
+                  <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                  <input
+                    type="email" required id="reset-email"
+                    placeholder="your@email.com"
+                    value={email} onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
+                  />
+                </div>
+              </div>
+
+              {/* OTP */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">6-Digit Verification OTP</label>
+                <div className="relative">
+                  <KeyRound size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold-champagne pointer-events-none" />
+                  <input
+                    type="text" required maxLength={6} id="reset-otp"
+                    placeholder="e.g. 849201"
+                    value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    className="w-full bg-white/5 border border-gold-border text-center tracking-[0.3em] font-mono text-sm font-bold text-gold-champagne rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne transition placeholder-white/20"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">New Password</label>
                 <div className="relative">
@@ -96,6 +142,7 @@ function ResetPasswordForm() {
                 </div>
               </div>
 
+              {/* Confirm */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Confirm Password</label>
                 <div className="relative">
@@ -111,9 +158,6 @@ function ResetPasswordForm() {
                     {showCfm ? <EyeOff size={13} /> : <Eye size={13} />}
                   </button>
                 </div>
-                {confirm.length > 0 && confirm !== password && (
-                  <p className="text-[10px] text-rose-400 font-mono">Passwords do not match</p>
-                )}
               </div>
 
               <button
@@ -121,7 +165,7 @@ function ResetPasswordForm() {
                 disabled={loading}
                 className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2"
               >
-                {loading ? <><Loader2 size={13} className="animate-spin" /> Updating...</> : <><ArrowRight size={13} /> Set New Password</>}
+                {loading ? <><Loader2 size={13} className="animate-spin" /> Resetting...</> : <><ArrowRight size={13} /> Set New Password</>}
               </button>
             </form>
           )}
