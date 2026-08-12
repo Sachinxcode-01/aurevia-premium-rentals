@@ -1,0 +1,3 @@
+{
+  "/(dashboard)/inventory/page": "app/(dashboard)/inventory/page.js"
+}

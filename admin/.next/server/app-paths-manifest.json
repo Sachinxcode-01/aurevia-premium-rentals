@@ -1,0 +1,21 @@
+{
+  "/(auth)/admin-login/page": "app/(auth)/admin-login/page.js",
+  "/(dashboard)/activity/page": "app/(dashboard)/activity/page.js",
+  "/(dashboard)/analytics/page": "app/(dashboard)/analytics/page.js",
+  "/(dashboard)/bookings/page": "app/(dashboard)/bookings/page.js",
+  "/(dashboard)/coupons/page": "app/(dashboard)/coupons/page.js",
+  "/(dashboard)/customers/page": "app/(dashboard)/customers/page.js",
+  "/(dashboard)/inventory/page": "app/(dashboard)/inventory/page.js",
+  "/(dashboard)/kyc/page": "app/(dashboard)/kyc/page.js",
+  "/(dashboard)/notifications/page": "app/(dashboard)/notifications/page.js",
+  "/(dashboard)/page": "app/(dashboard)/page.js",
+  "/(dashboard)/payments/page": "app/(dashboard)/payments/page.js",
+  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
+  "/(dashboard)/refunds/page": "app/(dashboard)/refunds/page.js",
+  "/(dashboard)/reports/page": "app/(dashboard)/reports/page.js",
+  "/(dashboard)/returns/page": "app/(dashboard)/returns/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(dashboard)/staff/page": "app/(dashboard)/staff/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}

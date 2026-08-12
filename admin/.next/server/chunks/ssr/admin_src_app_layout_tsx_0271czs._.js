@@ -1,0 +1,3 @@
+module.exports=[60519,a=>{"use strict";var b=a.i(7997);a.s(["default",0,function({children:a}){return(0,b.jsx)("html",{lang:"en",className:"dark",children:(0,b.jsx)("body",{className:"bg-[#070707] text-[#f5f1e8] antialiased selection:bg-[#d8b36a]/30 selection:text-[#d8b36a]",children:a})})},"metadata",0,{title:"AUREVIA — Admin Operations & Control Center",description:"Enterprise Operations, Inventory Control, Booking Management, KYC Verification, and Financial Intelligence for AUREVIA Premium Camera Rentals.",robots:{index:!1,follow:!1}}])},94544,a=>{a.n(a.i(60519))}];
+
+//# sourceMappingURL=admin_src_app_layout_tsx_0271czs._.js.map

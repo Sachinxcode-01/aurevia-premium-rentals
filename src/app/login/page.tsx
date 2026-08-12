@@ -52,7 +52,7 @@ function LoginPageContent() {
       setSuccess(true);
       toast.success("Welcome back to AUREVIA.");
       setTimeout(() => {
-        const dest = redirectPath || (result.role === "admin" || result.role === "staff" ? "/admin" : "/dashboard");
+        const dest = redirectPath || "/dashboard";
         router.push(dest);
       }, 800);
     } else {

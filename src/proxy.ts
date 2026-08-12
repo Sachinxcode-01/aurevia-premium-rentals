@@ -2,8 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_CUSTOMER = ["/dashboard"];
-const PROTECTED_ADMIN    = ["/admin"];
+const PROTECTED_CUSTOMER = ["/dashboard", "/checkout", "/kyc", "/booking"];
 const AUTH_PAGES         = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export async function proxy(request: NextRequest) {
@@ -46,44 +45,18 @@ export async function proxy(request: NextRequest) {
   const isProtectedCustomer = PROTECTED_CUSTOMER.some((p) =>
     pathname.startsWith(p)
   );
-  const isProtectedAdmin = PROTECTED_ADMIN.some((p) => pathname.startsWith(p));
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
 
   // Not logged in → redirect to login for protected routes
-  if (!user && (isProtectedCustomer || isProtectedAdmin)) {
+  if (!user && isProtectedCustomer) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && isProtectedAdmin) {
-    // Fetch role from profiles table
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = (profile as { role?: string } | null)?.role ?? "customer";
-
-    if (role !== "admin" && role !== "staff" && role !== "super_admin") {
-      // Customer trying to access admin → redirect to dashboard
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-  }
-
-  // Logged-in user visiting auth pages → redirect to appropriate dashboard
+  // Logged-in user visiting auth pages → redirect to customer dashboard
   if (user && isAuthPage) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = (profile as { role?: string } | null)?.role ?? "customer";
-    const dest =
-      role === "admin" || role === "staff" || role === "super_admin" ? "/admin" : "/dashboard";
-    return NextResponse.redirect(new URL(dest, request.url));
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return response;

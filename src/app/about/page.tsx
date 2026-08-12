@@ -122,7 +122,7 @@ export default function AboutPage() {
                 </div>
               </div>
               <p className="text-xs text-muted-gray leading-relaxed font-light">
-                Sachin designed and developed the AUREVIA web platform — including the cinematic scroll animation, 3D optics showroom, booking engine, customer dashboard, and admin analytics panel. He manages all technical operations for AUREVIA&apos;s digital presence and online systems.
+                Sachin designed and developed the AUREVIA web platform — including the cinematic scroll animation, optics showroom, instant booking engine, and customer portal. He manages all technical infrastructure and digital operations for AUREVIA.
               </p>
               <div className="space-y-2 pt-1">
                 <p className="text-[10px] font-mono uppercase tracking-wider text-muted-gray/60 mb-2">Website &amp; Technical Support</p>

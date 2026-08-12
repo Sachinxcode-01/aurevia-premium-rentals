@@ -965,14 +965,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Staff terminal & tech support */}
+          {/* My Account & Help */}
           <div className="space-y-4 text-xs">
             <div className="space-y-3">
-              <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Staff Terminal</h4>
+              <h4 className="font-semibold text-gold-champagne uppercase font-mono tracking-wider">Account &amp; Support</h4>
               <div className="flex flex-col gap-2 font-light text-muted-gray">
-                <Link href="/login" className="hover:text-gold-champagne transition">Admin Login</Link>
-                <Link href="/admin" className="hover:text-gold-champagne transition">Operations Centre</Link>
+                <Link href="/login" className="hover:text-gold-champagne transition">Customer Sign In</Link>
                 <Link href="/dashboard" className="hover:text-gold-champagne transition">Customer Dashboard</Link>
+                <Link href="/contact" className="hover:text-gold-champagne transition">Concierge Support</Link>
               </div>
             </div>
 
