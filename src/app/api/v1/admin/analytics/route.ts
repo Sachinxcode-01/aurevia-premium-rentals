@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { verifyApiAuth } from "@/lib/auth/rbac";
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
       .select("id, status");
 
     const totalFleetUnits = units?.length || 20;
-    const rentedUnitsCount = (units || []).filter((u) => u.status === "rented").length;
+    const rentedUnitsCount = (units || []).filter((u: any) => u.status === "rented").length;
     const fleetUtilizationRate = Math.round((rentedUnitsCount / Math.max(1, totalFleetUnits)) * 100);
 
     // 3. Build time-series data

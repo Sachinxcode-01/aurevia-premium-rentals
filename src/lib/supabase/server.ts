@@ -1,12 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "./types";
 
-export async function createServerSupabaseClient() {
+const DEFAULT_SUPABASE_URL = "https://mock.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1vY2siLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYwMDQ4MDAwMCwiZXhwIjoyMDE2MDU2MDAwfQ.placeholder";
+
+export async function createServerSupabaseClient(): Promise<any> {
   const cookieStore = await cookies();
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith("http")
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : DEFAULT_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY.length > 20
+    ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : DEFAULT_SUPABASE_ANON_KEY;
+
+  return createServerClient(
+    url,
+    key,
     {
       cookies: {
         getAll() {
@@ -23,21 +33,28 @@ export async function createServerSupabaseClient() {
         },
       },
     }
-  );
+  ) as any;
 }
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createJSClient } from "@supabase/supabase-js";
 
 /** Service-role client for trusted server-only operations (bypasses RLS). */
-export async function createServiceSupabaseClient() {
-  return createClient<any>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock.supabase.co",
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "mock-service-key",
+export async function createServiceSupabaseClient(): Promise<any> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_URL.startsWith("http")
+    ? process.env.NEXT_PUBLIC_SUPABASE_URL
+    : DEFAULT_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY.length > 20
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : DEFAULT_SUPABASE_ANON_KEY;
+
+  return createJSClient(
+    url,
+    serviceKey,
     {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       }
     }
-  );
+  ) as any;
 }

@@ -242,7 +242,7 @@ export default function Home() {
       name: "Gimbals & Stabilizers",
       slug: "gimbals",
       count: "6 Stabilizers",
-      imageUrl: "https://images.unsplash.com/photo-1589872547565-d978cfdb27d2?q=80&w=1000&auto=format&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?q=80&w=1000&auto=format&fit=crop",
     },
     {
       name: "Lighting Equipment",

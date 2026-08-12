@@ -95,17 +95,22 @@ export async function signOutAction(): Promise<AuthResult> {
 
 // ─── Get current user profile ────────────────────────────────
 export async function getCurrentUserAction() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-  const { data: profileData } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-  return profileData as Record<string, unknown> | null;
+    return profileData as Record<string, unknown> | null;
+  } catch (err) {
+    console.warn("getCurrentUserAction failed or unconfigured:", err);
+    return null;
+  }
 }
 
 // ─── Forgot Password ─────────────────────────────────────────

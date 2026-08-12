@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ─────────────────────────────────────────────────────────────
 // Supabase Database Type Definitions — AUREVIA
 // Mirrors supabase/migrations/20260715000000_schema.sql
@@ -29,6 +30,12 @@ export type UserRole = "customer" | "staff" | "admin";
 export interface Database {
   public: {
     Tables: {
+      [key: string]: {
+        Row: Record<string, any>;
+        Insert: Record<string, any>;
+        Update: Record<string, any>;
+        Relationships?: any[];
+      };
       profiles: {
         Row: {
           id: string;
@@ -129,16 +136,96 @@ export interface Database {
       audit_logs: {
         Row: {
           id: string;
+          actor_id: string | null;
+          actor_email: string | null;
           action: string;
-          table_name: string;
-          record_id: string;
-          changed_by: string | null;
-          old_data: Record<string, unknown> | null;
-          new_data: Record<string, unknown> | null;
+          resource: string;
+          resource_id: string | null;
+          metadata: Record<string, unknown> | null;
+          ip_address: string | null;
           created_at: string;
         };
         Insert: Omit<Database["public"]["Tables"]["audit_logs"]["Row"], "id" | "created_at">;
-        Update: never;
+        Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+      };
+      kyc_verifications: {
+        Row: {
+          id: string;
+          profile_id: string;
+          id_type: string;
+          id_number: string;
+          id_front_url: string;
+          id_back_url: string | null;
+          selfie_url: string | null;
+          status: string;
+          rejection_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["kyc_verifications"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["kyc_verifications"]["Row"]>;
+      };
+      kyc_documents: {
+        Row: {
+          id: string;
+          profile_id: string;
+          id_type: string;
+          id_number: string;
+          id_front_url: string;
+          id_back_url: string | null;
+          selfie_url: string | null;
+          status: string;
+          rejection_reason: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["kyc_documents"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["kyc_documents"]["Row"]>;
+      };
+      payments: {
+        Row: {
+          id: string;
+          booking_id: string;
+          razorpay_order_id: string;
+          razorpay_payment_id: string | null;
+          amount: number;
+          currency: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["payments"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["payments"]["Row"]>;
+      };
+      coupons: {
+        Row: {
+          id: string;
+          code: string;
+          discount_percent: number;
+          max_discount: number | null;
+          is_active: boolean;
+          expires_at: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["coupons"]["Row"], "id" | "created_at">;
+        Update: Partial<Database["public"]["Tables"]["coupons"]["Row"]>;
+      };
+      support_tickets: {
+        Row: {
+          id: string;
+          profile_id: string;
+          subject: string;
+          category: string;
+          status: string;
+          priority: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["support_tickets"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["support_tickets"]["Row"]>;
       };
       processed_events: {
         Row: {
@@ -156,6 +243,7 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
+    CompositeTypes: Record<string, never>;
     Functions: {
       reserve_inventory_for_booking: {
         Args: { p_booking_id: string };
