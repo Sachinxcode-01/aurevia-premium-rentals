@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export interface AuthResult {
@@ -179,7 +179,7 @@ export async function verifyOTPAndResetPasswordAction(
     const serviceSupabase = await createServiceSupabaseClient();
     const { data: usersList } = await serviceSupabase.auth.admin.listUsers();
     const targetUser = usersList?.users?.find(
-      (u) => u.email?.toLowerCase() === cleanEmail
+      (u: { email?: string; id: string }) => u.email?.toLowerCase() === cleanEmail
     );
 
     if (targetUser) {
