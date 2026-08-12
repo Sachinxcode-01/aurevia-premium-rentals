@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Aurevia Customer Engagement Store
  * Manages Reviews, Online Enquiries, and Support Tickets with full state persistence.

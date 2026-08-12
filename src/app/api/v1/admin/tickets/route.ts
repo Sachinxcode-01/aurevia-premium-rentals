@@ -16,8 +16,9 @@ export async function GET(req: NextRequest) {
       success: true,
       data: tickets,
     });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -74,8 +75,9 @@ export async function POST(req: NextRequest) {
       data: updatedTicket,
       message: "Ticket reply posted & customer notified via email.",
     });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -86,7 +88,8 @@ export async function PATCH(req: NextRequest) {
 
     const updated = engagementStore.updateTicketStatus(ticketId, status, priority);
     return NextResponse.json({ success: true, data: updated });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

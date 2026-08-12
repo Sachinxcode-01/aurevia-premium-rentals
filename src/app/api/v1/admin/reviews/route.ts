@@ -21,8 +21,9 @@ export async function GET(req: NextRequest) {
         rejected: reviews.filter((r) => r.status === "rejected").length,
       },
     });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -45,8 +46,9 @@ export async function PATCH(req: NextRequest) {
       data: updated,
       message: `Review has been marked as ${status}.`,
     });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 
@@ -61,7 +63,8 @@ export async function DELETE(req: NextRequest) {
 
     engagementStore.deleteReview(id);
     return NextResponse.json({ success: true, message: "Review deleted." });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "An unexpected error occurred";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
