@@ -57,6 +57,7 @@ export interface SupportTicket {
   customerEmail: string;
   bookingReference?: string;
   category: "Equipment Technical Issue" | "Billing & Deposit" | "Delivery & Pickup" | "General Question";
+  subject: string;
   status: "open" | "pending_customer" | "resolved" | "closed";
   priority: "urgent" | "normal" | "low";
   createdAt: string;
