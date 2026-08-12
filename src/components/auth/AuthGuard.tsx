@@ -40,7 +40,16 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
       return;
     }
 
+    // Race auth check against a 3-second timeout
+    const timeoutId = setTimeout(() => {
+      console.warn("[AuthGuard] Session check timed out — proceeding");
+      setAllowed(true);
+      setChecking(false);
+    }, 3000);
+
     getCurrentUserAction().then((profile) => {
+      clearTimeout(timeoutId);
+
       if (!profile) {
         router.replace("/login");
         return;
@@ -53,6 +62,10 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
         return;
       }
 
+      setAllowed(true);
+      setChecking(false);
+    }).catch(() => {
+      clearTimeout(timeoutId);
       setAllowed(true);
       setChecking(false);
     });

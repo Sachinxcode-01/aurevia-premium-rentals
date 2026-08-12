@@ -96,17 +96,26 @@ export async function signOutAction(): Promise<AuthResult> {
 // ─── Get current user profile ────────────────────────────────
 export async function getCurrentUserAction() {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    // Race against a 4-second timeout so the dashboard never hangs indefinitely
+    const timeoutPromise = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 4000)
+    );
 
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+    const fetchPromise = (async () => {
+      const supabase = await createServerSupabaseClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
 
-    return profileData as Record<string, unknown> | null;
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      return profileData as Record<string, unknown> | null;
+    })();
+
+    return await Promise.race([fetchPromise, timeoutPromise]);
   } catch (err) {
     console.warn("getCurrentUserAction failed or unconfigured:", err);
     return null;
