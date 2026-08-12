@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* Strongly-Typed API Client for AUREVIA Customer & Admin Applications */
 
 const API_BASE = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000");
@@ -135,5 +136,46 @@ export const adminApiClient = {
 
   audit: {
     list: (limit = 50) => fetchApi<any[]>(`/api/v1/admin/audit?limit=${limit}`),
+  },
+
+  reviews: {
+    list: (status = "all") => fetchApi<any>(`/api/v1/admin/reviews?status=${status}`),
+    updateStatus: (id: string, status: "approved" | "rejected", adminNote?: string) =>
+      fetchApi<any>("/api/v1/admin/reviews", {
+        method: "PATCH",
+        body: JSON.stringify({ id, status, adminNote }),
+      }),
+    delete: (id: string) =>
+      fetchApi<any>(`/api/v1/admin/reviews?id=${id}`, {
+        method: "DELETE",
+      }),
+  },
+
+  enquiries: {
+    list: (status = "all") => fetchApi<any>(`/api/v1/admin/enquiries?status=${status}`),
+    respond: (enquiryId: string, responseText: string, respondedBy?: string) =>
+      fetchApi<any>("/api/v1/admin/enquiries", {
+        method: "POST",
+        body: JSON.stringify({ enquiryId, responseText, respondedBy }),
+      }),
+    updateStatus: (id: string, status: string, adminNotes?: string) =>
+      fetchApi<any>("/api/v1/admin/enquiries", {
+        method: "PATCH",
+        body: JSON.stringify({ id, status, adminNotes }),
+      }),
+  },
+
+  tickets: {
+    list: (status = "all") => fetchApi<any>(`/api/v1/admin/tickets?status=${status}`),
+    reply: (ticketId: string, replyText: string, senderName?: string) =>
+      fetchApi<any>("/api/v1/admin/tickets", {
+        method: "POST",
+        body: JSON.stringify({ ticketId, replyText, senderName }),
+      }),
+    updateStatus: (ticketId: string, status: string, priority?: string) =>
+      fetchApi<any>("/api/v1/admin/tickets", {
+        method: "PATCH",
+        body: JSON.stringify({ ticketId, status, priority }),
+      }),
   },
 };
