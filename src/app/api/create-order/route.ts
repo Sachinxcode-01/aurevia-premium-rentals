@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       return apiError("Amount must be at least ₹1.", "MINIMUM_AMOUNT_REQUIRED", 400);
     }
 
-    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
     if (!keyId || !keySecret || keyId.includes("PLACEHOLDER") || keySecret.includes("PLACEHOLDER")) {

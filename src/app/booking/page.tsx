@@ -86,6 +86,22 @@ export default function BookingPage() {
   const [companyOrCollege, setCompanyOrCollege] = useState("Aurevia Studio");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
+  // Trigger confirmation page entrance animation
+  useEffect(() => {
+    if (step === "confirmation") {
+      const timer = setTimeout(() => {
+        animate(".success-fade", {
+          opacity: [0, 1],
+          translateY: [20, 0],
+          delay: stagger(150),
+          duration: 800,
+          ease: "easeOutQuad",
+        });
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
   const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     setCouponError("");
@@ -950,19 +966,19 @@ export default function BookingPage() {
           <div className="max-w-2xl mx-auto glass-panel-gold border-gold-border rounded-lg p-8 space-y-8 shadow-2xl backdrop-blur-md">
             
             <div className="text-center space-y-3 border-b border-white/10 pb-6">
-              <div className="flex justify-center mb-2 success-fade" style={{ opacity: 0 }}>
+              <div className="flex justify-center mb-2 success-fade">
                 <Logo variant="wordmark" theme="light" width={160} height={44} />
               </div>
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 success-fade" style={{ opacity: 0 }}>
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2 success-fade">
                 <CheckCircle size={24} />
               </div>
-              <h2 className="serif-heading text-2xl font-light text-ivory success-fade" style={{ opacity: 0 }}>Order Confirmed</h2>
-              <p className="text-xs text-gold-champagne font-mono uppercase tracking-widest success-fade" style={{ opacity: 0 }}>
+              <h2 className="serif-heading text-2xl font-light text-ivory success-fade">Order Confirmed</h2>
+              <p className="text-xs text-gold-champagne font-mono uppercase tracking-widest success-fade">
                 Reservation Code: {createdBooking.referenceCode}
               </p>
             </div>
 
-            <div className="space-y-6 text-xs success-fade" style={{ opacity: 0 }}>
+            <div className="space-y-6 text-xs success-fade">
               <div className="space-y-3">
                 <span className="text-[10px] text-muted-gray uppercase tracking-widest block font-mono">Rental Summary</span>
                 
@@ -1007,7 +1023,7 @@ export default function BookingPage() {
             </div>
 
             {/* Assistance Contact info */}
-            <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 success-fade" style={{ opacity: 0 }}>
+            <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4 success-fade">
               <div className="space-y-1 text-left">
                 <h4 className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                   <PhoneCall size={12} />
@@ -1027,7 +1043,7 @@ export default function BookingPage() {
               </a>
             </div>
 
-            <div className="pt-4 flex gap-4 success-fade" style={{ opacity: 0 }}>
+            <div className="pt-4 flex gap-4 success-fade">
               <Link
                 href="/dashboard"
                 className="w-1/2 py-3 bg-white/5 hover:bg-white/10 text-ivory text-xs font-semibold uppercase tracking-wider text-center rounded border border-white/10 transition"
