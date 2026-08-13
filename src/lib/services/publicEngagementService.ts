@@ -56,7 +56,7 @@ export function submitOnlineEnquiry(payload: PublicEnquiryPayload) {
     }
 
     // Broadcast live event to Admin Panel (:3002)
-    realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: newEnquiry.id, status: "new" }, "public");
+    realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: newEnquiry.id, status: "new" }, "public_website");
     return { success: true, referenceNo: refNo };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -99,7 +99,7 @@ export function submitSupportTicket(payload: PublicSupportTicketPayload) {
     }
 
     // Broadcast live event to Admin Panel
-    realtimeHub.broadcast("TICKET_UPDATED", { ticketId: newTicket.id, status: "open" }, "public");
+    realtimeHub.broadcast("TICKET_UPDATED", { ticketId: newTicket.id, status: "open" }, "public_website");
     return { success: true, ticketNo };
   } catch (err: any) {
     return { success: false, error: err.message };
@@ -130,7 +130,7 @@ export function submitCustomerReview(payload: PublicReviewPayload) {
     }
 
     // Broadcast live event to Admin Panel
-    realtimeHub.broadcast("REVIEW_MODERATED", { reviewId: newReview.id, status: "pending" }, "public");
+    realtimeHub.broadcast("REVIEW_MODERATED", { reviewId: newReview.id, status: "pending" }, "public_website");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message };
