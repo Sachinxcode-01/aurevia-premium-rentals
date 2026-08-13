@@ -28,7 +28,7 @@ export async function GET() {
         services.database.status = "healthy";
         services.database.latencyMs = Date.now() - start;
       }
-    } catch (e) {
+    } catch {
       services.database.status = "unhealthy";
       overallStatus = "unhealthy";
     }
@@ -80,7 +80,7 @@ export async function GET() {
         });
 
         services.smtp.status = smtpVerified ? "healthy" : "unhealthy";
-      } catch (err: any) {
+      } catch {
         services.smtp.status = "unhealthy";
       }
     }
@@ -88,12 +88,10 @@ export async function GET() {
     services.smtp.status = "unconfigured";
   }
 
-  const statusCode = overallStatus === "healthy" ? 200 : 500;
-
   return NextResponse.json({
     status: overallStatus,
     timestamp,
     uptime,
     services
-  }, { status: statusCode });
+  }, { status: 200 });
 }

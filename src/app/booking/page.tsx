@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -178,9 +177,39 @@ export default function BookingPage() {
 
       const orderJson = await orderRes.json();
       const orderData = orderJson.data || orderJson;
+      const orderId = orderData.order_id || orderData.id;
 
-      // 3. Open Razorpay Modal
-      const rzpKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+      if (!orderId) {
+        throw new Error("Server failed to return a valid payment order ID.");
+      }
+
+      // 3. If demo mode or mock order, complete payment directly
+      if (orderId.startsWith("order_demo_") || orderId.startsWith("order_mock_")) {
+        const verifyRes = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_order_id: orderId,
+            razorpay_payment_id: `pay_demo_${Date.now()}`,
+            razorpay_signature: "sig_demo_verified",
+            bookingId: result.id,
+          }),
+        });
+
+        const verifyData = await verifyRes.json();
+        if (verifyRes.ok && (verifyData.success || verifyData.data?.verified)) {
+          const updated = await db.getBookingById(result.id);
+          setCreatedBooking(updated || { ...result, status: "confirmed", paymentStatus: "paid" });
+          clearCart();
+          setStep("confirmation");
+          return;
+        } else {
+          throw new Error(verifyData.error?.message || verifyData.error || "Demo payment verification failed.");
+        }
+      }
+
+      // 4. Open Razorpay Modal for Live Orders
+      const rzpKeyId = orderData.key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
       if (!rzpKeyId) {
         throw new Error("Razorpay Key ID is not configured. Please set NEXT_PUBLIC_RAZORPAY_KEY_ID in your environment.");
       }
@@ -191,7 +220,7 @@ export default function BookingPage() {
         currency: orderData.currency,
         name: "AUREVIA Premium Rentals",
         description: `Rental Booking ${result.referenceCode}`,
-        order_id: orderData.order_id,
+        order_id: orderId,
         handler: async function (response: any) {
           try {
             setIsSubmitting(true);
@@ -210,8 +239,8 @@ export default function BookingPage() {
             });
 
             const verifyData = await verifyRes.json();
-            if (verifyRes.ok && verifyData.success) {
-              // 4. Mark the booking as paid and confirmed
+            if (verifyRes.ok && (verifyData.success || verifyData.data?.verified)) {
+              // Mark the booking as paid and confirmed
               const updated = await db.getBookingById(result.id);
               setCreatedBooking(updated || { ...result, status: "confirmed", paymentStatus: "paid" });
               clearCart();
@@ -228,7 +257,7 @@ export default function BookingPage() {
                 });
               }, 50);
             } else {
-              setBookingError(verifyData.error || "Payment verification failed.");
+              setBookingError(verifyData.error?.message || verifyData.error || "Payment verification failed.");
             }
           } catch (err: any) {
             setBookingError(err.message || "Failed to verify signature.");
@@ -253,9 +282,13 @@ export default function BookingPage() {
         },
       };
 
+      if (typeof window === "undefined" || !(window as any).Razorpay) {
+        throw new Error("Razorpay SDK is initializing. Please click Pay again in a moment.");
+      }
+
       const rzp = new (window as any).Razorpay(options);
       rzp.on("payment.failed", function (response: any) {
-        setBookingError(response.error.description || "Razorpay transaction failed.");
+        setBookingError(response.error?.description || response.error?.message || "Razorpay transaction failed.");
         setIsSubmitting(false);
       });
       rzp.open();
@@ -267,7 +300,7 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-screen bg-obsidian text-ivory pb-20">
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       <Navbar cartItemCount={cart.length} />
 
       {/* Page Title Header */}
