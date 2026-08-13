@@ -166,16 +166,28 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Footer Security Badges & Quick Demo Fill */}
-        <div className="space-y-3 pt-4 border-t border-white/5">
+        <div className="space-y-2 pt-4 border-t border-white/5">
           <button
             type="button"
             onClick={() => {
-              setEmail("admin@aurevia.com");
-              setPassword("admin123");
+              setEmail("premmundargi135@gmail.com");
+              setPassword("AureviaAdmin@2026");
             }}
             className="w-full py-2 px-3 bg-[#070707] hover:bg-white/5 border border-[#d8b36a]/30 rounded-lg text-left text-[11px] font-mono text-[#d8b36a] flex items-center justify-between cursor-pointer transition"
           >
-            <span>Fill Demo Credentials (admin@aurevia.com)</span>
+            <span>Fill Admin Credentials (Prem)</span>
+            <span className="text-[10px] text-white/50">Click to fill</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setEmail("sachiii8827@gmail.com");
+              setPassword("AureviaStaff@2026");
+            }}
+            className="w-full py-2 px-3 bg-[#070707] hover:bg-white/5 border border-white/10 rounded-lg text-left text-[11px] font-mono text-[#9a9995] flex items-center justify-between cursor-pointer transition"
+          >
+            <span>Fill Staff Credentials (Sachin)</span>
             <span className="text-[10px] text-white/50">Click to fill</span>
           </button>
 
