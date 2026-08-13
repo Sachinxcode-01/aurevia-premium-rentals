@@ -10,6 +10,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
 import { Star, CheckCircle, Cpu, Heart, ShoppingCart, MessageCircle } from "lucide-react";
 import Link from "next/link";
+import AvailabilityCalendar from "@/components/booking/AvailabilityCalendar";
 
 interface GearClientDetailsProps {
   product: Product;
@@ -198,6 +199,15 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
                 ))}
               </div>
             )}
+
+            {/* Live Vault Availability Calendar */}
+            <AvailabilityCalendar
+              productName={product.name}
+              onDateSelect={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }}
+            />
 
             {/* Specifications Grid */}
             <div className="bg-charcoal/50 backdrop-blur-md border border-white/10 rounded-xl p-6 space-y-4">

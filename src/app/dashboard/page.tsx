@@ -12,7 +12,7 @@ import {
   User, ShoppingBag, Settings, Camera, Calendar, CheckCircle,
   XCircle, Loader2, FileText, Download, Key, LogOut,
   ChevronRight, AlertTriangle, Menu, X, RefreshCw, Lock, Eye, EyeOff,
-  Phone, Mail, MessageCircle, TrendingUp, Tag, CreditCard, Star,
+  Phone, Mail, MessageCircle, TrendingUp, Tag, CreditCard, Star, QrCode, Gift, PlusCircle,
 } from "lucide-react";
 import { animate, stagger } from "animejs";
 import Link from "next/link";
@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation";
 import { db } from "@/lib/db/store";
 import { Logo } from "@/components/ui/Logo";
 import { MOCK_PRODUCTS, Product } from "@/lib/db/mockData";
+import { printOrDownloadInvoice } from "@/lib/utils/pdfGenerator";
+import BookingQRCode from "@/components/booking/BookingQRCode";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -383,6 +385,7 @@ export default function CustomerDashboard() {
   const [bookings, setBookings]         = useState<any[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
   const [activeTab, setActiveTab]       = useState<DashTab>("overview");
+  const [qrModalBooking, setQrModalBooking] = useState<any | null>(null);
   const [bookingFilter, setBookingFilter] = useState<BookingFilter>("all");
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -970,7 +973,34 @@ export default function CustomerDashboard() {
                   ))}
                 </div>
 
-                {/* Favorites Section */}
+                {/* Aurevia Rewards & Referral Center */}
+                <div className="dash-card opacity-0 glass-panel border-[#D8B36A]/30 bg-[#D8B36A]/5 rounded-xl p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Gift className="text-[#D8B36A]" size={18} />
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-[#D8B36A] font-bold">
+                        Aurevia Rewards &amp; Referral Program
+                      </h3>
+                    </div>
+                    <span className="text-[10px] bg-[#D8B36A] text-black font-bold px-2 py-0.5 rounded font-mono">
+                      5% CASHBACK ACTIVE
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 bg-black/40 border border-white/10 rounded-lg space-y-1">
+                      <span className="text-[10px] text-gray-400 font-mono uppercase block">Your Available Reward Credits</span>
+                      <div className="text-2xl font-bold text-[#D8B36A] font-mono">750 Points <span className="text-xs font-normal text-gray-400">(₹750 value)</span></div>
+                      <p className="text-[10px] text-gray-500">Redeem instantly during camera checkout</p>
+                    </div>
+
+                    <div className="p-4 bg-black/40 border border-white/10 rounded-lg space-y-1">
+                      <span className="text-[10px] text-gray-400 font-mono uppercase block">Your Referral Code</span>
+                      <div className="text-base font-bold text-white font-mono tracking-widest">AUREVIA-PREM-77</div>
+                      <p className="text-[10px] text-gray-500">Share with creator friends for ₹200 bonus credit</p>
+                    </div>
+                  </div>
+                </div>
                 {favoritesList.length > 0 && (
                   <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
                     <h3 className="text-[11px] uppercase font-mono tracking-widest text-gold-champagne mb-5">Your Favorite Gear</h3>
@@ -1275,11 +1305,58 @@ export default function CustomerDashboard() {
                           {/* Actions */}
                           <div className="flex flex-wrap gap-2 pt-3 border-t border-white/5 mt-3">
                             <button
-                              onClick={() => printInvoice(b, profile)}
+                              onClick={() => setQrModalBooking(b)}
+                              className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-[#D8B36A]/40 bg-[#D8B36A]/10 rounded-lg text-[#D8B36A] hover:bg-[#D8B36A]/20 transition cursor-pointer font-mono font-bold"
+                            >
+                              <QrCode size={12} /> View QR Pass
+                            </button>
+
+                            <button
+                              onClick={() => printOrDownloadInvoice({
+                                referenceCode: refCode,
+                                createdAt: b.createdAt || b.created_at,
+                                customerName: String(profile?.full_name || b.contactName || b.contact_name || "Valued Customer"),
+                                customerEmail: String(profile?.email || b.contactEmail || b.contact_email || "—"),
+                                customerPhone: String(profile?.phone || b.contactPhone || b.contact_phone || "—"),
+                                equipmentName: b.booking_items?.[0]?.product?.name || b.items?.[0]?.name || "Camera Equipment Package",
+                                startDate,
+                                endDate,
+                                rentalFee,
+                                discountFee: discount,
+                                couponCode: coupon,
+                                totalPayable: totalPay,
+                                status: b.status,
+                                paymentStatus: pStatus,
+                                paymentMethod: b.paymentMethod || b.payment_method,
+                              })}
                               className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-white/10 rounded-lg text-muted-gray hover:text-ivory hover:border-white/20 transition cursor-pointer"
                             >
-                              <Download size={11} /> Download Invoice
+                              <Download size={11} /> Download Tax Invoice
                             </button>
+
+                            {["approved", "ready_for_pickup", "rented"].includes(b.status) && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch("/api/v1/bookings/extend", {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ bookingId: b.id, extraDays: 1 }),
+                                    });
+                                    const data = await res.json();
+                                    if (data.success) {
+                                      toast.success("Rental extension of +1 day requested!");
+                                      loadBookings();
+                                    }
+                                  } catch {
+                                    toast.error("Failed to extend rental.");
+                                  }
+                                }}
+                                className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-teal-500/30 bg-teal-500/10 rounded-lg text-teal-400 hover:bg-teal-500/20 transition cursor-pointer font-mono"
+                              >
+                                <PlusCircle size={11} /> Extend +1 Day
+                              </button>
+                            )}
 
                             {/* Calendar download button */}
                             {["paid", "approved", "ready_for_pickup"].includes(b.status) && (
@@ -1861,6 +1938,25 @@ export default function CustomerDashboard() {
                 Go Back
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Digital QR Pass Modal */}
+      {qrModalBooking && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-sm w-full">
+            <button
+              onClick={() => setQrModalBooking(null)}
+              className="absolute -top-3 -right-3 z-10 p-2 bg-black border border-white/20 rounded-full text-white hover:text-gold-champagne transition"
+            >
+              <X size={16} />
+            </button>
+            <BookingQRCode
+              referenceCode={qrModalBooking.referenceCode || qrModalBooking.reference_code || qrModalBooking.id}
+              customerPhone={String(profile?.phone || qrModalBooking.contactPhone || qrModalBooking.contact_phone || "+91 96869 09048")}
+              pickupOTP={qrModalBooking.pickupOTP || "1358"}
+            />
           </div>
         </div>
       )}

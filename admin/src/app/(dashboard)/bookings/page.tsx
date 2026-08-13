@@ -4,11 +4,15 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Search, Filter, X,
   FileSpreadsheet, Sparkles, RefreshCw,
-  Trash2, CheckCircle
+  Trash2, CheckCircle, QrCode, Camera, MessageSquare, Download
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
+import ConditionInspectionModal from "../../../components/inspection/ConditionInspectionModal";
+import QRScannerModal from "../../../components/scanner/QRScannerModal";
+import NotificationCenterModal from "../../../components/notifications/NotificationCenterModal";
+import { printOrDownloadInvoice } from "../../../../../src/lib/utils/pdfGenerator";
 
 interface BookingItem {
   id: string;
@@ -43,6 +47,9 @@ export default function AdminBookingsPage() {
   const [otpError, setOtpError] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const [inspectionBooking, setInspectionBooking] = useState<BookingItem | null>(null);
+  const [notificationBooking, setNotificationBooking] = useState<BookingItem | null>(null);
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -305,6 +312,14 @@ export default function AdminBookingsPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            onClick={() => setShowScanner(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D8B36A] text-black font-mono font-bold text-xs hover:bg-[#c3a05b] transition cursor-pointer shadow-lg"
+          >
+            <QrCode size={14} />
+            <span>Scan QR Pass</span>
+          </button>
+
+          <button
             onClick={handlePurgeDuplicates}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-400 hover:bg-amber-500/20 transition cursor-pointer"
           >
@@ -436,6 +451,41 @@ export default function AdminBookingsPage() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setInspectionBooking(b)}
+                          title="Record Condition Inspection Photos"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-[#D8B36A]/20 text-[#D8B36A] border border-[#D8B36A]/30 transition"
+                        >
+                          <Camera size={13} />
+                        </button>
+                        <button
+                          onClick={() => setNotificationBooking(b)}
+                          title="Dispatch WhatsApp / SMS Notification"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition"
+                        >
+                          <MessageSquare size={13} />
+                        </button>
+                        <button
+                          onClick={() => printOrDownloadInvoice({
+                            referenceCode: b.id,
+                            customerName: b.customerName,
+                            customerEmail: b.email,
+                            customerPhone: b.phone,
+                            equipmentName: b.equipmentName,
+                            startDate: b.startDate,
+                            endDate: b.endDate,
+                            rentalFee: b.total,
+                            discountFee: 0,
+                            totalPayable: b.total,
+                            status: b.status,
+                            paymentStatus: b.paymentStatus,
+                            paymentMethod: b.paymentMethod,
+                          })}
+                          title="Print / Download PDF Tax Invoice"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition"
+                        >
+                          <Download size={13} />
+                        </button>
                         <button
                           onClick={() => setSelectedBooking(b)}
                           className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-[#d8b36a] hover:border-[#d8b36a]/40 transition cursor-pointer"
@@ -587,6 +637,37 @@ export default function AdminBookingsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Feature Modals */}
+      {showScanner && (
+        <QRScannerModal
+          onClose={() => setShowScanner(false)}
+          onScanSuccess={(code: string) => {
+            setSearch(code);
+            setActionSuccess(`Scanned QR Pass for ${code}. Matching record loaded.`);
+            setTimeout(() => setActionSuccess(""), 3000);
+          }}
+        />
+      )}
+
+      {inspectionBooking && (
+        <ConditionInspectionModal
+          bookingId={inspectionBooking.id}
+          equipmentName={inspectionBooking.equipmentName}
+          onClose={() => setInspectionBooking(null)}
+          onSave={() => {
+            setActionSuccess(`Condition Inspection recorded for ${inspectionBooking.id}`);
+            setTimeout(() => setActionSuccess(""), 3000);
+          }}
+        />
+      )}
+
+      {notificationBooking && (
+        <NotificationCenterModal
+          booking={notificationBooking}
+          onClose={() => setNotificationBooking(null)}
+        />
+      )}
     </div>
   );
 }
