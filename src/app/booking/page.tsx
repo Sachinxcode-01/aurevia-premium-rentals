@@ -19,10 +19,12 @@ import {
   Smartphone,
   ArrowRight,
   ShieldCheck,
+  Sliders,
 } from "lucide-react";
 import Link from "next/link";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
+import GearRigBuilderModal from "@/components/features/rig-builder/GearRigBuilderModal";
 import { getCurrentUserAction } from "@/lib/actions/auth";
 
 type CheckoutStep = "cart" | "details" | "logistics" | "terms" | "payment" | "confirmation";
@@ -41,6 +43,7 @@ export default function BookingPage() {
   } = useCart();
 
   const [step, setStep] = useState<CheckoutStep>("cart");
+  const [showRigBuilder, setShowRigBuilder] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   
@@ -354,20 +357,29 @@ export default function BookingPage() {
             </p>
           </div>
 
-          {/* Stepper Timeline */}
-          {step !== "confirmation" && (
-            <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono tracking-wider uppercase bg-white/5 p-2 px-3.5 rounded border border-white/5 self-start md:self-auto overflow-x-auto max-w-full">
-              <span className={step === "cart" ? "text-gold-champagne font-bold" : "text-muted-gray"}>1. Review</span>
-              <span className="text-white/20">/</span>
-              <span className={step === "details" ? "text-gold-champagne font-bold" : "text-muted-gray"}>2. Details</span>
-              <span className="text-white/20">/</span>
-              <span className={step === "logistics" ? "text-gold-champagne font-bold" : "text-muted-gray"}>3. Logistics</span>
-              <span className="text-white/20">/</span>
-              <span className={step === "terms" ? "text-gold-champagne font-bold" : "text-muted-gray"}>4. Terms</span>
-              <span className="text-white/20">/</span>
-              <span className={step === "payment" ? "text-gold-champagne font-bold" : "text-muted-gray"}>5. Pay</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowRigBuilder(true)}
+              className="px-4 py-2 rounded-xl bg-[#d8b36a]/15 border border-[#d8b36a]/40 text-[#d8b36a] text-xs font-mono font-bold hover:bg-[#d8b36a]/25 transition cursor-pointer flex items-center gap-2"
+            >
+              <Sliders size={14} /> ⚡ Build Custom Rig (15% OFF)
+            </button>
+
+            {/* Stepper Timeline */}
+            {step !== "confirmation" && (
+              <div className="flex items-center gap-2 md:gap-3 text-[10px] font-mono tracking-wider uppercase bg-white/5 p-2 px-3.5 rounded border border-white/5 self-start md:self-auto overflow-x-auto max-w-full">
+                <span className={step === "cart" ? "text-gold-champagne font-bold" : "text-muted-gray"}>1. Review</span>
+                <span className="text-white/20">/</span>
+                <span className={step === "details" ? "text-gold-champagne font-bold" : "text-muted-gray"}>2. Details</span>
+                <span className="text-white/20">/</span>
+                <span className={step === "logistics" ? "text-gold-champagne font-bold" : "text-muted-gray"}>3. Logistics</span>
+                <span className="text-white/20">/</span>
+                <span className={step === "terms" ? "text-gold-champagne font-bold" : "text-muted-gray"}>4. Terms</span>
+                <span className="text-white/20">/</span>
+                <span className={step === "payment" ? "text-gold-champagne font-bold" : "text-muted-gray"}>5. Pay</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1156,6 +1168,10 @@ export default function BookingPage() {
           </div>
         )}
       </div>
+
+      {showRigBuilder && (
+        <GearRigBuilderModal onClose={() => setShowRigBuilder(false)} />
+      )}
     </div>
   );
 }
