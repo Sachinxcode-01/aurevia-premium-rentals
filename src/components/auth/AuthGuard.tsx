@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getCurrentUserAction } from "@/lib/actions/auth";
+import { db } from "@/lib/db/store";
 import { Loader2 } from "lucide-react";
 
 interface AuthGuardProps {
@@ -15,7 +16,7 @@ interface AuthGuardProps {
 /**
  * Client-side auth guard — secondary safety net alongside middleware.
  * Middleware handles the primary server-side redirect; this handles
- * edge cases where middleware can't run (e.g., Supabase not configured).
+ * edge cases where middleware can't run (e.g., Supabase not configured or local profile fallback).
  */
 export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGuardProps) {
   const router = useRouter();
@@ -23,52 +24,80 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    // If Supabase is not configured, skip auth check (local dev mode)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-    const isSupabaseConfigured =
-      supabaseUrl.startsWith("https://") &&
-      supabaseUrl.includes(".supabase.co") &&
-      !supabaseUrl.includes("PLACEHOLDER") &&
-      !supabaseUrl.includes("YOUR_") &&
-      supabaseKey.length > 20 &&
-      !supabaseKey.includes("PLACEHOLDER");
+    let mounted = true;
 
-    if (!isSupabaseConfigured) {
-      setAllowed(true);
-      setChecking(false);
-      return;
-    }
-
-    // Race auth check against a 3-second timeout
+    // Safety timeout: 2.5 seconds max for session verification so user is never stuck
     const timeoutId = setTimeout(() => {
-      console.warn("[AuthGuard] Session check timed out — proceeding");
-      setAllowed(true);
-      setChecking(false);
-    }, 3000);
-
-    getCurrentUserAction().then((profile) => {
-      clearTimeout(timeoutId);
-
-      if (!profile) {
-        router.replace("/login");
-        return;
+      if (mounted) {
+        console.warn("[AuthGuard] Session check timed out — proceeding");
+        setAllowed(true);
+        setChecking(false);
       }
+    }, 2500);
 
-      const role = String(profile.role ?? "customer");
+    const checkAuth = async () => {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+        const isSupabaseConfigured =
+          supabaseUrl.startsWith("https://") &&
+          supabaseUrl.includes(".supabase.co") &&
+          !supabaseUrl.includes("PLACEHOLDER") &&
+          !supabaseUrl.includes("YOUR_") &&
+          supabaseKey.length > 20 &&
+          !supabaseKey.includes("PLACEHOLDER");
 
-      if (requiredRole === "admin" && role !== "admin" && role !== "staff") {
-        router.replace("/dashboard");
-        return;
+        if (!isSupabaseConfigured) {
+          if (mounted) {
+            clearTimeout(timeoutId);
+            setAllowed(true);
+            setChecking(false);
+          }
+          return;
+        }
+
+        // Try getting authenticated user profile from Supabase server action
+        const profile = await getCurrentUserAction();
+
+        if (mounted) {
+          clearTimeout(timeoutId);
+
+          if (profile) {
+            const role = String(profile.role ?? "customer");
+            if (requiredRole === "admin" && role !== "admin" && role !== "staff") {
+              router.replace("/dashboard");
+              setChecking(false);
+              return;
+            }
+            setAllowed(true);
+            setChecking(false);
+          } else {
+            // Check local profile fallback (for demo mode / local guest checkout)
+            const localProfile = await db.getProfile().catch(() => null);
+            if (localProfile) {
+              setAllowed(true);
+              setChecking(false);
+            } else {
+              setChecking(false);
+              router.replace("/login");
+            }
+          }
+        }
+      } catch (err) {
+        if (mounted) {
+          clearTimeout(timeoutId);
+          setAllowed(true);
+          setChecking(false);
+        }
       }
+    };
 
-      setAllowed(true);
-      setChecking(false);
-    }).catch(() => {
+    checkAuth();
+
+    return () => {
+      mounted = false;
       clearTimeout(timeoutId);
-      setAllowed(true);
-      setChecking(false);
-    });
+    };
   }, [router, requiredRole]);
 
   if (checking) {
