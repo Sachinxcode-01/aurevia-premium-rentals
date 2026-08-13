@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(_request: Request) {
+export async function GET() {
   try {
     const { isSupabaseConfigured } = await import("@/lib/db/store");
     let profileId: string | undefined = undefined;
