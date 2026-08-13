@@ -3137,22 +3137,29 @@ export const db = {
     assignedTo: string;
   }): Promise<any> {
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase
-        .from("support_tickets")
-        .insert({
-          profile_id: ticket.profileId,
-          booking_id: ticket.bookingId || null,
-          subject: ticket.subject,
-          description: ticket.description,
-          category: ticket.category,
-          priority: ticket.priority,
-          assigned_to: ticket.assignedTo,
-          status: "open",
-        })
-        .select("*")
-        .single();
-      return error ? null : data;
+      try {
+        const supabase = await getSupabase();
+        // Verify profileId is UUID format before inserting to prevent FK crash
+        const isValidUUID = ticket.profileId && /^[0-9a-fA-F-]{36}$/.test(ticket.profileId);
+
+        const { data, error } = await supabase
+          .from("support_tickets")
+          .insert({
+            profile_id: isValidUUID ? ticket.profileId : null,
+            booking_id: ticket.bookingId || null,
+            subject: ticket.subject,
+            description: ticket.description,
+            category: ticket.category,
+            priority: ticket.priority,
+            assigned_to: ticket.assignedTo,
+            status: "open",
+          })
+          .select("*")
+          .single();
+        if (!error && data) return data;
+      } catch {
+        // Fallback to local ticket store
+      }
     }
 
     const tickets = getLocalTickets();
