@@ -70,7 +70,7 @@ function canCancel(status: string) {
 }
 
 /* ─── Print invoice helper ───────────────────────────────────── */
-function printInvoice(booking: Record<string, unknown>, profile: Record<string, unknown> | null) {
+export function printInvoice(booking: Record<string, unknown>, profile: Record<string, unknown> | null) {
   const w = window.open("", "_blank");
   if (!w) return;
 
