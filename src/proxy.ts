@@ -37,9 +37,18 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Skip middleware for API routes — API routes perform their own auth verification
+  // Skip middleware for API routes — add CORS headers for admin subproject access
   if (pathname.startsWith("/api")) {
-    return NextResponse.next();
+    const origin = request.headers.get("origin") || "*";
+    const res = NextResponse.next();
+    res.headers.set("Access-Control-Allow-Origin", origin);
+    res.headers.set("Access-Control-Allow-Credentials", "true");
+    res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, { status: 200, headers: res.headers });
+    }
+    return res;
   }
 
   // Refresh session with a 2-second timeout to prevent hanging middleware

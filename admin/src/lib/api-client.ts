@@ -1,10 +1,19 @@
-/* Strongly-Typed Admin API Client for AUREVIA Admin Website */
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://localhost:3000";
+    }
+    return "https://aurevia-premium-rentals.vercel.app";
+  }
+  return "https://aurevia-premium-rentals.vercel.app";
+}
 
 async function fetchAdminApi<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data?: T; error?: { code: string; message: string }; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const baseUrl = getApiBase();
+    const res = await fetch(`${baseUrl}${endpoint}`, {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
@@ -16,11 +25,12 @@ async function fetchAdminApi<T>(endpoint: string, options: RequestInit = {}): Pr
     const json = await res.json();
     return json;
   } catch (err: any) {
+    console.warn("[Admin API] Fetch warning:", err?.message);
     return {
       success: false,
       error: {
         code: "NETWORK_ERROR",
-        message: err.message || "Failed to reach central Aurevia API",
+        message: err?.message || "Failed to reach central Aurevia API",
       },
     };
   }
