@@ -9,6 +9,7 @@ import { MOCK_PRODUCTS } from "@/lib/db/mockData";
 import {
   Trash2,
   CreditCard,
+  Banknote,
   Truck,
   Building,
   CheckCircle,
@@ -58,6 +59,7 @@ export default function BookingPage() {
   const [createdBooking, setCreatedBooking] = useState<any | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online");
 
   useEffect(() => {
     getCurrentUserAction().then((p) => {
@@ -156,6 +158,27 @@ export default function BookingPage() {
           }))
         ),
       };
+
+      // Handle Cash on Delivery (COD) mode directly
+      if (paymentMethod === "cod") {
+        const codPayload = {
+          ...bookingPayload,
+          status: "approval_pending",
+          paymentStatus: "unpaid",
+          paymentMethod: "cod",
+        };
+        const result = await db.createBooking(codPayload);
+        setCreatedBooking({
+          ...result,
+          paymentMethod: "cod",
+          status: "approval_pending",
+          paymentStatus: "unpaid",
+        });
+        clearCart();
+        setStep("confirmation");
+        setIsSubmitting(false);
+        return;
+      }
 
       // 1. Create the booking draft (local storage)
       const result = await db.createBooking(bookingPayload);
@@ -875,7 +898,51 @@ export default function BookingPage() {
         {step === "payment" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-8 glass-panel border-white/5 rounded-lg p-6 md:p-8 space-y-6">
-              <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Secure Razorpay Payment</h3>
+              <h3 className="serif-heading text-xl font-light text-ivory border-b border-white/5 pb-3">Payment Options</h3>
+
+              {/* Payment Method Selector */}
+              <div className="space-y-3">
+                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Select Payment Mode</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("online")}
+                    className={`p-4 rounded-lg border text-left space-y-2 cursor-pointer transition ${
+                      paymentMethod === "online"
+                        ? "bg-gold-champagne/10 border-gold-champagne text-gold-champagne shadow-lg shadow-gold-champagne/5"
+                        : "bg-white/5 border-white/5 text-ivory/80 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-semibold text-xs">
+                      <div className="flex items-center gap-2">
+                        <CreditCard size={15} />
+                        <span>Online Payment</span>
+                      </div>
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono uppercase">Razorpay</span>
+                    </div>
+                    <p className="text-[10px] text-muted-gray font-light">Pay via Razorpay using UPI, Credit/Debit Cards, Netbanking or Wallet.</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cod")}
+                    className={`p-4 rounded-lg border text-left space-y-2 cursor-pointer transition ${
+                      paymentMethod === "cod"
+                        ? "bg-gold-champagne/10 border-gold-champagne text-gold-champagne shadow-lg shadow-gold-champagne/5"
+                        : "bg-white/5 border-white/5 text-ivory/80 hover:border-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-semibold text-xs">
+                      <div className="flex items-center gap-2">
+                        <Banknote size={15} />
+                        <span>Cash / Pay on Delivery (COD)</span>
+                      </div>
+                      <span className="text-[9px] bg-gold-champagne/20 text-gold-champagne px-2 py-0.5 rounded font-mono uppercase">Handover</span>
+                    </div>
+                    <p className="text-[10px] text-muted-gray font-light">Pay ₹{cartTotals.totalPayable.toLocaleString("en-IN")} in Cash or UPI during pickup or delivery.</p>
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-4 text-xs font-light text-muted-gray bg-white/5 p-5 rounded border border-white/5">
                 <p>Verify your details before completing order checkout:</p>
@@ -899,10 +966,14 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              {/* Secure payment badge */}
+              {/* Payment badge */}
               <div className="flex items-center gap-3 p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-400 rounded text-[11px] font-mono uppercase">
                 <ShieldCheck size={18} />
-                <span>Verified SSL Connection · Recalculated server-side pricing · Secure Razorpay Checkout</span>
+                <span>
+                  {paymentMethod === "cod"
+                    ? "Cash on Delivery Selected · Verification required during equipment handover"
+                    : "Verified SSL Connection · Recalculated server-side pricing · Secure Razorpay Checkout"}
+                </span>
               </div>
 
               <div className="flex gap-3">
@@ -922,12 +993,17 @@ export default function BookingPage() {
                   {isSubmitting ? (
                     <>
                       <div className="w-3.5 h-3.5 rounded-full border border-obsidian/30 border-t-obsidian animate-spin"></div>
-                      Processing Razorpay payment...
+                      Processing {paymentMethod === "cod" ? "COD Order" : "Razorpay Payment"}...
+                    </>
+                  ) : paymentMethod === "cod" ? (
+                    <>
+                      <Banknote size={14} />
+                      Confirm Booking (COD - ₹{cartTotals.totalPayable.toLocaleString("en-IN")})
                     </>
                   ) : (
                     <>
                       <CreditCard size={14} />
-                      Pay ₹{cartTotals.totalPayable.toLocaleString("en-IN")}
+                      Pay ₹{cartTotals.totalPayable.toLocaleString("en-IN")} via Razorpay
                     </>
                   )}
                 </button>
@@ -1016,10 +1092,28 @@ export default function BookingPage() {
 
               <div className="space-y-2 border-t border-white/10 pt-4 font-mono text-[10px] text-muted-gray">
                 <div className="flex justify-between">
-                  <span>Grand Total Paid:</span>
-                  <span className="text-ivory">₹{createdBooking.totalPayable.toLocaleString("en-IN")}</span>
+                  <span>Payment Mode:</span>
+                  <span className="text-ivory font-bold uppercase">
+                    {createdBooking.paymentMethod === "cod" ? "Cash / Pay on Handover (COD)" : "Online via Razorpay"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Grand Total:</span>
+                  <span className="text-gold-champagne font-bold">₹{createdBooking.totalPayable.toLocaleString("en-IN")}</span>
                 </div>
               </div>
+
+              {createdBooking.paymentMethod === "cod" && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-lg text-left space-y-1">
+                  <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+                    <Banknote size={15} />
+                    Cash on Delivery / Pay on Handover Selected
+                  </div>
+                  <p className="text-[11px] text-muted-gray leading-normal font-light">
+                    Please keep <strong className="text-ivory">₹{createdBooking.totalPayable.toLocaleString("en-IN")}</strong> ready in Cash or UPI when collecting your equipment from AUREVIA studio or on delivery handover.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Assistance Contact info */}
