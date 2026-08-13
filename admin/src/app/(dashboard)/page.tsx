@@ -84,9 +84,9 @@ export default function AdminOverviewDashboard() {
             { name: "Completed", value: 5 },
           ],
           mostRentedGear: res.data.mostRentedGear || [
-            { name: "Canon EOS R5 C", count: 18 },
-            { name: "Sony FX6 Cinema", count: 14 },
-            { name: "RED Komodo 6K", count: 9 },
+            { id: "g1", name: "Canon EOS R5 C", count: 18, revenue: 89982, utilization: 85, image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400" },
+            { id: "g2", name: "Sony FX6 Cinema", count: 14, revenue: 77000, utilization: 72, image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=400" },
+            { id: "g3", name: "RED Komodo 6K", count: 9, revenue: 58500, utilization: 64, image: "https://images.unsplash.com/photo-1589872737418-202b8015e378?q=80&w=400" },
           ],
           recentBookings: res.data.recentBookings || [],
           activityFeed: res.data.activityFeed || [],
@@ -113,25 +113,25 @@ export default function AdminOverviewDashboard() {
             { date: "Aug 13", revenue: 59996 },
           ],
           statusDistribution: [
-            { name: "Active Rented", value: 3 },
-            { name: "Ready Pickup", value: 2 },
-            { name: "Approval Pending", value: 1 },
-            { name: "Completed", value: 5 },
+            { name: "Active Rented", value: 3, color: "#818cf8" },
+            { name: "Ready Pickup", value: 2, color: "#34d399" },
+            { name: "Approval Pending", value: 1, color: "#fbbf24" },
+            { name: "Completed", value: 5, color: "#d8b36a" },
           ],
           mostRentedGear: [
-            { name: "Canon EOS R5 C", count: 18 },
-            { name: "Sony FX6 Cinema", count: 14 },
-            { name: "RED Komodo 6K", count: 9 },
+            { id: "g1", name: "Canon EOS R5 C", count: 18, revenue: 89982, utilization: 85, image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400" },
+            { id: "g2", name: "Sony FX6 Cinema", count: 14, revenue: 77000, utilization: 72, image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=400" },
+            { id: "g3", name: "RED Komodo 6K", count: 9, revenue: 58500, utilization: 64, image: "https://images.unsplash.com/photo-1589872737418-202b8015e378?q=80&w=400" },
           ],
           recentBookings: [
-            { id: "AUR-1042", customer: "Rahul Verma", equipment: "Canon EOS R5 C Cinema Camera", amount: 14997, paymentStatus: "PAID", status: "ready_for_pickup" },
-            { id: "AUR-1041", customer: "Ananya Sharma", equipment: "Sony FX6 Full-Frame Package", amount: 16500, paymentStatus: "PAID", status: "approval_pending" },
-            { id: "AUR-1040", customer: "Vikramaditya Rao", equipment: "RED Komodo 6K Rig", amount: 26000, paymentStatus: "PAID", status: "rented" },
-            { id: "AUR-1039", customer: "Priya Nair", equipment: "Canon RF 70-200mm f/2.8L IS USM", amount: 2499, paymentStatus: "PAID", status: "returned" },
+            { id: "AUR-1042", customer: "Rahul Verma", gear: "Canon EOS R5 C Cinema Camera", dates: "13 Aug → 16 Aug", amount: 14997, paymentStatus: "PAID", status: "ready_for_pickup" },
+            { id: "AUR-1041", customer: "Ananya Sharma", gear: "Sony FX6 Full-Frame Package", dates: "14 Aug → 17 Aug", amount: 16500, paymentStatus: "PAID", status: "approval_pending" },
+            { id: "AUR-1040", customer: "Vikramaditya Rao", gear: "RED Komodo 6K Rig", dates: "12 Aug → 16 Aug", amount: 26000, paymentStatus: "PAID", status: "rented" },
+            { id: "AUR-1039", customer: "Priya Nair", gear: "Canon RF 70-200mm f/2.8L IS USM", dates: "10 Aug → 11 Aug", amount: 2499, paymentStatus: "PAID", status: "returned" },
           ],
           activityFeed: [
-            { id: "act-1", title: "New Booking Created", time: "Just now", desc: "Reservation created for Canon EOS R5 C" },
-            { id: "act-2", title: "KYC Verified", time: "10m ago", desc: "Aadhaar document verified for Rahul Verma" },
+            { id: "act-1", text: "New Booking Created for Canon EOS R5 C", time: "Just now" },
+            { id: "act-2", text: "Aadhaar KYC Verified for Rahul Verma", time: "10m ago" },
           ],
         });
       }
@@ -221,7 +221,7 @@ export default function AdminOverviewDashboard() {
           </div>
           <div>
             <p className="text-2xl font-semibold text-[#f5f1e8] font-mono">
-              ₹{data.kpis.totalRevenue.toLocaleString("en-IN")}
+              ₹{(data.kpis.totalRevenue ?? 0).toLocaleString("en-IN")}
             </p>
             <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 mt-1">
               <TrendingUp size={12} />
@@ -238,7 +238,7 @@ export default function AdminOverviewDashboard() {
           </div>
           <div>
             <p className="text-2xl font-semibold text-[#f5f1e8] font-mono">
-              ₹{data.kpis.todaysRevenue.toLocaleString("en-IN")}
+              ₹{(data.kpis.todaysRevenue ?? 0).toLocaleString("en-IN")}
             </p>
             <div className="flex items-center gap-1.5 text-[11px] text-[#9a9995] mt-1">
               <span>{data.kpis.todayTxCount} completed transactions</span>
@@ -322,7 +322,7 @@ export default function AdminOverviewDashboard() {
                 <YAxis stroke="#9a9995" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v >= 1000 ? `${v / 1000}k` : v}`} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#121212", borderColor: "rgba(255,255,255,0.15)", borderRadius: "12px", fontSize: "12px" }}
-                  formatter={(val: any) => [`₹${Number(val).toLocaleString("en-IN")}`, "Revenue"]}
+                  formatter={(val: any) => [`₹${Number(val || 0).toLocaleString("en-IN")}`, "Revenue"]}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#d8b36a" strokeWidth={2} fillOpacity={1} fill="url(#revenueGrad)" />
               </AreaChart>
@@ -350,7 +350,7 @@ export default function AdminOverviewDashboard() {
                   dataKey="value"
                 >
                   {data.statusDistribution.map((entry, idx) => (
-                    <Cell key={idx} fill={entry.color} />
+                    <Cell key={idx} fill={entry.color || "#d8b36a"} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: "#121212", borderColor: "rgba(255,255,255,0.15)", borderRadius: "12px", fontSize: "12px" }} />
@@ -365,7 +365,7 @@ export default function AdminOverviewDashboard() {
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-[11px]">
             {data.statusDistribution.slice(0, 4).map((s) => (
               <div key={s.name} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: s.color || "#d8b36a" }} />
                 <span className="text-[#9a9995] truncate">{s.name}:</span>
                 <span className="font-mono text-[#f5f1e8] font-semibold">{s.value}</span>
               </div>
@@ -406,12 +406,12 @@ export default function AdminOverviewDashboard() {
                   <tr key={b.id} className="hover:bg-white/5 transition">
                     <td className="py-3 font-mono text-[#d8b36a]">{b.id}</td>
                     <td className="py-3 font-medium">{b.customer}</td>
-                    <td className="py-3 text-[#9a9995]">{b.gear}</td>
+                    <td className="py-3 text-[#9a9995]">{b.gear || b.equipment}</td>
                     <td className="py-3 font-mono text-[11px]">{b.dates}</td>
-                    <td className="py-3 font-mono">₹{b.amount.toLocaleString("en-IN")}</td>
+                    <td className="py-3 font-mono">₹{(b.amount ?? b.total ?? 0).toLocaleString("en-IN")}</td>
                     <td className="py-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                        {String(b.status).replace(/_/g, " ")}
+                        {String(b.status || "").replace(/_/g, " ")}
                       </span>
                     </td>
                   </tr>
@@ -435,7 +435,7 @@ export default function AdminOverviewDashboard() {
                   <CheckCircle2 size={14} />
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-[#f5f1e8] font-light leading-snug">{act.text}</p>
+                  <p className="text-[#f5f1e8] font-light leading-snug">{act.text || act.desc || act.title}</p>
                   <p className="text-[10px] font-mono text-[#9a9995]">{act.time}</p>
                 </div>
               </div>
@@ -457,23 +457,23 @@ export default function AdminOverviewDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {data.mostRentedGear.map((item) => (
-            <div key={item.id} className="bg-[#0c0c0c] border border-white/10 rounded-xl p-4 space-y-3">
-              <div className="h-32 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${item.image})` }} />
+          {data.mostRentedGear.map((item, idx) => (
+            <div key={item.id || item.name || idx} className="bg-[#0c0c0c] border border-white/10 rounded-xl p-4 space-y-3">
+              <div className="h-32 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${item.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400"})` }} />
               <div>
                 <h4 className="text-xs font-semibold text-[#f5f1e8] truncate">{item.name}</h4>
                 <div className="flex items-center justify-between text-[11px] font-mono text-[#9a9995] mt-1">
-                  <span>{item.count} Rentals</span>
-                  <span className="text-[#d8b36a]">₹{item.revenue.toLocaleString("en-IN")}</span>
+                  <span>{item.count || 0} Rentals</span>
+                  <span className="text-[#d8b36a]">₹{(item.revenue ?? item.totalRevenue ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] font-mono text-[#9a9995]">
                   <span>Utilization</span>
-                  <span className="text-emerald-400">{item.utilization}%</span>
+                  <span className="text-emerald-400">{item.utilization || 75}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#d8b36a] rounded-full" style={{ width: `${item.utilization}%` }} />
+                  <div className="h-full bg-[#d8b36a] rounded-full" style={{ width: `${item.utilization || 75}%` }} />
                 </div>
               </div>
             </div>
