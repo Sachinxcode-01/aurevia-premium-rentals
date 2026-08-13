@@ -57,6 +57,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import GearAssistantModal from "@/components/ai/GearAssistantModal";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -125,9 +127,10 @@ export default function RootLayout({
               <div className="flex-1 flex flex-col">
                 {children}
               </div>
-              {/* Floating AI Chatbot overlay & Floating WhatsApp trigger */}
+              {/* Floating AI Chatbot overlay, AI Gear Concierge, & Floating WhatsApp trigger */}
               <FloatingChatLauncher />
               <ChatWindow />
+              <GearAssistantModal />
               <FloatingWhatsApp />
             </ChatbotProvider>
           </CartProvider>
