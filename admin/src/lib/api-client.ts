@@ -44,6 +44,10 @@ export const adminApiClient = {
         method: "PATCH",
         body: JSON.stringify({ bookingId, status, notes }),
       }),
+    delete: (bookingId: string) =>
+      fetchAdminApi<any>(`/api/v1/admin/bookings?id=${bookingId}`, {
+        method: "DELETE",
+      }),
   },
 
   inventory: {

@@ -4,7 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   turbopack: {
-    root: path.resolve(__dirname),
+    root: path.resolve(__dirname, ".."),
   },
   images: {
     remotePatterns: [

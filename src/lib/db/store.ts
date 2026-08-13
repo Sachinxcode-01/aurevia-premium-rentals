@@ -1104,6 +1104,20 @@ export const db = {
     return bookings[idx];
   },
 
+  async deleteBooking(bookingId: string): Promise<boolean> {
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      await supabase.from("booking_items").delete().eq("booking_id", bookingId);
+      const { error } = await supabase.from("bookings").delete().eq("id", bookingId);
+      if (!error) return true;
+    }
+
+    const bookings = getLocalBookings();
+    const filtered = bookings.filter((b) => b.id !== bookingId && b.referenceCode !== bookingId);
+    saveLocalBookings(filtered);
+    return true;
+  },
+
   async acceptAgreement(bookingId: string, ip: string): Promise<Booking | null> {
     if (isSupabaseConfigured()) {
       const supabase = await getSupabase();

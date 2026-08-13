@@ -149,3 +149,40 @@ export async function PATCH(req: NextRequest) {
     return errorResponse("ADMIN_BOOKING_UPDATE_FAILED", err.message || "Failed to update booking status", 500);
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
+    if (response || !user) return response!;
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return errorResponse("INVALID_DELETE_REQUEST", "Booking ID parameter is required", 400);
+    }
+
+    const supabase = await createServiceSupabaseClient();
+
+    // Delete booking items first to prevent FK constraint issues
+    await supabase.from("booking_items").delete().eq("booking_id", id);
+    const { error } = await supabase.from("bookings").delete().eq("id", id);
+
+    if (error) {
+      return errorResponse("DELETE_BOOKING_FAILED", error.message, 500);
+    }
+
+    await recordAuditLog({
+      actorId: user.id,
+      actorEmail: user.email,
+      action: "booking.deleted",
+      resource: "bookings",
+      resourceId: id,
+      metadata: { deletedAt: new Date().toISOString() },
+    });
+
+    return successResponse(null, `Booking ${id} successfully deleted from system`);
+  } catch (err: any) {
+    return errorResponse("ADMIN_BOOKING_DELETE_FAILED", err.message || "Failed to delete booking", 500);
+  }
+}
