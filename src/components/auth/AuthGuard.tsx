@@ -64,7 +64,13 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
 
           if (profile) {
             const role = String(profile.role ?? "customer");
-            if (requiredRole === "admin" && role !== "admin" && role !== "staff") {
+            const isStaffOrAdmin = role === "admin" || role === "staff";
+            if (requiredRole === "admin" && !isStaffOrAdmin) {
+              router.replace("/dashboard");
+              setChecking(false);
+              return;
+            }
+            if (requiredRole === "customer" && isStaffOrAdmin && !allowAdmin) {
               router.replace("/dashboard");
               setChecking(false);
               return;
@@ -83,7 +89,7 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
             }
           }
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           clearTimeout(timeoutId);
           setAllowed(true);
@@ -98,7 +104,7 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
       mounted = false;
       clearTimeout(timeoutId);
     };
-  }, [router, requiredRole]);
+  }, [router, requiredRole, allowAdmin]);
 
   if (checking) {
     return (
