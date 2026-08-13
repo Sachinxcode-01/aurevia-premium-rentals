@@ -5,6 +5,8 @@ import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { Phone, Mail, MapPin, MessageSquare, CheckCircle, Camera, Code2 } from "lucide-react";
 
+import { submitOnlineEnquiry } from "@/lib/services/publicEngagementService";
+
 export default function ContactPage() {
   const { cart } = useCart();
   const [name, setName] = useState("");
@@ -12,15 +14,26 @@ export default function ContactPage() {
   const [subject, setSubject] = useState("rental");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
-    setName("");
-    setEmail("");
-    setSubject("rental");
-    setMessage("");
-    setTimeout(() => setSent(false), 5000);
+    const result = submitOnlineEnquiry({
+      customerName: name,
+      customerEmail: email,
+      subject,
+      message
+    });
+
+    if (result.success && result.referenceNo) {
+      setSubmittedRef(result.referenceNo);
+      setSent(true);
+      setName("");
+      setEmail("");
+      setSubject("rental");
+      setMessage("");
+      setTimeout(() => setSent(false), 8000);
+    }
   };
 
   // Obfuscated email display to reduce spam harvesting
@@ -225,7 +238,7 @@ export default function ContactPage() {
             {sent && (
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono rounded flex items-center gap-2">
                 <CheckCircle size={14} />
-                Enquiry submitted. You will receive a response shortly.
+                Enquiry {submittedRef || ""} submitted successfully! Synced to concierge desk. You will receive a response shortly.
               </div>
             )}
 
