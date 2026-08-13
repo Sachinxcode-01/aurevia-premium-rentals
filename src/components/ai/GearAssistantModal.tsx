@@ -52,7 +52,7 @@ export default function GearAssistantModal() {
         <MagneticButton>
           <button
             onClick={() => setIsOpen(true)}
-            className="group flex items-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-neutral-950 font-semibold text-xs shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all duration-300 border border-amber-300/40"
+            className="group flex items-center gap-3 px-4 py-3 rounded-full bg-linear-to-r from-amber-500 via-amber-600 to-amber-700 text-neutral-950 font-semibold text-xs shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all duration-300 border border-amber-300/40"
           >
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75"></span>
@@ -71,7 +71,7 @@ export default function GearAssistantModal() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-950/80 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative w-full max-w-xl rounded-2xl bg-neutral-900 border border-amber-500/30 p-6 shadow-2xl shadow-amber-500/10 text-amber-50 overflow-hidden">
             {/* Top Glow & Header */}
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-300 to-amber-600" />
+            <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-amber-500 via-amber-300 to-amber-600" />
             
             <div className="flex items-center justify-between pb-4 border-b border-amber-500/20 mb-4">
               <div className="flex items-center gap-2.5">

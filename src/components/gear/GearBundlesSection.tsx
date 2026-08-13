@@ -52,7 +52,7 @@ export default function GearBundlesSection({ onSelectBundle }: GearBundlesSectio
             className="group relative flex flex-col justify-between rounded-2xl bg-neutral-900/80 border border-amber-500/20 hover:border-amber-400/50 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 backdrop-blur-xl overflow-hidden"
           >
             {/* Top Accent Gradient & Badge */}
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-transparent via-amber-400 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
             
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -83,7 +83,7 @@ export default function GearBundlesSection({ onSelectBundle }: GearBundlesSectio
                 {bundle.items.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs text-neutral-200">
                     <span className="flex items-center gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>{item.name}</span>
                     </span>
                     <span className="text-[11px] text-amber-400/70 font-mono">
@@ -114,7 +114,7 @@ export default function GearBundlesSection({ onSelectBundle }: GearBundlesSectio
               <MagneticButton>
                 <button
                   onClick={() => onSelectBundle && onSelectBundle(bundle)}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-semibold text-xs transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
+                  className="px-4 py-2.5 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-neutral-950 font-semibold text-xs transition-all shadow-lg shadow-amber-500/20 flex items-center gap-2"
                 >
                   <Package className="w-4 h-4" />
                   Select Bundle
