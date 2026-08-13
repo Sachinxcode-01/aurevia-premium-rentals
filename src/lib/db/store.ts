@@ -51,6 +51,7 @@ export interface Booking {
   totalPayable: number;
   status: "pending_payment" | "paid" | "approval_pending" | "approved" | "ready_for_pickup" | "rented" | "returned" | "completed" | "rejected" | "cancelled" | "payment_failed" | "overdue" | "maintenance";
   paymentStatus: "unpaid" | "paid" | "refunded";
+  paymentMethod?: string;
   deliveryMethod: "pickup" | "delivery";
   contactName: string;
   contactPhone: string;
@@ -833,9 +834,55 @@ export const db = {
   },
 
   async createBooking(booking: Omit<Booking, "id" | "createdAt" | "status" | "paymentStatus" | "depositStatus" | "statusHistory" | "auditLogs">): Promise<Booking> {
+    const refCode = booking.referenceCode || `AV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    if (typeof window !== "undefined") {
+      try {
+        const apiRes = await fetch("/api/v1/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: booking.items,
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+            deliveryMethod: booking.deliveryMethod,
+            contactName: booking.contactName,
+            contactPhone: booking.contactPhone,
+            couponCode: booking.couponApplied,
+            profileId: booking.profileId,
+          }),
+        });
+        const apiJson = await apiRes.json();
+        if (apiJson.success && apiJson.data) {
+          const newB: Booking = {
+            ...booking,
+            id: apiJson.data.bookingId || `bk-${Math.random().toString(36).substring(2, 11)}`,
+            referenceCode: apiJson.data.referenceCode || refCode,
+            status: (apiJson.data.status as any) || (booking.paymentMethod === "cod" ? "approval_pending" : "pending_payment"),
+            paymentStatus: (apiJson.data.paymentStatus as any) || "unpaid",
+            createdAt: new Date().toISOString(),
+            lateFee: 0,
+            damageDescription: "",
+            damageCost: 0,
+            statusHistory: [
+              { status: "pending_payment", timestamp: new Date().toISOString(), note: "Booking initiated successfully." }
+            ],
+            auditLogs: [
+              { action: "booking_created", timestamp: new Date().toISOString(), performedBy: "customer", details: `Booking reference ${refCode} created.` }
+            ],
+          };
+
+          const currentBookings = getLocalBookings();
+          saveLocalBookings([newB, ...currentBookings]);
+          return newB;
+        }
+      } catch (err) {
+        console.warn("[Store] API createBooking call failed, using direct store:", err);
+      }
+    }
+
     if (isSupabaseConfigured()) {
       const supabase = await getSupabase();
-      const refCode = `AV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
       const { data: dbB, error: bErr } = await supabase
         .from("bookings")
@@ -921,9 +968,9 @@ export const db = {
       }
     }
 
-    const refCode = booking.referenceCode;
     const newBooking: Booking = {
       ...booking,
+      referenceCode: refCode,
       id: `bk-${Math.random().toString(36).substring(2, 11)}`,
       status: "pending_payment",
       paymentStatus: "unpaid",

@@ -551,15 +551,26 @@ export default function CustomerDashboard() {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
       const isSupabase = supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
+      
+      const profileId = (profile?.id as string) ?? "usr-prem";
+      const local = await db.getBookings(profileId).catch(() => []);
+      let mine: any[] = [];
+
       if (isSupabase && profile?.id) {
         const { getUserBookingsAction } = await import("@/lib/actions/bookings");
-        const mine = await getUserBookingsAction();
-        setBookings(mine);
-      } else {
-        const profileId = (profile?.id as string) ?? "usr-prem";
-        const local = await db.getBookings(profileId);
-        setBookings(local as Record<string, any>[]);
+        mine = await getUserBookingsAction().catch(() => []);
       }
+
+      const combined = [...mine, ...local];
+      const uniqueMap = new Map();
+      combined.forEach((b: any) => {
+        const id = b.reference_code || b.referenceCode || b.id;
+        if (id && !uniqueMap.has(id)) {
+          uniqueMap.set(id, b);
+        }
+      });
+
+      setBookings(Array.from(uniqueMap.values()));
     } catch {
       toast.error("Failed to load bookings.");
     } finally {
