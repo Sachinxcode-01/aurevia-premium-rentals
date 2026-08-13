@@ -141,12 +141,14 @@ export default function Home() {
 
   const featuredSectionRef = useRef<HTMLDivElement>(null);
 
-  const featuredCameras = finalProducts.filter(
-    (p) =>
-      p.categoryId === "c1000000-0000-0000-0000-000000000001" || // DSLR Cameras
-      p.categoryId === "c1000000-0000-0000-0000-000000000002" || // Mirrorless Cameras
-      p.categoryId === "c1000000-0000-0000-0000-000000000003"    // Cinema Cameras
-  );
+  const featuredCameras = finalProducts
+    .filter(
+      (p) =>
+        p.categoryId === "c1000000-0000-0000-0000-000000000001" || // DSLR Cameras
+        p.categoryId === "c1000000-0000-0000-0000-000000000002" || // Mirrorless Cameras
+        p.categoryId === "c1000000-0000-0000-0000-000000000003"    // Cinema Cameras
+    )
+    .slice(0, 2);
 
   useEffect(() => {
     const element = featuredSectionRef.current;
@@ -411,7 +413,7 @@ export default function Home() {
 
         {/* Camera Cards Container */}
         <div
-          className="max-w-7xl mx-auto flex md:grid md:grid-cols-3 gap-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-none pb-8 md:pb-0"
+          className="max-w-5xl mx-auto flex md:grid md:grid-cols-2 gap-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-none pb-8 md:pb-0"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {featuredCameras.map((camera) => {

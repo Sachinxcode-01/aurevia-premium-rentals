@@ -663,55 +663,41 @@ export const db = {
         .select("*, product_images(*)")
         .eq("is_archived", false);
 
-      if (!error && dbProds) {
+      if (!error && dbProds && dbProds.length > 0) {
         products = (dbProds as any[]).map(mapDbProductToApp);
+      }
+    }
 
-        if (filters?.featuredOnly) {
-          products = products.filter((p: Product) => p.isFeatured);
-        }
-        if (filters?.categorySlug) {
-          const { data: cat } = await supabase.from("categories").select("id").eq("slug", filters.categorySlug).single();
-          if (cat) {
-            products = products.filter((p: Product) => p.categoryId === (cat as any).id);
-          }
-        }
-        if (filters?.brandSlug) {
-          const { data: brand } = await supabase.from("brands").select("id").eq("slug", filters.brandSlug).single();
-          if (brand) {
-            products = products.filter((p: Product) => p.brandId === (brand as any).id);
-          }
-        }
-        if (filters?.search) {
-          const q = filters.search.toLowerCase();
-          products = products.filter(
-            (p: Product) =>
-              p.name.toLowerCase().includes(q) ||
-              p.description.toLowerCase().includes(q)
-          );
-        }
-      }
-    } else {
-      // Mock Fallback
+    if (products.length === 0) {
       products = getLocalProducts();
-      if (filters?.featuredOnly) products = products.filter((p) => p.isFeatured);
-      if (filters?.categorySlug) {
-        const cat = MOCK_CATEGORIES.find((c) => c.slug === filters.categorySlug);
-        if (cat) products = products.filter((p) => p.categoryId === cat.id);
+    }
+
+    if (filters?.featuredOnly) {
+      products = products.filter((p: Product) => p.isFeatured);
+    }
+    if (filters?.categorySlug) {
+      const cat = MOCK_CATEGORIES.find((c) => c.slug === filters.categorySlug);
+      if (cat) {
+        products = products.filter((p: Product) => p.categoryId === cat.id);
+      } else {
+        products = products.filter((p: Product) => p.categoryId === filters.categorySlug);
       }
-      if (filters?.brandSlug) {
-        const brand = MOCK_BRANDS.find((b) => b.slug === filters.brandSlug);
-        if (brand) products = products.filter((p) => p.brandId === brand.id);
+    }
+    if (filters?.brandSlug) {
+      const brand = MOCK_BRANDS.find((b) => b.slug === filters.brandSlug);
+      if (brand) {
+        products = products.filter((p: Product) => p.brandId === brand.id);
+      } else {
+        products = products.filter((p: Product) => p.brandId === filters.brandSlug);
       }
-      if (filters?.search) {
-        const query = filters.search.toLowerCase();
-        products = products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query) ||
-            p.description.toLowerCase().includes(query) ||
-            Object.values(p.specs).some((val) => val.toLowerCase().includes(query))
-        );
-      }
-      products = products.filter((p) => !p.isArchived);
+    }
+    if (filters?.search) {
+      const q = filters.search.toLowerCase();
+      products = products.filter(
+        (p: Product) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
+      );
     }
 
     // Merge content drafts if preview mode is active
