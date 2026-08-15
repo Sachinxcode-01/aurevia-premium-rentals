@@ -1,11 +1,10 @@
-"use client";
-
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Wrench, RefreshCw } from "lucide-react";
+import { Search, Wrench, RefreshCw, Plus } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
 
 import FleetMaintenanceModal from "../../../components/inventory/FleetMaintenanceModal";
+import AddEditCameraModal from "../../../components/inventory/AddEditCameraModal";
 
 interface InventoryItem {
   id: string;
@@ -65,6 +64,7 @@ export default function AdminInventoryPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [maintenanceTarget, setMaintenanceTarget] = useState<InventoryItem | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const loadInventory = useCallback(async () => {
     setLoading(true);
@@ -126,14 +126,24 @@ export default function AdminInventoryPage() {
           </h1>
         </div>
 
-        <button
-          onClick={() => loadInventory()}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={`text-[#d8b36a] ${loading ? "animate-spin" : ""}`} />
-          <span>Sync Fleet Inventory</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#d8b36a] text-black font-bold text-xs hover:bg-[#b98a43] transition cursor-pointer font-mono uppercase tracking-wider shadow-lg"
+          >
+            <Plus size={14} />
+            <span>Add Camera Equipment</span>
+          </button>
+
+          <button
+            onClick={() => loadInventory()}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={`text-[#d8b36a] ${loading ? "animate-spin" : ""}`} />
+            <span>Sync Fleet Inventory</span>
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -217,6 +227,13 @@ export default function AdminInventoryPage() {
           onSave={() => {
             setItems(prev => prev.map(i => i.id === maintenanceTarget.id ? { ...i, status: "MAINTENANCE" } : i));
           }}
+        />
+      )}
+
+      {showAddModal && (
+        <AddEditCameraModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => loadInventory()}
         />
       )}
     </div>

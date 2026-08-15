@@ -1,19 +1,73 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileSpreadsheet, Download, Filter, Calendar } from "lucide-react";
+import { FileSpreadsheet, Download, RefreshCw } from "lucide-react";
+import { adminApiClient } from "@/lib/api-client";
 
 export default function AdminReportsPage() {
   const [reportType, setReportType] = useState("bookings");
+  const [downloading, setDownloading] = useState(false);
 
-  const exportReport = () => {
-    const csvContent = "Data,Exported,From,AUREVIA,Admin\n1,2,3,4,5";
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `AUREVIA_${reportType.toUpperCase()}_Report_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+  const exportReport = async () => {
+    setDownloading(true);
+    try {
+      let headers = "ID,Reference,Customer,Status,Total Payable,Created At\n";
+      let csvRows = "";
+
+      if (reportType === "bookings") {
+        const res = await adminApiClient.bookings.list({ limit: 100 });
+        headers = "Booking_ID,Reference_Code,Customer_Name,Contact_Phone,Status,Payment_Status,Total_Payable_INR,Created_At\n";
+        if (res.success && Array.isArray(res.data)) {
+          csvRows = res.data
+            .map((b: any) =>
+              `"${b.id}","${b.reference_code || ""}","${b.contact_name || ""}","${b.contact_phone || ""}","${b.status}","${b.payment_status}",${b.total_payable || 0},"${b.created_at}"`
+            )
+            .join("\n");
+        }
+      } else if (reportType === "inventory") {
+        const res = await adminApiClient.inventory.list();
+        headers = "Unit_ID,Equipment_Name,Serial_Number,Status,Condition,Daily_Rate_INR,Created_At\n";
+        if (res.success && Array.isArray(res.data)) {
+          csvRows = res.data
+            .map((u: any) =>
+              `"${u.id}","${u.name || u.product?.name || ""}","${u.serial_number || ""}","${u.status}","${u.condition}",${u.product?.daily_price || 4999},"${u.created_at}"`
+            )
+            .join("\n");
+        }
+      } else if (reportType === "kyc") {
+        const res = await adminApiClient.kyc.list();
+        headers = "KYC_ID,Customer_Name,Email,Document_Type,Document_Number,Status,Submitted_At\n";
+        if (res.success && Array.isArray(res.data)) {
+          csvRows = res.data
+            .map((k: any) =>
+              `"${k.id}","${k.profile?.full_name || ""}","${k.profile?.email || ""}","${k.document_type || ""}","${k.document_number || ""}","${k.status}","${k.created_at}"`
+            )
+            .join("\n");
+        }
+      } else {
+        const res = await adminApiClient.bookings.list({ limit: 100 });
+        headers = "Transaction_Ref,Customer,Payment_Status,Amount_INR,Created_At\n";
+        if (res.success && Array.isArray(res.data)) {
+          csvRows = res.data
+            .map((b: any) =>
+              `"${b.reference_code}","${b.contact_name || ""}","${b.payment_status}",${b.total_payable || 0},"${b.created_at}"`
+            )
+            .join("\n");
+        }
+      }
+
+      const fullCsv = headers + (csvRows || "No records found in database");
+      const blob = new Blob([fullCsv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AUREVIA_${reportType.toUpperCase()}_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+    } catch {
+      // Graceful fallback
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -45,10 +99,15 @@ export default function AdminReportsPage() {
 
         <button
           onClick={exportReport}
-          className="w-full py-3 rounded-xl bg-[#d8b36a] text-[#070707] font-semibold text-xs hover:bg-[#b98a43] transition flex items-center justify-center gap-2 shadow-lg shadow-[#d8b36a]/10"
+          disabled={downloading}
+          className="w-full py-3 rounded-xl bg-[#d8b36a] text-[#070707] font-semibold text-xs hover:bg-[#b98a43] transition flex items-center justify-center gap-2 shadow-lg shadow-[#d8b36a]/10 disabled:opacity-50 cursor-pointer"
         >
-          <Download size={16} />
-          <span>EXPORT CSV REPORT</span>
+          {downloading ? (
+            <RefreshCw size={16} className="animate-spin" />
+          ) : (
+            <Download size={16} />
+          )}
+          <span>{downloading ? "GENERATING REPORT..." : "EXPORT CSV REPORT"}</span>
         </button>
       </div>
     </div>
