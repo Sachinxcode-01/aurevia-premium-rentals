@@ -664,29 +664,77 @@ export default function CustomerDashboard() {
                   ))}
                 </div>
 
-                {/* Referral Architecture Card */}
-                <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6 bg-gold-champagne/5 relative overflow-hidden">
-                  <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-5">
-                    <Tag size={160} className="text-gold-champagne" />
+                {/* Referral Architecture & Rewards Command Center */}
+                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-gold-champagne/5 relative overflow-hidden space-y-4">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <div>
+                      <span className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne font-bold block">CREATOR VIRAL REFERRAL &amp; REWARDS PROGRAM</span>
+                      <h3 className="serif-heading text-lg font-light text-ivory">Earn ₹500 Reward Credit per Friend Booking</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 bg-gold-champagne/15 border border-gold-champagne/40 text-gold-champagne text-xs font-mono font-bold rounded-xl">
+                        Your Reward Code: AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                      </span>
+                    </div>
                   </div>
-                  <h3 className="text-[11px] uppercase font-mono tracking-widest text-gold-champagne mb-2">Referral Concierge</h3>
-                  <p className="text-xs text-ivory/80 leading-relaxed max-w-md">
-                    Invite your fellow cinematographers and photographers to AUREVIA. When they book using your referral link, they receive a flat ₹199 discount, and you earn ₹500 in rental credits.
+
+                  <p className="text-xs text-ivory/80 leading-relaxed max-w-xl">
+                    Invite your fellow cinematographers, directors, and photographers to AUREVIA. When they book using your referral link or enter your code at checkout, they get an instant <strong className="text-gold-champagne">₹200 discount</strong>, and you earn <strong className="text-emerald-400">₹500 in rental credits</strong> once their booking completes!
                   </p>
                   
-                  <div className="mt-4 flex flex-wrap gap-2.5 items-center">
-                    <div className="bg-black/45 border border-white/10 rounded px-3 py-2 text-xs font-mono text-gold-champagne select-all">
-                      AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                  {/* Share Tools */}
+                  <div className="flex flex-wrap gap-2.5 items-center pt-2">
+                    <div className="bg-black/50 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-gold-champagne select-all">
+                      http://localhost:3000/booking?ref=AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
                     </div>
+
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`http://localhost:3000/register?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`);
+                        const refUrl = `http://localhost:3000/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`;
+                        navigator.clipboard.writeText(refUrl);
                         toast.success("Referral link copied to clipboard!");
                       }}
-                      className="px-3 py-2 bg-white/10 hover:bg-white/15 text-[10px] uppercase font-bold text-gold-champagne rounded transition cursor-pointer"
+                      className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-xs font-bold font-mono uppercase text-gold-champagne rounded-xl transition cursor-pointer"
                     >
-                      Copy Invite Link
+                      Copy Link
                     </button>
+
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Hey! Rent cinema cameras & optics on AUREVIA with an instant ₹200 discount using my referral link:\nhttp://localhost:3000/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold font-mono uppercase text-white rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <MessageCircle size={14} /> Share on WhatsApp
+                    </a>
+                  </div>
+
+                  {/* Referred Friends Roster */}
+                  <div className="pt-3 border-t border-white/10 space-y-2">
+                    <span className="text-[10px] text-muted-gray uppercase font-mono tracking-widest block font-bold">Your Referred Creators Roster</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div>
+                          <p className="text-ivory font-semibold">Rahul Sharma (Cinematographer)</p>
+                          <p className="text-[10px] text-muted-gray">Code used: AUREVIA-REF-PREM</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px]">
+                          ₹500 Credit Earned
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div>
+                          <p className="text-ivory font-semibold">Priya Verma (Director)</p>
+                          <p className="text-[10px] text-muted-gray">Code used: AUREVIA-REF-PREM</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[9px]">
+                          First Booking Pending
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

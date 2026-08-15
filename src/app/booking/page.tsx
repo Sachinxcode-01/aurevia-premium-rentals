@@ -47,6 +47,12 @@ export default function BookingPage() {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   
+  // Referral Link & Reward State
+  const [referralCode, setReferralCode] = useState("");
+  const [referralApplied, setReferralApplied] = useState(false);
+  const [referralError, setReferralError] = useState("");
+  const referralDiscount = referralApplied ? 200 : 0;
+  
   // Checkout Form Details
   const [profileId, setProfileId] = useState("usr-prem");
   const [fullName, setFullName] = useState("");
@@ -65,6 +71,17 @@ export default function BookingPage() {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online");
 
   useEffect(() => {
+    // Auto-capture ?ref= parameter from referral link
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlRef = params.get("ref") || localStorage.getItem("aurevia_ref_code");
+      if (urlRef) {
+        setReferralCode(urlRef);
+        setReferralApplied(true);
+        localStorage.setItem("aurevia_ref_code", urlRef);
+      }
+    }
+
     getCurrentUserAction().then((p) => {
       if (p) {
         setProfileId(String(p.id ?? "usr-prem"));
@@ -126,7 +143,9 @@ export default function BookingPage() {
     try {
       const refCode = `AV-2026-${Math.floor(Math.random() * 90000) + 10000}`;
       
-      const payableAmount = cartTotals.totalPayable;
+      const netPayable = Math.max(0, cartTotals.totalPayable - referralDiscount);
+      const totalDiscount = cartTotals.discountAmount + referralDiscount;
+
       const bookingPayload = {
         profileId: profileId, // Real authenticated profile ID
         referenceCode: refCode,
@@ -135,13 +154,14 @@ export default function BookingPage() {
         totalRentalFee: cartTotals.rentalFee,
         taxFee: 0,
         deliveryFee: 0,
-        discountAmount: cartTotals.discountAmount,
-        totalPayable: payableAmount,
+        discountAmount: totalDiscount,
+        totalPayable: netPayable,
         deliveryMethod,
         contactName: fullName,
         contactPhone: phone,
         contactEmail: email,
         couponApplied: coupon?.code,
+        referralCode: referralApplied ? referralCode : undefined,
         pickupTime,
         returnTime,
         emergencyContact,
@@ -488,40 +508,102 @@ export default function BookingPage() {
                       <span className="font-mono">- ₹{cartTotals.discountAmount.toLocaleString("en-IN")}</span>
                     </div>
                   )}
+                  {referralApplied && (
+                    <div className="flex justify-between text-gold-champagne font-mono font-semibold">
+                      <span>Friend Referral Discount:</span>
+                      <span>- ₹200</span>
+                    </div>
+                  )}
                   
                   <div className="flex justify-between text-sm font-bold border-t border-white/10 pt-3 text-gold-champagne">
                     <span>Total Net Amount:</span>
-                    <span className="font-mono">₹{cartTotals.totalPayable.toLocaleString("en-IN")}</span>
+                    <span className="font-mono">₹{Math.max(0, cartTotals.totalPayable - (referralApplied ? 200 : 0)).toLocaleString("en-IN")}</span>
                   </div>
                 </div>
 
                 {/* Promo Code Input */}
                 {cart.length > 0 && (
-                  <form onSubmit={handleApplyCoupon} className="space-y-2 pt-2 border-t border-white/5">
-                    <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Apply Promo Coupon</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. AUREVIA10"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        className="flex-1 bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
-                      />
-                      <button type="submit" className="px-3 bg-white/10 text-gold-champagne text-xs font-semibold rounded hover:bg-white/15 transition cursor-pointer">
-                        Apply
-                      </button>
-                    </div>
-                    {coupon ? (
-                      <div className="flex items-center justify-between bg-emerald-500/10 text-emerald-400 text-[10px] p-2 rounded border border-emerald-500/20 mt-2 font-mono">
-                        <span>Code Applied: {coupon.code}</span>
-                        <button type="button" onClick={removeCoupon} className="hover:underline text-[9px] uppercase font-bold cursor-pointer">Remove</button>
+                  <div className="space-y-4 pt-2 border-t border-white/5">
+                    <form onSubmit={handleApplyCoupon} className="space-y-2">
+                      <label className="text-[9px] text-muted-gray uppercase font-mono tracking-wider block">Apply Promo Coupon</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g. AUREVIA10"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value)}
+                          className="flex-1 bg-white/5 border border-white/10 text-xs rounded p-2 focus:outline-none focus:border-gold-champagne/40"
+                        />
+                        <button type="submit" className="px-3 bg-white/10 text-gold-champagne text-xs font-semibold rounded hover:bg-white/15 transition cursor-pointer">
+                          Apply
+                        </button>
                       </div>
-                    ) : couponError ? (
-                      <p className="text-[10px] text-rose-400 font-mono mt-1">{couponError}</p>
-                    ) : (
-                      <p className="text-[9px] text-muted-gray leading-normal mt-1">Use AUREVIA10 for a 10% discount on optical services.</p>
-                    )}
-                  </form>
+                      {coupon ? (
+                        <div className="flex items-center justify-between bg-emerald-500/10 text-emerald-400 text-[10px] p-2 rounded border border-emerald-500/20 mt-2 font-mono">
+                          <span>Code Applied: {coupon.code}</span>
+                          <button type="button" onClick={removeCoupon} className="hover:underline text-[9px] uppercase font-bold cursor-pointer">Remove</button>
+                        </div>
+                      ) : couponError ? (
+                        <p className="text-[10px] text-rose-400 font-mono mt-1">{couponError}</p>
+                      ) : null}
+                    </form>
+
+                    {/* Optional Referral Code Input */}
+                    <div className="space-y-2 pt-2 border-t border-white/5">
+                      <label className="text-[9px] text-gold-champagne uppercase font-mono tracking-wider font-bold block flex items-center gap-1">
+                        🎁 Optional Referral / Friend Code
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="e.g. AUREVIA-REF-PREM"
+                          value={referralCode}
+                          onChange={(e) => {
+                            setReferralCode(e.target.value);
+                            setReferralError("");
+                          }}
+                          className="flex-1 bg-black/40 border border-gold-border/40 text-xs text-gold-champagne font-mono rounded p-2 focus:outline-none focus:border-gold-champagne uppercase"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (referralCode.trim().length >= 4) {
+                              setReferralApplied(true);
+                              setReferralError("");
+                              localStorage.setItem("aurevia_ref_code", referralCode.trim());
+                            } else {
+                              setReferralError("Please enter a valid referral code.");
+                            }
+                          }}
+                          className="px-3 bg-gold-champagne text-black font-bold text-xs rounded hover:bg-gold-warm transition cursor-pointer font-mono"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {referralApplied ? (
+                        <div className="flex items-center justify-between bg-gold-champagne/10 text-gold-champagne text-[10px] p-2 rounded border border-gold-border/30 font-mono">
+                          <span>✓ Referral Applied: {referralCode} (₹200 OFF + ₹500 Friend Reward)</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReferralApplied(false);
+                              setReferralCode("");
+                              localStorage.removeItem("aurevia_ref_code");
+                            }}
+                            className="hover:underline text-[9px] uppercase font-bold cursor-pointer text-gray-400"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : referralError ? (
+                        <p className="text-[10px] text-rose-400 font-mono">{referralError}</p>
+                      ) : (
+                        <p className="text-[9px] text-muted-gray leading-normal">
+                          Have a friend&apos;s referral code? Get an instant ₹200 discount &amp; your friend earns ₹500 reward credits!
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 <button
@@ -888,7 +970,7 @@ export default function BookingPage() {
                 <div className="space-y-2 text-xs font-mono">
                   <div className="flex justify-between text-muted-gray">
                     <span>Contact:</span>
-                    <span className="truncate max-w-[120px]">{fullName}</span>
+                    <span className="truncate max-w-30">{fullName}</span>
                   </div>
                   <div className="flex justify-between text-muted-gray">
                     <span>Selected Duration:</span>
