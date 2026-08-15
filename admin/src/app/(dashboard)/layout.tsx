@@ -216,7 +216,7 @@ export default function AdminDashboardLayout({
         <div className="p-3 border-t border-white/5 bg-[#070707]/60">
           <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : "justify-between"}`}>
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#d8b36a]/30 to-[#b98a43]/20 border border-[#d8b36a]/40 flex items-center justify-center text-[#d8b36a] text-xs font-bold shrink-0">
+              <div className="w-8 h-8 rounded-full bg-linear-to-tr from-[#d8b36a]/30 to-[#b98a43]/20 border border-[#d8b36a]/40 flex items-center justify-center text-[#d8b36a] text-xs font-bold shrink-0">
                 PM
               </div>
               {!collapsed && (

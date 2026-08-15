@@ -313,7 +313,7 @@ export default function AdminFleetCalendarPage() {
 
       {/* Gantt Timeline Schedule Table */}
       <div className="admin-card rounded-2xl border border-white/10 overflow-x-auto shadow-2xl bg-[#090909]">
-        <table className="w-full text-left border-collapse min-w-[1200px]">
+        <table className="w-full text-left border-collapse min-w-300">
           <thead>
             <tr className="border-b border-white/10 bg-[#121212] text-[10px] font-mono text-[#9a9995] uppercase">
               <th className="p-4 sticky left-0 z-20 bg-[#121212] w-64 border-r border-white/10">
