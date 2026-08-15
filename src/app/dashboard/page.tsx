@@ -52,7 +52,7 @@ const TIMELINE_STEPS = [
 
 const STEP_ORDER = TIMELINE_STEPS.map((s) => s.key);
 
-type DashTab = "overview" | "bookings" | "support" | "settings";
+type DashTab = "overview" | "bookings" | "invoices" | "support" | "settings";
 type BookingFilter = "all" | "upcoming" | "active" | "completed" | "cancelled";
 
 /* ─── Booking filter helper ──────────────────────────────────── */
@@ -484,6 +484,7 @@ export default function CustomerDashboard() {
   const navItems: { id: DashTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "overview",  label: "Overview",  icon: <TrendingUp size={15} /> },
     { id: "bookings",  label: "Bookings",  icon: <ShoppingBag size={15} />, badge: bookings.length },
+    { id: "invoices",  label: "Invoices Vault", icon: <FileText size={15} />, badge: bookings.filter(b => ["paid", "completed", "rented", "approved"].includes(b.status)).length },
     { id: "support",   label: "Support Desk", icon: <MessageCircle size={15} />, badge: tickets.filter(t => t.status !== 'resolved').length },
     { id: "settings",  label: "Settings",  icon: <Settings size={15} /> },
   ];
@@ -569,7 +570,7 @@ export default function CustomerDashboard() {
               <div>
                 <span className="text-[9px] text-gold-champagne uppercase font-mono tracking-widest">Customer Portal</span>
                 <h2 className="text-base font-semibold text-ivory serif-heading">
-                  {activeTab === "overview" ? "Overview" : activeTab === "bookings" ? "Bookings" : activeTab === "support" ? "Support Desk" : "Settings"}
+                  {activeTab === "overview" ? "Overview" : activeTab === "bookings" ? "Bookings" : activeTab === "invoices" ? "Invoices & Receipts Vault" : activeTab === "support" ? "Support Desk" : "Settings"}
                 </h2>
               </div>
             </div>
@@ -581,6 +582,7 @@ export default function CustomerDashboard() {
                 <h1 className="serif-heading text-2xl font-light text-ivory">
                   {activeTab === "overview" && `Welcome, ${String(profile?.full_name ?? "").split(" ")[0] || "Member"}`}
                   {activeTab === "bookings" && "My Bookings"}
+                  {activeTab === "invoices" && "Invoices & Receipts Vault"}
                   {activeTab === "support" && "Support Desk"}
                   {activeTab === "settings" && "Account Settings"}
                 </h1>
@@ -598,6 +600,53 @@ export default function CustomerDashboard() {
             {/* ── OVERVIEW TAB ── */}
             {activeTab === "overview" && (
               <div className="space-y-6">
+                {/* Customer Profile Details Card */}
+                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-linear-to-r from-gold-champagne/10 via-obsidian to-black relative overflow-hidden space-y-4">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gold-champagne/15 border border-gold-champagne/40 flex items-center justify-center text-gold-champagne font-bold text-xl font-mono shadow-lg shrink-0">
+                        {String(profile?.full_name ?? "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-lg font-semibold text-ivory font-serif">{String(profile?.full_name ?? "Valued Customer")}</h2>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1">
+                            <CheckCircle size={10} /> Identity Verified
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-gray font-mono">{String(profile?.email ?? "")} • {String(profile?.phone ?? "+91 96869 09048")}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-xl bg-gold-champagne text-black font-bold font-mono text-[11px] uppercase tracking-wider shadow-md">
+                        VIP GOLD CREATOR
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                    <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Total Bookings</span>
+                      <span className="text-sm font-bold text-ivory">{bookings.length} Orders</span>
+                    </div>
+                    <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Active Rentals</span>
+                      <span className="text-sm font-bold text-gold-champagne">{stats.active} Cameras</span>
+                    </div>
+                    <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Lifetime Spend</span>
+                      <span className="text-sm font-bold text-emerald-400">
+                        ₹{bookings.reduce((sum, b) => sum + Number(b.totalPayable ?? b.total_payable ?? 0), 0).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                    <div className="bg-white/5 p-3 rounded-xl border border-white/5">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Reward Points</span>
+                      <span className="text-sm font-bold text-gold-champagne">750 PTS (₹750)</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   {[
@@ -1174,6 +1223,119 @@ export default function CustomerDashboard() {
                               </button>
                             )}
                           </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── INVOICES VAULT TAB ── */}
+            {activeTab === "invoices" && (
+              <div className="space-y-6">
+                <div className="glass-panel border-white/5 rounded-xl p-6 bg-linear-to-r from-gold-champagne/5 via-obsidian to-black space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-gold-champagne/15 text-gold-champagne border border-gold-border/30">
+                        <FileText size={22} />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase font-mono text-gold-champagne tracking-widest block font-bold">GST &amp; TAX COMPLIANCE VAULT</span>
+                        <h2 className="text-lg font-semibold text-ivory font-serif">Customer Tax Invoices</h2>
+                      </div>
+                    </div>
+                    <div className="text-right font-mono text-xs">
+                      <span className="text-muted-gray block text-[10px]">TOTAL INVOICE DOCUMENTS</span>
+                      <span className="text-gold-champagne font-bold text-base">{bookings.length} Invoices Available</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-gray leading-relaxed">
+                    Download official GST-compliant tax invoices for your camera rentals, studio expense reimbursement, or business accounting audit logs.
+                  </p>
+                </div>
+
+                {bookings.length === 0 ? (
+                  <div className="glass-panel border-white/5 rounded-xl p-12 text-center space-y-3">
+                    <FileText size={32} className="text-muted-gray/40 mx-auto" />
+                    <p className="text-sm text-muted-gray">No invoices generated yet.</p>
+                    <Link href="/booking" className="text-xs text-gold-champagne hover:underline font-mono">Book camera equipment to generate tax invoices →</Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {bookings.map((b) => {
+                      const refCode = b.referenceCode || b.reference_code || b.id;
+                      const startDate = b.startDate || b.start_date;
+                      const endDate = b.endDate || b.end_date;
+                      const totalPay = b.totalPayable ?? b.total_payable ?? 0;
+                      const rentalFee = b.totalRentalFee || b.total_rental_fee || 0;
+                      const discount = b.discountAmount || b.discount_amount || 0;
+                      const coupon = b.couponApplied || b.coupon_applied;
+                      const pStatus = b.paymentStatus || b.payment_status || "paid";
+                      const equipName = b.booking_items?.[0]?.product?.name || b.items?.[0]?.name || "Professional Camera Package";
+
+                      return (
+                        <div key={b.id} className="dash-card opacity-0 glass-panel border-white/10 hover:border-gold-border/40 rounded-xl p-5 space-y-4 transition bg-black/40">
+                          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                            <div>
+                              <span className="text-[9px] text-gold-champagne font-mono font-bold uppercase tracking-widest block">TAX INVOICE</span>
+                              <span className="text-xs font-mono font-semibold text-ivory">{refCode}</span>
+                            </div>
+                            <span className="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[9px] uppercase font-bold">
+                              {pStatus.toUpperCase()}
+                            </span>
+                          </div>
+
+                          <div className="space-y-1 text-xs">
+                            <p className="font-semibold text-ivory truncate">{equipName}</p>
+                            <p className="text-[10px] text-muted-gray font-mono">Rental Window: {startDate} → {endDate}</p>
+                          </div>
+
+                          <div className="p-3 bg-white/5 rounded-lg font-mono text-xs space-y-1.5 border border-white/5">
+                            <div className="flex justify-between text-muted-gray">
+                              <span>Base Rental Fee:</span>
+                              <span>₹{rentalFee.toLocaleString("en-IN")}</span>
+                            </div>
+                            {discount > 0 && (
+                              <div className="flex justify-between text-teal-400">
+                                <span>Discount ({coupon || "PROMO"}):</span>
+                                <span>−₹{discount.toLocaleString("en-IN")}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-muted-gray">
+                              <span>GST (18% Included):</span>
+                              <span>₹{Math.round(rentalFee * 0.18).toLocaleString("en-IN")}</span>
+                            </div>
+                            <div className="flex justify-between text-gold-champagne font-bold pt-1.5 border-t border-white/10 text-sm">
+                              <span>Total Amount Paid:</span>
+                              <span>₹{totalPay.toLocaleString("en-IN")}</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => printOrDownloadInvoice({
+                              referenceCode: refCode,
+                              createdAt: b.createdAt || b.created_at,
+                              customerName: String(profile?.full_name || b.contactName || b.contact_name || "Valued Customer"),
+                              customerEmail: String(profile?.email || b.contactEmail || b.contact_email || "—"),
+                              customerPhone: String(profile?.phone || b.contactPhone || b.contact_phone || "—"),
+                              equipmentName: equipName,
+                              startDate,
+                              endDate,
+                              rentalFee,
+                              discountFee: discount,
+                              couponCode: coupon,
+                              totalPayable: totalPay,
+                              status: b.status,
+                              paymentStatus: pStatus,
+                              paymentMethod: b.paymentMethod || b.payment_method,
+                            })}
+                            className="w-full py-2.5 bg-gold-champagne hover:bg-gold-warm text-black font-bold font-mono text-xs uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-gold-champagne/10"
+                          >
+                            <Download size={14} />
+                            <span>Download Tax Invoice (PDF)</span>
+                          </button>
                         </div>
                       );
                     })}
