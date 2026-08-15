@@ -200,7 +200,7 @@ export default function AdminSupportTicketsPage() {
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition capitalize whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
                 filterStatus === st
                   ? "bg-[#d8b36a] text-black font-bold shadow-md"
                   : "text-[#9a9995] hover:text-white"

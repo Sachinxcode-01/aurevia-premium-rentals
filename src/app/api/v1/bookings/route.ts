@@ -71,21 +71,67 @@ export async function POST(req: NextRequest) {
 
       const { data: prod } = await supabase
         .from("products")
-        .select("id, name, daily_price, weekly_price")
+        .select("id, name, daily_price, weekly_price, inventory_qty")
         .or(`id.eq.${productId},slug.eq.${productId}`)
         .single();
+
+      const resolvedProdId = prod?.id || productId;
+
+      // Double-Booking & Availability Check
+      const { data: units } = await supabase
+        .from("inventory_units")
+        .select("id, status")
+        .eq("product_id", resolvedProdId);
+
+      let totalUnits = prod?.inventory_qty || 1;
+      let maintenanceCount = 0;
+      if (units && units.length > 0) {
+        totalUnits = units.length;
+        maintenanceCount = units.filter((u: any) => u.status === "maintenance" || u.status === "decommissioned" || u.status === "damaged").length;
+      }
+
+      const usableUnits = Math.max(0, totalUnits - maintenanceCount);
+
+      const { data: overlappingBookings } = await supabase
+        .from("bookings")
+        .select("id, booking_items(quantity, product_id)")
+        .in("status", ["pending", "paid", "approval_pending", "approved", "ready_for_pickup", "rented", "confirmed"])
+        .lte("start_date", endDate)
+        .gte("end_date", startDate);
+
+      let bookedCount = 0;
+      if (overlappingBookings) {
+        for (const ob of overlappingBookings as any[]) {
+          if (ob.booking_items) {
+            for (const bi of ob.booking_items) {
+              if (bi.product_id === resolvedProdId) {
+                bookedCount += bi.quantity || 1;
+              }
+            }
+          }
+        }
+      }
+
+      const availableCount = Math.max(0, usableUnits - bookedCount);
+      if (availableCount < quantity) {
+        return errorResponse(
+          "DOUBLE_BOOKING_PREVENTED",
+          `Product '${prod?.name || productId}' is unavailable for the selected dates (${availableCount} available, ${quantity} requested).`,
+          409
+        );
+      }
 
       const dailyPrice = prod?.daily_price ? Number(prod.daily_price) : (item.unitPrice || 1500);
       const pricingBreakdown = calculateBookingPrice({
         startDate,
         endDate,
-        items: [{ productId, dailyPrice, quantity }],
+        items: [{ productId: resolvedProdId, dailyPrice, quantity }],
       });
 
       totalRentalFee += pricingBreakdown.subtotal;
 
       itemRecords.push({
-        product_id: prod?.id || productId,
+        product_id: resolvedProdId,
         quantity,
         unit_price: dailyPrice,
       });

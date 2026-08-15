@@ -74,8 +74,8 @@ export default function ModernHero({ onExploreClick }: ModernHeroProps) {
   return (
     <GridBackground className="w-full bg-obsidian text-ivory relative overflow-hidden border-b border-white/10 pt-24 pb-16 md:py-32">
       {/* Background Volumetric Lighting Gradients */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-champagne/10 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="absolute bottom-0 right-0 w-[450px] h-[450px] bg-indigo-900/15 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-gold-champagne/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-0 right-0 w-112.5 h-112.5 bg-indigo-900/15 rounded-full blur-[120px] pointer-events-none z-0" />
 
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 space-y-12">
         {/* Top Announcement Tag */}
@@ -111,7 +111,7 @@ export default function ModernHero({ onExploreClick }: ModernHeroProps) {
 
               <Link
                 href="/booking"
-                className="px-8 py-4 bg-white/[0.03] hover:bg-white/[0.08] text-ivory border border-white/10 hover:border-gold-border/40 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2"
+                className="px-8 py-4 bg-white/3 hover:bg-white/8 text-ivory border border-white/10 hover:border-gold-border/40 text-xs font-bold uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center gap-2"
               >
                 <span>Instant Availability</span>
                 <ChevronRight size={16} className="text-gold-champagne" />
@@ -175,9 +175,9 @@ export default function ModernHero({ onExploreClick }: ModernHeroProps) {
                   sizes="(max-width: 1024px) 90vw, 40vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between z-10">
-                  <span className="text-xs font-mono text-ivory/90 truncate max-w-[200px]">
+                  <span className="text-xs font-mono text-ivory/90 truncate max-w-50">
                     {activeGear.tagline}
                   </span>
                   <Link
@@ -209,7 +209,7 @@ export default function ModernHero({ onExploreClick }: ModernHeroProps) {
                   {activeGear.specs.map((spec, i) => (
                     <div
                       key={i}
-                      className="px-2.5 py-1 rounded bg-white/[0.02] border border-white/5 text-[10px] font-mono text-ivory/80 flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded bg-white/2 border border-white/5 text-[10px] font-mono text-ivory/80 flex items-center gap-1.5"
                     >
                       <span className="w-1 h-1 rounded-full bg-gold-champagne" />
                       <span className="truncate">{spec}</span>
@@ -227,7 +227,7 @@ export default function ModernHero({ onExploreClick }: ModernHeroProps) {
                     className={`py-2 px-1 rounded text-[10px] font-mono font-semibold transition-all cursor-pointer ${
                       activeGearIndex === idx
                         ? "bg-gold-champagne text-obsidian border border-gold-warm shadow-md"
-                        : "bg-white/[0.03] text-muted-gray hover:text-ivory border border-white/5 hover:border-white/20"
+                        : "bg-white/3 text-muted-gray hover:text-ivory border border-white/5 hover:border-white/20"
                     }`}
                   >
                     {gear.name.split(" ")[0]} {gear.name.split(" ")[1]}

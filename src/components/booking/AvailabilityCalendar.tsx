@@ -55,7 +55,7 @@ export default function AvailabilityCalendar({ productName = "Camera Equipment",
     <div className="bg-[#121212] border border-white/10 rounded-xl p-5 shadow-2xl space-y-4">
       <div className="flex items-center justify-between border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <CalendarIcon className="text-[#D8B36A]" size={18} />
+          <CalendarIcon className="text-gold-champagne" size={18} />
           <div>
             <h4 className="text-sm font-semibold text-white font-mono uppercase tracking-wider">
               Live Availability Grid
@@ -72,7 +72,7 @@ export default function AvailabilityCalendar({ productName = "Camera Equipment",
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-xs font-bold text-[#D8B36A] font-mono uppercase tracking-widest px-2">
+          <span className="text-xs font-bold text-gold-champagne font-mono uppercase tracking-widest px-2">
             {monthNames[month]} {year}
           </span>
           <button
@@ -91,7 +91,7 @@ export default function AvailabilityCalendar({ productName = "Camera Equipment",
           <span>Available</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#D8B36A]"></span>
+          <span className="h-2.5 w-2.5 rounded-full bg-gold-champagne"></span>
           <span>Selected</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -127,8 +127,8 @@ export default function AvailabilityCalendar({ productName = "Camera Equipment",
                 isBooked
                   ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 cursor-not-allowed line-through"
                   : active
-                  ? "bg-[#D8B36A] text-black font-bold border border-[#D8B36A] shadow-lg shadow-[#D8B36A]/20"
-                  : "bg-white/[0.03] text-gray-200 border border-white/5 hover:border-[#D8B36A]/50 hover:bg-[#D8B36A]/10"
+                  ? "bg-gold-champagne text-black font-bold border border-gold-champagne shadow-lg shadow-gold-champagne/20"
+                  : "bg-white/3 text-gray-200 border border-white/5 hover:border-gold-champagne/50 hover:bg-gold-champagne/10"
               }`}
             >
               <span>{dayNum}</span>
@@ -139,12 +139,12 @@ export default function AvailabilityCalendar({ productName = "Camera Equipment",
       </div>
 
       {selectedStart && (
-        <div className="p-3 bg-[#D8B36A]/10 border border-[#D8B36A]/20 rounded-lg flex items-center justify-between text-xs">
+        <div className="p-3 bg-gold-champagne/10 border border-gold-champagne/20 rounded-lg flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-white">
-            <CheckCircle size={14} className="text-[#D8B36A]" />
+            <CheckCircle size={14} className="text-gold-champagne" />
             <span>Selected Range: <strong>{selectedStart}</strong> {selectedEnd ? `→ ${selectedEnd}` : "(Select End Date)"}</span>
           </div>
-          <span className="text-[10px] text-[#D8B36A] font-mono uppercase font-bold">Available</span>
+          <span className="text-[10px] text-gold-champagne font-mono uppercase font-bold">Available</span>
         </div>
       )}
     </div>

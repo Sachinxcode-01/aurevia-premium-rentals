@@ -103,7 +103,7 @@ export default function RegisterPage() {
       <Navbar cartItemCount={cart.length} />
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gold-champagne/3 blur-[120px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-gold-champagne/3 blur-[120px]" />
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 pt-32 pb-12 relative">

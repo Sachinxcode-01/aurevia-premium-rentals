@@ -75,7 +75,7 @@ export default function ContactPage() {
                 <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-gold-champagne block mb-0.5">
                   Camera Rentals &amp; Bookings
                 </span>
-                <h2 className="text-xl font-semibold text-ivory serif-heading font-light">
+                <h2 className="text-xl font-semibold text-ivory serif-heading">
                   Prem Mundargi
                 </h2>
                 <p className="text-[11px] text-muted-gray mt-0.5 font-light">
@@ -143,7 +143,7 @@ export default function ContactPage() {
                 <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-gray block mb-0.5">
                   Website &amp; Technical Support
                 </span>
-                <h2 className="text-xl font-semibold text-ivory serif-heading font-light">
+                <h2 className="text-xl font-semibold text-ivory serif-heading">
                   Sachin
                 </h2>
                 <p className="text-[11px] text-muted-gray mt-0.5 font-light">

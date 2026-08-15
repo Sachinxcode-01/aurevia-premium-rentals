@@ -168,7 +168,7 @@ export default function AdminReviewsPage() {
             <button
               key={st}
               onClick={() => setFilterStatus(st)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition capitalize whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
                 filterStatus === st
                   ? "bg-[#d8b36a] text-black font-bold shadow-md"
                   : "text-[#9a9995] hover:text-white"
@@ -257,7 +257,7 @@ export default function AdminReviewsPage() {
 
                 {/* Equipment & Rating */}
                 <div className="flex items-center justify-between pt-1 border-t border-white/5">
-                  <span className="text-xs text-[#d8b36a] font-mono truncate max-w-[240px]">{rev.productName}</span>
+                  <span className="text-xs text-[#d8b36a] font-mono truncate max-w-60">{rev.productName}</span>
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star

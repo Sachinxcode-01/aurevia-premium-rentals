@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Camera, Plus, Search, Filter, Wrench, ShieldAlert, CheckCircle2,
-  AlertTriangle, Edit2, Trash2, LayoutGrid, List, RefreshCw
-} from "lucide-react";
+import { Search, Wrench, RefreshCw } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
 
@@ -66,25 +63,25 @@ export default function AdminInventoryPage() {
   const [items, setItems] = useState<InventoryItem[]>(INITIAL_INVENTORY);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [loading, setLoading] = useState(false);
   const [maintenanceTarget, setMaintenanceTarget] = useState<InventoryItem | null>(null);
 
   const loadInventory = useCallback(async () => {
     setLoading(true);
     const res = await adminApiClient.inventory.list({ status: filterStatus !== "all" ? filterStatus : undefined, search: search || undefined });
-    if (res.success && res.data && res.data.length > 0) {
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
       const mapped = res.data.map((u: any) => ({
         id: u.id,
         name: u.name || u.product?.name || "Equipment Unit",
-        brand: "Canon",
+        brand: u.product?.brand?.name || "Aurevia",
         category: "camera" as const,
         serialNumber: u.serial_number,
         dailyPrice: u.product?.daily_price ? Number(u.product.daily_price) : 4999,
-        deposit: 5000,
+        deposit: u.product?.security_deposit ? Number(u.product.security_deposit) : 5000,
         status: u.status ? (u.status.toUpperCase() as any) : "AVAILABLE",
         condition: u.condition ? (u.condition.toUpperCase() as any) : "EXCELLENT",
-        image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400",
+        image: u.product?.image_url || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400",
+        productId: u.product_id,
       }));
       setItems(mapped);
     }
@@ -99,7 +96,7 @@ export default function AdminInventoryPage() {
     loadInventory();
   });
 
-  const handleToggleMaintenance = (id: string, currentStatus: string) => {
+  const handleToggleMaintenance = (id: string) => {
     const targetItem = items.find(i => i.id === id);
     if (targetItem) {
       setMaintenanceTarget(targetItem);
@@ -197,7 +194,7 @@ export default function AdminInventoryPage() {
                 <span className="text-[#f5f1e8] font-semibold">₹{item.dailyPrice.toLocaleString("en-IN")}</span>
               </div>
               <button
-                onClick={() => handleToggleMaintenance(item.id, item.status)}
+                onClick={() => handleToggleMaintenance(item.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-sans transition cursor-pointer ${
                   item.status === "MAINTENANCE"
                     ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"

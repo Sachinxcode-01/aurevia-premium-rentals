@@ -702,15 +702,15 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Aurevia Rewards & Referral Center */}
-                <div className="dash-card opacity-0 glass-panel border-[#D8B36A]/30 bg-[#D8B36A]/5 rounded-xl p-6 space-y-4">
+                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 bg-gold-champagne/5 rounded-xl p-6 space-y-4">
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div className="flex items-center gap-2">
-                      <Gift className="text-[#D8B36A]" size={18} />
-                      <h3 className="text-xs font-mono uppercase tracking-widest text-[#D8B36A] font-bold">
+                      <Gift className="text-gold-champagne" size={18} />
+                      <h3 className="text-xs font-mono uppercase tracking-widest text-gold-champagne font-bold">
                         Aurevia Rewards &amp; Referral Program
                       </h3>
                     </div>
-                    <span className="text-[10px] bg-[#D8B36A] text-black font-bold px-2 py-0.5 rounded font-mono">
+                    <span className="text-[10px] bg-gold-champagne text-black font-bold px-2 py-0.5 rounded font-mono">
                       5% CASHBACK ACTIVE
                     </span>
                   </div>
@@ -718,7 +718,7 @@ export default function CustomerDashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="p-4 bg-black/40 border border-white/10 rounded-lg space-y-1">
                       <span className="text-[10px] text-gray-400 font-mono uppercase block">Your Available Reward Credits</span>
-                      <div className="text-2xl font-bold text-[#D8B36A] font-mono">750 Points <span className="text-xs font-normal text-gray-400">(₹750 value)</span></div>
+                      <div className="text-2xl font-bold text-gold-champagne font-mono">750 Points <span className="text-xs font-normal text-gray-400">(₹750 value)</span></div>
                       <p className="text-[10px] text-gray-500">Redeem instantly during camera checkout</p>
                     </div>
 
@@ -1034,7 +1034,7 @@ export default function CustomerDashboard() {
                           <div className="flex flex-wrap gap-2 pt-3 border-t border-white/5 mt-3">
                             <button
                               onClick={() => setQrModalBooking(b)}
-                              className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-[#D8B36A]/40 bg-[#D8B36A]/10 rounded-lg text-[#D8B36A] hover:bg-[#D8B36A]/20 transition cursor-pointer font-mono font-bold"
+                              className="flex items-center gap-1.5 text-[10px] px-3 py-1.5 border border-gold-champagne/40 bg-gold-champagne/10 rounded-lg text-gold-champagne hover:bg-gold-champagne/20 transition cursor-pointer font-mono font-bold"
                             >
                               <QrCode size={12} /> View QR Pass
                             </button>

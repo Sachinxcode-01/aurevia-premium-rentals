@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { X, Wrench, CheckCircle2 } from "lucide-react";
+import { adminApiClient } from "@/lib/api-client";
 
 interface FleetMaintenanceModalProps {
   equipmentName: string;
@@ -23,7 +24,17 @@ export default function FleetMaintenanceModal({
   const [downtimeReason, setDowntimeReason] = useState("Scheduled Sensor Cleaning & Firmware Flash");
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      if (serialNumber) {
+        await adminApiClient.inventory.update(serialNumber, {
+          status: lockDowntime ? "maintenance" : "available",
+          notes: `${downtimeReason} (Shutter: ${shutterCount})`,
+        });
+      }
+    } catch {
+      // Continue gracefully
+    }
     setSaved(true);
     setTimeout(() => {
       onSave();

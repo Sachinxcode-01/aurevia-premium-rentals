@@ -79,6 +79,38 @@ export const adminApiClient = {
       }),
   },
 
+  products: {
+    list: (search?: string) => {
+      const query = new URLSearchParams();
+      if (search) query.append("search", search);
+      return fetchAdminApi<any[]>(`/api/v1/admin/products?${query.toString()}`);
+    },
+    add: (product: {
+      name: string;
+      slug?: string;
+      description?: string;
+      dailyPrice: number;
+      securityDeposit?: number;
+      inventoryQty?: number;
+      imageUrl?: string;
+      specifications?: Record<string, any>;
+      isFeatured?: boolean;
+    }) =>
+      fetchAdminApi<any>("/api/v1/admin/products", {
+        method: "POST",
+        body: JSON.stringify(product),
+      }),
+    update: (id: string, payload: Record<string, any>) =>
+      fetchAdminApi<any>("/api/v1/admin/products", {
+        method: "PATCH",
+        body: JSON.stringify({ id, ...payload }),
+      }),
+    delete: (id: string) =>
+      fetchAdminApi<any>(`/api/v1/admin/products?id=${id}`, {
+        method: "DELETE",
+      }),
+  },
+
   kyc: {
     list: (status?: string) => {
       const query = new URLSearchParams();

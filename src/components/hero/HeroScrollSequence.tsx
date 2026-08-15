@@ -312,7 +312,7 @@ export default function HeroScrollSequence({
             </div>
             <h2 className="serif-heading text-2xl tracking-wide text-ivory mb-2">AUREVIA</h2>
             <p className="text-xs uppercase tracking-[0.25em] text-muted-gray mb-1">Frame the Extraordinary</p>
-            <div className="w-48 h-[1px] bg-white/10 rounded-full overflow-hidden mt-4">
+            <div className="w-48 h-px bg-white/10 rounded-full overflow-hidden mt-4">
               <div
                 className="h-full bg-gold-champagne transition-all duration-300 ease-out"
                 style={{ width: `${loadingProgress}%` }}
@@ -323,11 +323,11 @@ export default function HeroScrollSequence({
         )}
 
         {/* Sticky Frame Viewer */}
-        <div className="sticky top-0 w-full h-[100vh] overflow-hidden flex items-center justify-center z-10 select-none">
+        <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center z-10 select-none">
           
           {/* Ambient volumetric background light overlay */}
           <div className="absolute inset-0 bg-gold-champagne/10 blur-[120px] pointer-events-none z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/80 pointer-events-none z-15" />
+          <div className="absolute inset-0 bg-linear-to-t from-obsidian via-transparent to-obsidian/80 pointer-events-none z-15" />
 
           {/* Interactive Canvas Sequence */}
           {!useFallback ? (
@@ -352,7 +352,7 @@ export default function HeroScrollSequence({
 
           {/* Fallback Viewport Static Overlay */}
           {useFallback && (
-            <div className="absolute inset-0 z-20 flex items-center bg-gradient-to-r from-obsidian via-obsidian/60 to-transparent">
+            <div className="absolute inset-0 z-20 flex items-center bg-linear-to-r from-obsidian via-obsidian/60 to-transparent">
               <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div className="space-y-6 md:space-y-8 text-left">
                   <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
@@ -536,7 +536,7 @@ export default function HeroScrollSequence({
             >
               <div
                 ref={progressRef}
-                className="h-full w-full origin-top bg-gradient-to-b from-gold-champagne/40 to-gold-champagne"
+                className="h-full w-full origin-top bg-linear-to-b from-gold-champagne/40 to-gold-champagne"
                 style={{ transform: "scaleY(0.02)", willChange: "transform" }}
               />
             </div>
@@ -550,7 +550,7 @@ export default function HeroScrollSequence({
               <span className="text-[10px] uppercase tracking-[0.3em] text-muted-gray/80 font-light mb-2 font-mono scroll-hint-element" style={{ opacity: 0 }}>
                 Scroll to reveal
               </span>
-              <div className="w-[1px] h-12 bg-gradient-to-b from-gold-champagne to-transparent scroll-hint-element" style={{ opacity: 0 }}></div>
+              <div className="w-px h-12 bg-linear-to-b from-gold-champagne to-transparent scroll-hint-element" style={{ opacity: 0 }}></div>
             </div>
           )}
         </div>
