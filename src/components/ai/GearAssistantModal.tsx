@@ -47,19 +47,19 @@ export default function GearAssistantModal() {
 
   return (
     <>
-      {/* Floating Concierge Launcher Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Concierge Launcher Button (Bottom-Left to avoid bottom-right overlap) */}
+      <div className="fixed bottom-5 left-4 md:bottom-6 md:left-6 z-40">
         <MagneticButton>
           <button
             onClick={() => setIsOpen(true)}
-            className="group flex items-center gap-3 px-4 py-3 rounded-full bg-linear-to-r from-amber-500 via-amber-600 to-amber-700 text-neutral-950 font-semibold text-xs shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all duration-300 border border-amber-300/40"
+            className="group flex items-center gap-2.5 px-3.5 py-2.5 md:px-4 md:py-3 rounded-full bg-linear-to-r from-amber-500 via-amber-600 to-amber-700 text-neutral-950 font-semibold text-xs shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all duration-300 border border-amber-300/40 cursor-pointer"
           >
-            <span className="relative flex h-3 w-3">
+            <span className="relative flex h-2.5 w-2.5 md:h-3 md:w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-neutral-950"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 md:h-3 md:w-3 bg-neutral-950"></span>
             </span>
-            <Bot className="w-4 h-4 text-neutral-950" />
-            <span className="tracking-wide uppercase text-[11px] font-bold">
+            <Bot className="w-3.5 h-3.5 md:w-4 md:h-4 text-neutral-950 shrink-0" />
+            <span className="tracking-wide uppercase text-[10px] md:text-[11px] font-bold whitespace-nowrap">
               AI Gear Concierge
             </span>
           </button>

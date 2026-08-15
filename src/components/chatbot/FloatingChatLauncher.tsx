@@ -182,7 +182,7 @@ export default function FloatingChatLauncher() {
 
   return (
     <div 
-      className="fixed z-[9999] pointer-events-none"
+      className="fixed z-50 pointer-events-none"
       style={{
         left: 0,
         top: 0,
@@ -203,10 +203,10 @@ export default function FloatingChatLauncher() {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           aria-label="Open AUREVIA support chat"
-          className="w-14 h-14 rounded-full bg-obsidian border border-gold-border text-gold-champagne flex items-center justify-center shadow-2xl hover:bg-gold-champagne/10 transition-colors cursor-grab active:cursor-grabbing select-none"
+          className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-obsidian border border-gold-border text-gold-champagne flex items-center justify-center shadow-2xl hover:bg-gold-champagne/10 transition-colors cursor-grab active:cursor-grabbing select-none"
         >
-          <div className="relative w-8 h-8 flex items-center justify-center">
-            <Logo variant="monogram" theme="light" width={32} height={32} />
+          <div className="relative w-6 h-6 md:w-8 md:h-8 flex items-center justify-center">
+            <Logo variant="monogram" theme="light" width={28} height={28} />
           </div>
         </button>
 
