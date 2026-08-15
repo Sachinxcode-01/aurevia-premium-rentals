@@ -550,7 +550,7 @@ export default function BookingPage() {
 
                     {/* Optional Referral Code Input */}
                     <div className="space-y-2 pt-2 border-t border-white/5">
-                      <label className="text-[9px] text-gold-champagne uppercase font-mono tracking-wider font-bold block flex items-center gap-1">
+                      <label className="text-[9px] text-gold-champagne uppercase font-mono tracking-wider font-bold flex items-center gap-1">
                         🎁 Optional Referral / Friend Code
                       </label>
                       <div className="flex gap-2">

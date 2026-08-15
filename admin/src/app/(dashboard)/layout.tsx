@@ -35,6 +35,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "OPERATIONS",
     items: [
       { name: "Bookings", href: "/bookings", icon: CalendarCheck, badge: "12", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+      { name: "Fleet Calendar", href: "/calendar", icon: CalendarCheck, badge: "LIVE", badgeColor: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
       { name: "Inventory", href: "/inventory", icon: Camera },
       { name: "Customers", href: "/customers", icon: Users },
       { name: "KYC Center", href: "/kyc", icon: ShieldAlert, badge: "4", badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
