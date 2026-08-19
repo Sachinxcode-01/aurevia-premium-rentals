@@ -23,6 +23,7 @@ import { MOCK_PRODUCTS, Product } from "@/lib/db/mockData";
 import { printOrDownloadInvoice } from "@/lib/utils/pdfGenerator";
 import BookingQRCode from "@/components/booking/BookingQRCode";
 import { useRealtimeReferrals } from "@/hooks/useRealtimeReferrals";
+import { claimReferralRewardCouponAction } from "@/lib/actions/referrals";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -111,6 +112,25 @@ export default function CustomerDashboard() {
   const { referrals: realtimeReferrals, totalRewardEarned, pendingReward } = useRealtimeReferrals();
 
   const [originUrl, setOriginUrl] = useState<string>("https://aurevia-app.vercel.app");
+  const [claimingRewardId, setClaimingRewardId] = useState<string | null>(null);
+  const [claimedCoupons, setClaimedCoupons] = useState<Record<string, string>>({});
+
+  const handleClaimReward = async (referralId: string) => {
+    setClaimingRewardId(referralId);
+    try {
+      const res = await claimReferralRewardCouponAction(referralId);
+      if (res.success && res.couponCode) {
+        setClaimedCoupons((prev) => ({ ...prev, [referralId]: res.couponCode! }));
+        toast.success(`Reward Coupon Generated: ${res.couponCode}`);
+      } else {
+        toast.error(res.error || "Failed to claim referral reward");
+      }
+    } catch {
+      toast.error("Failed to claim reward coupon");
+    } finally {
+      setClaimingRewardId(null);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -756,23 +776,62 @@ export default function CustomerDashboard() {
                       <p className="text-xs text-muted-gray py-2 font-mono">No referred creators yet. Share your code to earn credits!</p>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                        {realtimeReferrals.map((r) => (
-                          <div key={r.id} className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
-                            <div>
-                              <p className="text-ivory font-semibold">{r.referred_name}</p>
-                              <p className="text-[10px] text-muted-gray">Code used: {r.code_used}</p>
+                        {realtimeReferrals.map((r) => {
+                          const claimedCouponCode = claimedCoupons[r.id];
+                          const isRewarded = r.status === "rewarded" || !!claimedCouponCode;
+                          const isClaimable = r.status === "completed" && !claimedCouponCode;
+
+                          return (
+                            <div key={r.id} className="p-3.5 bg-black/40 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div>
+                                <p className="text-ivory font-semibold">{r.referred_name}</p>
+                                <p className="text-[10px] text-muted-gray">Code used: {r.code_used}</p>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {isClaimable ? (
+                                  <button
+                                    onClick={() => handleClaimReward(r.id)}
+                                    disabled={claimingRewardId === r.id}
+                                    className="px-3 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 rounded-lg text-[10px] font-bold transition cursor-pointer flex items-center gap-1.5 shadow-md active:scale-95"
+                                  >
+                                    {claimingRewardId === r.id ? (
+                                      <Loader2 size={12} className="animate-spin text-emerald-400" />
+                                    ) : (
+                                      <Gift size={12} />
+                                    )}
+                                    Claim ₹{r.reward_amount || 500} Coupon
+                                  </button>
+                                ) : isRewarded ? (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
+                                      ₹{r.reward_amount || 500} Reward Claimed
+                                    </span>
+                                    {claimedCouponCode && (
+                                      <button
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(claimedCouponCode);
+                                          toast.success(`Coupon ${claimedCouponCode} copied!`);
+                                        }}
+                                        className="px-2 py-0.5 bg-gold-champagne/20 border border-gold-champagne/40 text-gold-champagne font-mono rounded text-[9px] font-bold hover:bg-gold-champagne/30 transition cursor-pointer"
+                                      >
+                                        Copy {claimedCouponCode}
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                                    r.status === "pending"
+                                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                                      : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                                  }`}>
+                                    {r.status}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
-                              r.status === "rewarded"
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                                : r.status === "pending"
-                                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                                : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                            }`}>
-                              {r.status === "rewarded" ? `₹${r.reward_amount} Earned` : r.status}
-                            </span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>

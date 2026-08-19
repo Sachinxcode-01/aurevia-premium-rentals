@@ -228,7 +228,7 @@ export default function AdminReferralsPage() {
       </div>
 
       {/* Program Settings Control Card */}
-      <div className="bg-[#161922] border border-[#d8b36a]/30 rounded-2xl p-6 space-y-4 bg-gradient-to-r from-[#d8b36a]/5 via-[#161922] to-black">
+      <div className="bg-[#161922] border border-[#d8b36a]/30 rounded-2xl p-6 space-y-4 bg-linear-to-r from-[#d8b36a]/5 via-[#161922] to-black">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center gap-2">
             <Gift className="text-[#d8b36a]" size={18} />
