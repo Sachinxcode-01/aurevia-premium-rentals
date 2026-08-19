@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
   },
   verification: {
-    google: "2a5V6ZIdHIhOnfdi6z-N5r0sKCopfYFoAnbXBvKo4i8",
+    google: "google2af6b85353900719",
   },
 };
 
