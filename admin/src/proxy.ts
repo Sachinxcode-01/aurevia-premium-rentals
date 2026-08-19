@@ -50,11 +50,8 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Verify session with timeout to avoid hanging proxy execution
-  const user = await Promise.race([
-    supabase.auth.getUser().then((res) => res.data?.user || null).catch(() => null),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
-  ]);
+  // Verify session from SSR cookies (without artificial timeout)
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     const url = request.nextUrl.clone();

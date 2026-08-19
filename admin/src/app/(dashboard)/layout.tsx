@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminLogo } from "@/components/ui/AdminLogo";
+import { createClient } from "@/utils/supabase/client";
 
 interface NavItem {
   name: string;
@@ -90,27 +91,26 @@ export default function AdminDashboardLayout({
   const [searchOpen, setSearchOpen] = useState(false);
 
   React.useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
-      import("@supabase/supabase-js").then(({ createClient }) => {
-        const supabase = createClient(supabaseUrl, supabaseKey);
-        supabase.auth.getUser().then(({ data }) => {
-          if (!data.user) {
-            router.push("/admin-login");
-          }
-        });
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data?.user) {
+          router.push("/admin-login");
+        }
+      }).catch(() => {
+        router.push("/admin-login");
       });
+    } catch {
+      // Fallback
     }
   }, [router]);
 
   const handleLogout = async () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (supabaseUrl && supabaseKey && !supabaseUrl.includes("your-project-id")) {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(supabaseUrl, supabaseKey);
+    try {
+      const supabase = createClient();
       await supabase.auth.signOut();
+    } catch {
+      // Ignore
     }
     router.push("/admin-login");
   };
