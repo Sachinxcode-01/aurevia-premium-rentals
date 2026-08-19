@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
+import { createClient } from "@/utils/supabase/client";
 
 interface KYCSubmission {
   id: string;
@@ -53,20 +54,60 @@ export default function AdminKYCPage() {
 
   const loadKyc = useCallback(async () => {
     setLoading(true);
-    const res = await adminApiClient.kyc.list(activeTab !== "ALL" ? activeTab : undefined);
-    if (res.success && res.data && res.data.length > 0) {
-      const mapped = res.data.map((d: any) => ({
-        id: d.id,
-        customerName: d.profile?.full_name || "Customer",
-        email: d.profile?.email || "customer@aurevia.com",
-        phone: d.profile?.phone || "+91 98765 43210",
-        idType: d.document_type ? (d.document_type.toUpperCase() as any) : "Aadhaar",
-        idNumber: d.document_number || "•••• •••• 4210",
-        documentUrl: d.file_path || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800",
-        status: d.status ? (d.status.toUpperCase() as any) : "PENDING",
-        submittedAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : "Today",
-      }));
-      setKycList(mapped);
+    const combined: KYCSubmission[] = [];
+    const idSet = new Set<string>();
+
+    const res = await adminApiClient.kyc.list(activeTab !== "ALL" ? activeTab : undefined).catch(() => null);
+    if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+      res.data.forEach((d: any) => {
+        if (!idSet.has(d.id)) {
+          idSet.add(d.id);
+          combined.push({
+            id: d.id,
+            customerName: d.profile?.full_name || d.customerName || "Customer",
+            email: d.profile?.email || d.email || "customer@aurevia.com",
+            phone: d.profile?.phone || d.phone || "+91 98765 43210",
+            idType: d.document_type ? (d.document_type.toUpperCase() as any) : "Aadhaar",
+            idNumber: d.document_number || "•••• •••• 4210",
+            documentUrl: d.file_path || d.documentUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800",
+            status: d.status ? (d.status.toUpperCase() as any) : "PENDING",
+            submittedAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : "Today",
+          });
+        }
+      });
+    }
+
+    try {
+      const supabase = createClient();
+      let query = supabase.from("kyc_verifications").select("*, profile:profiles(full_name, email, phone)").order("created_at", { ascending: false });
+      if (activeTab !== "ALL") {
+        query = query.eq("status", activeTab.toLowerCase());
+      }
+      const { data: dbKyc } = await query;
+      if (dbKyc && Array.isArray(dbKyc)) {
+        dbKyc.forEach((d: any) => {
+          if (!idSet.has(d.id)) {
+            idSet.add(d.id);
+            combined.push({
+              id: d.id,
+              customerName: d.profile?.full_name || "Customer",
+              email: d.profile?.email || "customer@aurevia.com",
+              phone: d.profile?.phone || "+91 98765 43210",
+              idType: d.document_type ? (d.document_type.toUpperCase() as any) : "Aadhaar",
+              idNumber: d.document_number || "•••• •••• 4210",
+              documentUrl: d.file_path || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800",
+              status: d.status ? (d.status.toUpperCase() as any) : "PENDING",
+              submittedAt: d.created_at ? new Date(d.created_at).toLocaleDateString() : "Today",
+            });
+          }
+        });
+      }
+    } catch {}
+
+    if (combined.length > 0) {
+      setKycList(combined);
+    } else {
+      setKycList(MOCK_KYC);
     }
     setLoading(false);
   }, [activeTab]);

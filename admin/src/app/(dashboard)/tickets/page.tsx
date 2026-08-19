@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, SupportTicket } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
+import { createClient } from "@/utils/supabase/client";
 
 export default function AdminSupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -23,9 +24,109 @@ export default function AdminSupportTicketsPage() {
   const [sendingReply, setSendingReply] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const loadTickets = () => {
-    const data = engagementStore.getTickets();
-    setTickets(data);
+  const loadTickets = async () => {
+    const combined: SupportTicket[] = [];
+    const idMap = new Set<string>();
+
+    // 1. Local engagement store tickets
+    const storeData = engagementStore.getTickets();
+    storeData.forEach((t) => {
+      if (!idMap.has(t.id) && !idMap.has(t.ticketNo)) {
+        idMap.add(t.id);
+        idMap.add(t.ticketNo);
+        combined.push(t);
+      }
+    });
+
+    // 2. Public website localStorage ('aurevia_admin_tickets')
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("aurevia_admin_tickets");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          parsed.forEach((t: any) => {
+            const ticketNo = t.ticketNo || t.id;
+            if (!idMap.has(t.id) && !idMap.has(ticketNo)) {
+              idMap.add(t.id);
+              idMap.add(ticketNo);
+              combined.push({
+                id: t.id,
+                ticketNo,
+                customerName: t.customerName || "Customer",
+                customerEmail: t.customerEmail || "",
+                bookingReference: t.bookingReference,
+                category: t.category || "General Question",
+                subject: t.subject || "Support Ticket",
+                status: (t.status as any) || "open",
+                priority: (t.priority as any) || "normal",
+                createdAt: t.createdAt || new Date().toISOString(),
+                updatedAt: t.updatedAt || new Date().toISOString(),
+                messages: t.messages || [],
+              });
+            }
+          });
+        }
+      } catch {}
+    }
+
+    // 3. Server API tickets
+    try {
+      const apiRes = await adminApiClient.tickets.list().catch(() => null);
+      if (apiRes && apiRes.success && Array.isArray(apiRes.data)) {
+        apiRes.data.forEach((t: any) => {
+          const ticketNo = t.ticket_no || t.ticketNo || `TCK-${t.id.slice(0, 4)}`;
+          if (!idMap.has(t.id) && !idMap.has(ticketNo)) {
+            idMap.add(t.id);
+            idMap.add(ticketNo);
+            combined.push({
+              id: t.id,
+              ticketNo,
+              customerName: t.customer_name || t.customerName || "Customer",
+              customerEmail: t.customer_email || t.customerEmail || "",
+              bookingReference: t.booking_reference || t.bookingReference,
+              category: t.category || "General Question",
+              subject: t.subject || "Support Ticket",
+              status: (t.status as any) || "open",
+              priority: (t.priority as any) || "normal",
+              createdAt: t.created_at || t.createdAt || new Date().toISOString(),
+              updatedAt: t.updated_at || t.updatedAt || new Date().toISOString(),
+              messages: t.messages || [],
+            });
+          }
+        });
+      }
+    } catch {}
+
+    // 4. Direct Supabase DB support_tickets table query
+    try {
+      const supabase = createClient();
+      const { data: dbData } = await supabase.from("support_tickets").select("*").order("created_at", { ascending: false });
+      if (dbData && Array.isArray(dbData)) {
+        dbData.forEach((t: any) => {
+          const ticketNo = t.ticket_no || `TCK-${t.id.slice(0, 4)}`;
+          if (!idMap.has(t.id) && !idMap.has(ticketNo)) {
+            idMap.add(t.id);
+            idMap.add(ticketNo);
+            combined.push({
+              id: t.id,
+              ticketNo,
+              customerName: t.customer_name || "Customer",
+              customerEmail: t.customer_email || "",
+              bookingReference: t.booking_reference,
+              category: t.category || "General Question",
+              subject: t.subject || "Support Ticket",
+              status: (t.status as any) || "open",
+              priority: (t.priority as any) || "normal",
+              createdAt: t.created_at || new Date().toISOString(),
+              updatedAt: t.updated_at || new Date().toISOString(),
+              messages: t.messages || [],
+            });
+          }
+        });
+      }
+    } catch {}
+
+    setTickets(combined);
   };
 
   useEffect(() => {

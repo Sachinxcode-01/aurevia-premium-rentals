@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
+import { createClient } from "@/utils/supabase/client";
 
 export default function AdminEnquiriesPage() {
   const [enquiries, setEnquiries] = useState<OnlineEnquiry[]>([]);
@@ -23,9 +24,112 @@ export default function AdminEnquiriesPage() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const loadEnquiries = () => {
-    const data = engagementStore.getEnquiries();
-    setEnquiries(data);
+  const loadEnquiries = async () => {
+    const combined: OnlineEnquiry[] = [];
+    const idMap = new Set<string>();
+
+    // 1. Read engagement store local enquiries
+    const storeData = engagementStore.getEnquiries();
+    storeData.forEach((e) => {
+      if (!idMap.has(e.id) && !idMap.has(e.referenceNo)) {
+        idMap.add(e.id);
+        idMap.add(e.referenceNo);
+        combined.push(e);
+      }
+    });
+
+    // 2. Read public website localStorage ('aurevia_admin_enquiries')
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("aurevia_admin_enquiries");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          parsed.forEach((e: any) => {
+            const refNo = e.referenceNo || e.id;
+            if (!idMap.has(e.id) && !idMap.has(refNo)) {
+              idMap.add(e.id);
+              idMap.add(refNo);
+              combined.push({
+                id: e.id,
+                referenceNo: refNo,
+                customerName: e.customerName || "Customer",
+                customerEmail: e.customerEmail || "",
+                customerPhone: e.customerPhone || "Not provided",
+                subject: e.subject || "Online Inquiry",
+                equipmentInterest: e.equipmentInterest || "General Gear",
+                rentalDates: e.rentalDates,
+                message: e.message || "",
+                status: (e.status as any) || "new",
+                priority: (e.priority as any) || "medium",
+                createdAt: e.createdAt || new Date().toISOString(),
+                responses: e.responses || [],
+              });
+            }
+          });
+        }
+      } catch {}
+    }
+
+    // 3. Fetch server API enquiries
+    try {
+      const apiRes = await adminApiClient.enquiries.list().catch(() => null);
+      if (apiRes && apiRes.success && Array.isArray(apiRes.data)) {
+        apiRes.data.forEach((e: any) => {
+          const refNo = e.reference_no || e.referenceNo || `ENQ-${e.id.slice(0, 4)}`;
+          if (!idMap.has(e.id) && !idMap.has(refNo)) {
+            idMap.add(e.id);
+            idMap.add(refNo);
+            combined.push({
+              id: e.id,
+              referenceNo: refNo,
+              customerName: e.customer_name || e.customerName || "Customer",
+              customerEmail: e.customer_email || e.customerEmail || "",
+              customerPhone: e.customer_phone || e.customerPhone || "Not provided",
+              subject: e.subject || "Online Inquiry",
+              equipmentInterest: e.equipment_interest || e.equipmentInterest || "General Gear",
+              rentalDates: e.rental_dates || e.rentalDates,
+              message: e.message || "",
+              status: (e.status as any) || "new",
+              priority: (e.priority as any) || "medium",
+              createdAt: e.created_at || e.createdAt || new Date().toISOString(),
+              responses: e.responses || [],
+            });
+          }
+        });
+      }
+    } catch {}
+
+    // 4. Fetch Supabase DB enquiries table directly
+    try {
+      const supabase = createClient();
+      const { data: dbData } = await supabase.from("enquiries").select("*").order("created_at", { ascending: false });
+      if (dbData && Array.isArray(dbData)) {
+        dbData.forEach((e: any) => {
+          const refNo = e.reference_no || `ENQ-${e.id.slice(0, 4)}`;
+          if (!idMap.has(e.id) && !idMap.has(refNo)) {
+            idMap.add(e.id);
+            idMap.add(refNo);
+            combined.push({
+              id: e.id,
+              referenceNo: refNo,
+              customerName: e.customer_name || "Customer",
+              customerEmail: e.customer_email || "",
+              customerPhone: e.customer_phone || "Not provided",
+              subject: e.subject || "Online Inquiry",
+              equipmentInterest: e.equipment_interest || "General Gear",
+              rentalDates: e.rental_dates,
+              message: e.message || "",
+              status: (e.status as any) || "new",
+              priority: (e.priority as any) || "medium",
+              createdAt: e.created_at || new Date().toISOString(),
+              responses: e.responses || [],
+            });
+          }
+        });
+      }
+    } catch {}
+
+    setEnquiries(combined);
   };
 
   useEffect(() => {
