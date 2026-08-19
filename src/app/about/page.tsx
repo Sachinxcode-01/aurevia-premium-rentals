@@ -77,7 +77,7 @@ export default function AboutPage() {
                   <Camera size={20} className="text-gold-champagne" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-ivory serif-heading font-light">Prem Mundargi</h3>
+                  <h3 className="text-lg font-semibold text-ivory serif-heading">Prem Mundargi</h3>
                   <p className="text-[11px] text-gold-champagne font-mono uppercase tracking-wider mt-0.5">
                     Owner &amp; Founder, AUREVIA Camera Rentals
                   </p>
@@ -126,7 +126,7 @@ export default function AboutPage() {
                   <span className="text-ivory/60 text-base font-light font-mono">&lt;/&gt;</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-ivory serif-heading font-light">Sachin</h3>
+                  <h3 className="text-lg font-semibold text-ivory serif-heading">Sachin</h3>
                   <p className="text-[11px] text-muted-gray font-mono uppercase tracking-wider mt-0.5">
                     Website Designer, Developer &amp; Technical Manager
                   </p>
