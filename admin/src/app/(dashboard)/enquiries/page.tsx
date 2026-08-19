@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
+import { useAdminRealtime } from "@/lib/realtime";
 import { createClient } from "@/utils/supabase/client";
 
 export default function AdminEnquiriesPage() {
@@ -135,6 +136,10 @@ export default function AdminEnquiriesPage() {
   useEffect(() => {
     loadEnquiries();
   }, []);
+
+  useAdminRealtime(() => {
+    loadEnquiries();
+  });
 
   const showToast = (msg: string) => {
     setToastMsg(msg);

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, SupportTicket } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
+import { useAdminRealtime } from "@/lib/realtime";
 import { createClient } from "@/utils/supabase/client";
 
 export default function AdminSupportTicketsPage() {
@@ -132,6 +133,10 @@ export default function AdminSupportTicketsPage() {
   useEffect(() => {
     loadTickets();
   }, []);
+
+  useAdminRealtime(() => {
+    loadTickets();
+  });
 
   const showToast = (msg: string) => {
     setToastMsg(msg);

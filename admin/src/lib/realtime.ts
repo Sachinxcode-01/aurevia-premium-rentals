@@ -1,44 +1,53 @@
 import { useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mock.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "mock-anon-key";
-
-const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+import { createClient } from "@/utils/supabase/client";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 export function useAdminRealtime(onDatabaseChange: (payload: any) => void) {
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      // In mock/unconfigured environment, bypass subscription safely
-      return;
-    }
+    // 1. Setup Supabase Postgres Realtime Subscription
+    let channel: any = null;
+    try {
+      const supabase = createClient();
+      channel = supabase
+        .channel("admin-realtime-hub")
+        .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, (payload) => onDatabaseChange({ table: "bookings", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "enquiries" }, (payload) => onDatabaseChange({ table: "enquiries", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "reviews" }, (payload) => onDatabaseChange({ table: "reviews", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, (payload) => onDatabaseChange({ table: "support_tickets", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "kyc_verifications" }, (payload) => onDatabaseChange({ table: "kyc_verifications", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "inventory_units" }, (payload) => onDatabaseChange({ table: "inventory_units", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, (payload) => onDatabaseChange({ table: "payments", payload }))
+        .on("postgres_changes", { event: "*", schema: "public", table: "refunds" }, (payload) => onDatabaseChange({ table: "refunds", payload }))
+        .subscribe();
+    } catch {}
 
-    const channel = supabaseClient
-      .channel("admin-realtime-sync")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookings" },
-        (payload) => onDatabaseChange({ table: "bookings", payload })
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "inventory_units" },
-        (payload) => onDatabaseChange({ table: "inventory_units", payload })
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "kyc_documents" },
-        (payload) => onDatabaseChange({ table: "kyc_documents", payload })
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payments" },
-        (payload) => onDatabaseChange({ table: "payments", payload })
-      )
-      .subscribe();
+    // 2. Setup RealtimeHub (BroadcastChannel / LocalStorage Signal) subscriptions
+    const unsubBooking = realtimeHub.subscribe("BOOKING_UPDATED", (payload) => onDatabaseChange({ type: "BOOKING_UPDATED", payload }));
+    const unsubEnquiry = realtimeHub.subscribe("ENQUIRY_UPDATED", (payload) => onDatabaseChange({ type: "ENQUIRY_UPDATED", payload }));
+    const unsubTicket = realtimeHub.subscribe("TICKET_UPDATED", (payload) => onDatabaseChange({ type: "TICKET_UPDATED", payload }));
+    const unsubReview = realtimeHub.subscribe("REVIEW_MODERATED", (payload) => onDatabaseChange({ type: "REVIEW_MODERATED", payload }));
+    const unsubKyc = realtimeHub.subscribe("KYC_STATUS_UPDATED", (payload) => onDatabaseChange({ type: "KYC_STATUS_UPDATED", payload }));
+    const unsubInventory = realtimeHub.subscribe("INVENTORY_UPDATED", (payload) => onDatabaseChange({ type: "INVENTORY_UPDATED", payload }));
+
+    // 3. Fallback Polling (Every 4 seconds for instant responsiveness)
+    const interval = setInterval(() => {
+      onDatabaseChange({ type: "POLL_TICK" });
+    }, 4000);
 
     return () => {
-      supabaseClient.removeChannel(channel);
+      if (channel) {
+        try {
+          const supabase = createClient();
+          supabase.removeChannel(channel);
+        } catch {}
+      }
+      unsubBooking();
+      unsubEnquiry();
+      unsubTicket();
+      unsubReview();
+      unsubKyc();
+      unsubInventory();
+      clearInterval(interval);
     };
   }, [onDatabaseChange]);
 }

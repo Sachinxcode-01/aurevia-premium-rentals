@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, CustomerReview } from "@/lib/db/engagementStore";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
+import { useAdminRealtime } from "@/lib/realtime";
 import { adminApiClient } from "@/lib/api-client";
 import { createClient } from "@/utils/supabase/client";
 
@@ -120,6 +121,10 @@ export default function AdminReviewsPage() {
   useEffect(() => {
     loadReviews();
   }, []);
+
+  useAdminRealtime(() => {
+    loadReviews();
+  });
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
