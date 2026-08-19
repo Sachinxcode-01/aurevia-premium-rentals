@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
     });
   }, [step]);
 
-  // Step 1: Send OTP to Email
+  // Step 1: Send Password Reset Email / OTP
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes("@")) {
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
     setLoading(false);
 
     if (result.success) {
-      toast.success("6-digit verification code sent to your email!");
+      toast.success("Password reset instructions sent to your email!");
       setStep("verify");
     } else {
       toast.error(result.error ?? "Failed to send verification email.");

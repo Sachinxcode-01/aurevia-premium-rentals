@@ -10,7 +10,7 @@ import {
   Eye, EyeOff, ArrowRight, ShieldCheck, KeyRound
 } from "lucide-react";
 import Link from "next/link";
-import { requestSignUpOTPAction, verifySignUpOTPAction } from "@/lib/actions/auth";
+import { signUpAction, verifySignUpOTPAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import { GoogleSignInButton } from "@/components/ui/GoogleSignInButton";
@@ -54,7 +54,7 @@ export default function RegisterPage() {
   const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][pwStrength];
   const strengthColor = ["", "bg-rose-500", "bg-amber-500", "bg-teal-500", "bg-emerald-500"][pwStrength];
 
-  // Step 1: Request OTP
+  // Step 1: Create Account with Supabase Auth
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
@@ -67,12 +67,17 @@ export default function RegisterPage() {
     }
     setLoading(true);
 
-    const result = await requestSignUpOTPAction(email, password, name, phone);
+    const result = await signUpAction(email, password, name, phone);
     setLoading(false);
 
     if (result.success) {
-      toast.success("6-digit verification OTP code sent to your email!");
-      setStep("otp");
+      setSuccess(true);
+      if (result.needsVerification) {
+        toast.success("Account created! Please check your inbox for the verification link.");
+      } else {
+        toast.success("Welcome to AUREVIA! Redirecting to dashboard...");
+        setTimeout(() => router.push("/dashboard"), 1200);
+      }
     } else {
       toast.error(result.error ?? "Registration failed. Please try again.");
     }

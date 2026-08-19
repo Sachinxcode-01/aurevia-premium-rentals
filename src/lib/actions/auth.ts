@@ -42,17 +42,8 @@ export async function signInAction(email: string, password: string): Promise<Aut
   return { success: true, role: profile?.role ?? "customer" };
 }
 
-// In-memory Signup OTP Store
-const signupOtpStore = new Map<string, {
-  otp: string;
-  password: string;
-  fullName: string;
-  phone: string;
-  expiresAt: number;
-}>();
-
-// ─── Sign Up (Step 1: Request 6-Digit Email OTP) ──────────────
-export async function requestSignUpOTPAction(
+// ─── Sign Up (Native Supabase Auth) ──────────────────────────
+export async function signUpAction(
   email: string,
   password: string,
   fullName: string,
@@ -69,95 +60,65 @@ export async function requestSignUpOTPAction(
   }
 
   const cleanEmail = email.toLowerCase().trim();
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = Date.now() + 10 * 60 * 1000;
+  const supabase = await createServerSupabaseClient();
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-  signupOtpStore.set(cleanEmail, {
-    otp,
+  // Attempt native Supabase Auth sign up (uses Supabase default email service)
+  const { data, error } = await supabase.auth.signUp({
+    email: cleanEmail,
     password,
-    fullName,
-    phone,
-    expiresAt,
+    options: {
+      data: {
+        full_name: fullName,
+        phone: phone || "",
+      },
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
   });
 
-  try {
-    const { sendAccountVerificationOTP } = await import("@/lib/email/mailer");
-    await sendAccountVerificationOTP(cleanEmail, fullName, otp);
-    return { success: true, needsVerification: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Failed to send verification email.";
-    return { success: false, error: msg };
-  }
-}
-
-// ─── Sign Up (Step 2: Verify 6-Digit OTP & Create Account) ───
-export async function verifySignUpOTPAction(
-  email: string,
-  otp: string
-): Promise<AuthResult> {
-  if (!email || !otp) {
-    return { success: false, error: "Email and OTP verification code are required." };
-  }
-
-  const cleanEmail = email.toLowerCase().trim();
-  const cleanOtp = otp.trim();
-  const record = signupOtpStore.get(cleanEmail);
-
-  if (!record || record.otp !== cleanOtp) {
-    return { success: false, error: "Invalid 6-digit verification code." };
-  }
-
-  if (Date.now() > record.expiresAt) {
-    signupOtpStore.delete(cleanEmail);
-    return { success: false, error: "Verification code has expired. Please request a new code." };
-  }
-
-  try {
-    const serviceSupabase = await createServiceSupabaseClient();
-
-    // Create & auto-confirm user in Supabase
-    const { data: newUser, error: createErr } = await serviceSupabase.auth.admin.createUser({
-      email: cleanEmail,
-      password: record.password,
-      email_confirm: true,
-      user_metadata: { full_name: record.fullName },
-    });
-
-    if (createErr) {
-      if (createErr.message.toLowerCase().includes("already registered") || createErr.message.toLowerCase().includes("already exists")) {
-        return { success: false, error: "An account with this email already exists. Please sign in." };
-      }
-      return { success: false, error: createErr.message };
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes("already registered") || msg.includes("already exists")) {
+      return { success: false, error: "An account with this email already exists. Please sign in." };
     }
+    return { success: false, error: error.message };
+  }
 
-    if (newUser?.user) {
-      await serviceSupabase.from("profiles").upsert([{
-        id: newUser.user.id,
-        full_name: record.fullName,
-        email: cleanEmail,
-        phone: record.phone,
-        role: "customer",
-        avatar_url: null,
-      }] as never[]);
+  if (data.user) {
+    try {
+      const serviceSupabase = await createServiceSupabaseClient();
+      await serviceSupabase.from("profiles").upsert([
+        {
+          id: data.user.id,
+          email: cleanEmail,
+          full_name: fullName,
+          phone: phone || "",
+          role: "customer",
+          avatar_url: null,
+        },
+      ] as never[]);
+    } catch {
+      // Fallback: profile will be created on first callback or login
     }
+  }
 
-    // Clean up OTP
-    signupOtpStore.delete(cleanEmail);
+  if (data.session) {
     revalidatePath("/");
     return { success: true, role: "customer" };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Failed to verify account creation.";
-    return { success: false, error: msg };
   }
+
+  // If email confirmation is required by Supabase project settings
+  return { success: true, needsVerification: true };
 }
 
-export async function signUpAction(
+// ─── Legacy OTP Helper (Optional) ────────────────────────────
+export async function requestSignUpOTPAction(
   email: string,
   password: string,
   fullName: string,
   phone: string
 ): Promise<AuthResult> {
-  return requestSignUpOTPAction(email, password, fullName, phone);
+  return signUpAction(email, password, fullName, phone);
 }
 
 // ─── Sign Out ────────────────────────────────────────────────
@@ -277,9 +238,29 @@ export async function verifyOTPAndResetPasswordAction(
   return { success: true };
 }
 
-// ─── Legacy Fallback Actions ──────────────────────────────────
+// ─── Forgot Password (Native Supabase Auth) ──────────────────
+export async function sendResetEmailAction(email: string): Promise<AuthResult> {
+  if (!email || !email.includes("@")) {
+    return { success: false, error: "Please enter a valid email address." };
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const supabase = await createServerSupabaseClient();
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+    redirectTo: `${origin}/reset-password`,
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
 export async function forgotPasswordAction(email: string): Promise<AuthResult> {
-  return sendResetOTPAction(email);
+  return sendResetEmailAction(email);
 }
 
 export async function resetPasswordAction(newPassword: string): Promise<AuthResult> {
