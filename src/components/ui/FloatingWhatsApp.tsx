@@ -16,7 +16,7 @@ export default function FloatingWhatsApp({
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
   return (
-    <div className="fixed bottom-19 right-4 md:bottom-22 md:right-6 z-40 flex items-center pointer-events-auto select-none">
+    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 flex items-center pointer-events-auto select-none">
       <motion.a
         href={whatsappUrl}
         target="_blank"

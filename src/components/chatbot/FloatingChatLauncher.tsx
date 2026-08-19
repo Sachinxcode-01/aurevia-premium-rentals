@@ -23,10 +23,10 @@ function getInitialPosition(): { x: number; y: number } {
       try {
         return JSON.parse(saved);
       } catch {
-        return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+        return { x: window.innerWidth - 64, y: window.innerHeight - 136 };
       }
     }
-    return { x: window.innerWidth - 72, y: window.innerHeight - 72 };
+    return { x: window.innerWidth - 64, y: window.innerHeight - 136 };
   }
   return { x: 0, y: 0 };
 }
