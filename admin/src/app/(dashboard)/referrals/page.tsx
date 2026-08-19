@@ -322,7 +322,7 @@ export default function AdminReferralsPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-white/[0.02] transition">
+                  <tr key={r.id} className="hover:bg-white/2 transition">
                     <td className="py-3.5 px-3">
                       <p className="text-[#f5f5f7] font-semibold">{r.referred_name}</p>
                       <p className="text-[10px] text-gray-500">{r.referred_email}</p>
