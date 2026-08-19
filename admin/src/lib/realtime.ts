@@ -34,6 +34,17 @@ export function useAdminRealtime(onDatabaseChange: (payload: any) => void) {
       onDatabaseChange({ type: "POLL_TICK" });
     }, 4000);
 
+    // 4. Instant Mobile Tab Focus & Online Reconnect Sync Trigger
+    const handleVisibilityOrOnline = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        onDatabaseChange({ type: "SYNC_REFRESH" });
+      }
+    };
+
+    window.addEventListener("visibilitychange", handleVisibilityOrOnline);
+    window.addEventListener("online", handleVisibilityOrOnline);
+    window.addEventListener("focus", handleVisibilityOrOnline);
+
     return () => {
       if (channel) {
         try {
@@ -48,6 +59,9 @@ export function useAdminRealtime(onDatabaseChange: (payload: any) => void) {
       unsubKyc();
       unsubInventory();
       clearInterval(interval);
+      window.removeEventListener("visibilitychange", handleVisibilityOrOnline);
+      window.removeEventListener("online", handleVisibilityOrOnline);
+      window.removeEventListener("focus", handleVisibilityOrOnline);
     };
   }, [onDatabaseChange]);
 }

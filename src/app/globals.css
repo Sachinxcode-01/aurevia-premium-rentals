@@ -161,6 +161,16 @@ textarea {
   will-change: opacity, transform;
 }
 
+@media (max-width: 768px) {
+  .reveal-section {
+    transform: translate3d(0, 20px, 0);
+    transition:
+      opacity 450ms var(--motion-expo),
+      transform 550ms var(--motion-expo);
+    will-change: auto;
+  }
+}
+
 .reveal-section.is-visible {
   opacity: 1;
   transform: translate3d(0, 0, 0);
