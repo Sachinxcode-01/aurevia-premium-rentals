@@ -5,6 +5,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AUREVIA — Admin Operations & Control Center",
   description: "Enterprise Operations, Inventory Control, Booking Management, KYC Verification, and Financial Intelligence for AUREVIA Premium Camera Rentals.",
+  icons: {
+    icon: "/aurevia-logo.png",
+    shortcut: "/aurevia-logo.png",
+    apple: "/aurevia-logo.png",
+  },
   robots: {
     index: false,
     follow: false,

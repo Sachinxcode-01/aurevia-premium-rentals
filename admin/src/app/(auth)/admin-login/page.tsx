@@ -5,6 +5,7 @@ import { ShieldCheck, Lock, Mail, ArrowRight, Loader2, AlertTriangle } from "luc
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { adminSignInWithPasswordAction, adminSignInWithGoogleAction } from "@/lib/actions/adminAuth";
+import { AdminLogo } from "@/components/ui/AdminLogo";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -79,16 +80,18 @@ function AdminLoginForm() {
       className="relative z-10 w-full max-w-md bg-[#121212]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl space-y-6"
     >
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-[#d8b36a]/10 border border-[#d8b36a]/30 text-[#d8b36a] mb-2">
-          <ShieldCheck size={24} />
+      <div className="text-center space-y-3 flex flex-col items-center">
+        <div className="relative w-44 h-12">
+          <AdminLogo variant="wordmark" width={180} height={46} />
         </div>
-        <h1 className="text-2xl font-light tracking-wide text-[#f5f1e8] font-serif">
-          AUREVIA <span className="font-mono text-xs uppercase tracking-widest text-[#d8b36a] ml-1.5 font-bold">ADMIN</span>
-        </h1>
-        <p className="text-xs text-[#9a9995] font-light">
-          Enterprise Security &amp; Operations Terminal
-        </p>
+        <div>
+          <h1 className="text-sm font-mono tracking-widest text-[#d8b36a] font-bold uppercase mt-1">
+            ENTERPRISE SECURITY &amp; OPERATIONS TERMINAL
+          </h1>
+          <p className="text-xs text-[#9a9995] font-light mt-0.5">
+            AUREVIA Concierge Operations &amp; Fleet Control Center
+          </p>
+        </div>
       </div>
 
       {/* Error Alert */}

@@ -10,6 +10,7 @@ import {
   Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { AdminLogo } from "@/components/ui/AdminLogo";
 
 interface NavItem {
   name: string;
@@ -116,13 +117,10 @@ export default function AdminDashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#070707] text-[#f5f1e8] flex flex-col md:flex-row font-sans selection:bg-[#d8b36a]/30">
-      {/* Mobile Header Bar */}
+      {/* Mobile Top Navigation */}
       <div className="md:hidden flex items-center justify-between p-4 bg-[#121212] border-b border-white/10 sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#d8b36a]/10 border border-[#d8b36a]/30 text-[#d8b36a] flex items-center justify-center font-bold">
-            A
-          </div>
-          <span className="font-serif tracking-wide text-sm font-semibold">AUREVIA ADMIN</span>
+          <AdminLogo variant="wordmark" width={130} height={34} />
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -149,20 +147,10 @@ export default function AdminDashboardLayout({
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-white/5">
           {!collapsed && (
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#d8b36a]/10 border border-[#d8b36a]/40 text-[#d8b36a] flex items-center justify-center font-bold font-serif text-sm">
-                A
-              </div>
-              <div>
-                <span className="font-serif tracking-wider text-sm font-semibold text-[#f5f1e8]">AUREVIA</span>
-                <span className="block text-[9px] font-mono uppercase tracking-widest text-[#d8b36a]">CONTROL CENTER</span>
-              </div>
-            </div>
+            <AdminLogo variant="wordmark" width={140} height={36} />
           )}
           {collapsed && (
-            <div className="mx-auto w-8 h-8 rounded-lg bg-[#d8b36a]/10 border border-[#d8b36a]/40 text-[#d8b36a] flex items-center justify-center font-bold font-serif text-sm">
-              A
-            </div>
+            <AdminLogo variant="monogram" />
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}

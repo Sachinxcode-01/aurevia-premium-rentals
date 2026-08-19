@@ -28,7 +28,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Aurevia Premium Camera Rentals | Professional Cameras & Lenses for Rent",
   description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
-  metadataBase: new URL("https://aurevia-premium-rentals.vercel.app"),
+  metadataBase: new URL("https://aurevia-app.vercel.app"),
+  icons: {
+    icon: "/readme/aurevia-logo.png",
+    shortcut: "/readme/aurevia-logo.png",
+    apple: "/readme/aurevia-logo.png",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
