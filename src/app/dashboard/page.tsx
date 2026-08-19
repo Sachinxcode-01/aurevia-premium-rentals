@@ -12,7 +12,7 @@ import {
   User, ShoppingBag, Settings, Camera, Calendar, CheckCircle,
   XCircle, Loader2, FileText, Download, Key, LogOut,
   ChevronRight, AlertTriangle, Menu, X, RefreshCw, Lock, Eye, EyeOff,
-  Phone, Mail, MessageCircle, TrendingUp, Tag, CreditCard, Star, QrCode, Gift, PlusCircle,
+  Phone, Mail, MessageCircle, TrendingUp, CreditCard, Star, QrCode, Gift, PlusCircle,
 } from "lucide-react";
 import { animate, stagger } from "animejs";
 import Link from "next/link";
