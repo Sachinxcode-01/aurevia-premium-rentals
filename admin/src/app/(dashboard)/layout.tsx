@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarCheck, Camera, Users, ShieldAlert,
   RotateCcw, CreditCard, RefreshCw, Ticket, BarChart3, FileSpreadsheet,
   Bell, Activity, UserCog, Settings, LogOut, ChevronLeft, ChevronRight,
-  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy
+  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -48,6 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
       { name: "Reviews Moderation", href: "/reviews", icon: Star, badge: "2", badgeColor: "bg-[#d8b36a]/20 text-[#d8b36a] border-[#d8b36a]/30" },
       { name: "Online Enquiries", href: "/enquiries", icon: HelpCircle, badge: "1", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
       { name: "Support Tickets", href: "/tickets", icon: LifeBuoy, badge: "1", badgeColor: "bg-rose-500/20 text-rose-400 border-rose-500/30" },
+      { name: "Referral System", href: "/referrals", icon: Gift, badge: "LIVE", badgeColor: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
     ],
   },
   {

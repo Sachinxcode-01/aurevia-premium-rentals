@@ -22,6 +22,7 @@ import { Logo } from "@/components/ui/Logo";
 import { MOCK_PRODUCTS, Product } from "@/lib/db/mockData";
 import { printOrDownloadInvoice } from "@/lib/utils/pdfGenerator";
 import BookingQRCode from "@/components/booking/BookingQRCode";
+import { useRealtimeReferrals } from "@/hooks/useRealtimeReferrals";
 
 /* ─── Constants ──────────────────────────────────────────────── */
 const STATUS_STYLES: Record<string, string> = {
@@ -669,12 +670,17 @@ export default function CustomerDashboard() {
                 <div className="dash-card glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-gold-champagne/5 relative overflow-hidden space-y-4">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
-                      <span className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne font-bold block">CREATOR VIRAL REFERRAL &amp; REWARDS PROGRAM</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne font-bold block">CREATOR VIRAL REFERRAL &amp; REWARDS PROGRAM</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] font-mono font-bold flex items-center gap-1 animate-pulse">
+                          ● Realtime Active
+                        </span>
+                      </div>
                       <h3 className="serif-heading text-lg font-light text-ivory">Earn ₹500 Reward Credit per Friend Booking</h3>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="px-3 py-1 bg-gold-champagne/15 border border-gold-champagne/40 text-gold-champagne text-xs font-mono font-bold rounded-xl">
-                        Your Reward Code: AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                        Your Code: AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -683,16 +689,32 @@ export default function CustomerDashboard() {
                     Invite your fellow cinematographers, directors, and photographers to AUREVIA. When they book using your referral link or enter your code at checkout, they get an instant <strong className="text-gold-champagne">₹200 discount</strong>, and you earn <strong className="text-emerald-400">₹500 in rental credits</strong> once their booking completes!
                   </p>
                   
-                  {/* Share Tools */}
+                  {/* Rewards Summary Bar */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-mono py-1">
+                    <div className="bg-black/40 p-3 rounded-xl border border-white/10">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Total Rewards Earned</span>
+                      <span className="text-sm font-bold text-emerald-400">₹{totalRewardEarned.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="bg-black/40 p-3 rounded-xl border border-white/10">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Pending Approvals</span>
+                      <span className="text-sm font-bold text-amber-400">₹{pendingReward.toLocaleString("en-IN")}</span>
+                    </div>
+                    <div className="bg-black/40 p-3 rounded-xl border border-white/10 col-span-2 sm:col-span-1">
+                      <span className="text-[9px] text-muted-gray uppercase block mb-0.5">Total Referred Creators</span>
+                      <span className="text-sm font-bold text-gold-champagne">{realtimeReferrals.length} Creators</span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Share Tools */}
                   <div className="flex flex-wrap gap-2.5 items-center pt-2">
-                    <div className="bg-black/50 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-gold-champagne select-all">
-                      http://localhost:3000/booking?ref=AUREVIA-REF-{String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                    <div className="bg-black/50 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-gold-champagne select-all truncate max-w-xs sm:max-w-md">
+                      {(typeof window !== "undefined" ? window.location.origin : "https://aurevia.com") + "/booking?ref=AUREVIA-REF-" + String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
                     </div>
 
                     <button
                       onClick={() => {
-                        const refUrl = `http://localhost:3000/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`;
-                        navigator.clipboard.writeText(refUrl);
+                        const link = (typeof window !== "undefined" ? window.location.origin : "https://aurevia.com") + "/booking?ref=AUREVIA-REF-" + String(profile?.id || "PREM").slice(0, 5).toUpperCase();
+                        navigator.clipboard.writeText(link);
                         toast.success("Referral link copied to clipboard!");
                       }}
                       className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-xs font-bold font-mono uppercase text-gold-champagne rounded-xl transition cursor-pointer"
@@ -702,7 +724,7 @@ export default function CustomerDashboard() {
 
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(
-                        `Hey! Rent cinema cameras & optics on AUREVIA with an instant ₹200 discount using my referral link:\nhttp://localhost:3000/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`
+                        `Hey! Rent cinema cameras & optics on AUREVIA with an instant ₹200 discount using my referral link:\n${(typeof window !== "undefined" ? window.location.origin : "https://aurevia.com")}/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -712,30 +734,36 @@ export default function CustomerDashboard() {
                     </a>
                   </div>
 
-                  {/* Referred Friends Roster */}
+                  {/* Referred Friends Realtime Roster */}
                   <div className="pt-3 border-t border-white/10 space-y-2">
-                    <span className="text-[10px] text-muted-gray uppercase font-mono tracking-widest block font-bold">Your Referred Creators Roster</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
-                      <div className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
-                        <div>
-                          <p className="text-ivory font-semibold">Rahul Sharma (Cinematographer)</p>
-                          <p className="text-[10px] text-muted-gray">Code used: AUREVIA-REF-PREM</p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[9px]">
-                          ₹500 Credit Earned
-                        </span>
-                      </div>
-
-                      <div className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
-                        <div>
-                          <p className="text-ivory font-semibold">Priya Verma (Director)</p>
-                          <p className="text-[10px] text-muted-gray">Code used: AUREVIA-REF-PREM</p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[9px]">
-                          First Booking Pending
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted-gray uppercase font-mono tracking-widest block font-bold">Your Referred Creators Roster</span>
+                      <span className="text-[9px] text-gold-champagne font-mono">Live Realtime Updates</span>
                     </div>
+                    
+                    {realtimeReferrals.length === 0 ? (
+                      <p className="text-xs text-muted-gray py-2 font-mono">No referred creators yet. Share your code to earn credits!</p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                        {realtimeReferrals.map((r) => (
+                          <div key={r.id} className="p-3 bg-black/40 rounded-xl border border-white/5 flex items-center justify-between">
+                            <div>
+                              <p className="text-ivory font-semibold">{r.referred_name}</p>
+                              <p className="text-[10px] text-muted-gray">Code used: {r.code_used}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                              r.status === "rewarded"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                : r.status === "pending"
+                                ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                                : "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                            }`}>
+                              {r.status === "rewarded" ? `₹${r.reward_amount} Earned` : r.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
