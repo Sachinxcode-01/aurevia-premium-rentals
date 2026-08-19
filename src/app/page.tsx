@@ -351,22 +351,22 @@ export default function Home() {
       <CanonScrollSequence onExploreClick={() => router.push("/explore")} />
 
       {/* Brand Highlights Ribbon */}
-      <section data-reveal className="reveal-section relative border-t border-b border-gold-border/20 bg-gradient-to-r from-obsidian via-rich-black-lux to-obsidian z-20 overflow-hidden">
+      <section data-reveal className="reveal-section relative border-t border-b border-gold-border/20 bg-linear-to-r from-obsidian via-rich-black-lux to-obsidian z-20 overflow-hidden">
         <div className="absolute inset-0 luxury-spotlight pointer-events-none" />
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-16 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 relative z-10">
-          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
+          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/2 border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
             <span className="serif-heading text-3xl md:text-4xl text-gold-champagne font-light tracking-tight group-hover:text-gold-warm transition-colors text-gold-glow">50+</span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-gray font-mono font-medium mt-2">L-Series Optics</span>
           </div>
-          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
+          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/2 border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
             <span className="serif-heading text-3xl md:text-4xl text-gold-champagne font-light tracking-tight group-hover:text-gold-warm transition-colors text-gold-glow">100%</span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-gray font-mono font-medium mt-2">Sensor Sanitized</span>
           </div>
-          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
+          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/2 border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
             <span className="serif-heading text-3xl md:text-4xl text-gold-champagne font-light tracking-tight group-hover:text-gold-warm transition-colors text-gold-glow">Zero</span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-gray font-mono font-medium mt-2">Deposit Scheme</span>
           </div>
-          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
+          <div className="flex flex-col items-center text-center p-6 rounded-xl bg-white/2 border border-white/5 hover:border-gold-champagne/30 transition-all duration-300 group hover-gold-glow">
             <span className="serif-heading text-3xl md:text-4xl text-gold-champagne font-light tracking-tight group-hover:text-gold-warm transition-colors text-gold-glow">Concierge</span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-gray font-mono font-medium mt-2">Pelican Delivery</span>
           </div>
@@ -418,7 +418,7 @@ export default function Home() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                className="camera-card-anim premium-surface opacity-0 min-w-[290px] sm:min-w-[350px] md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-[520px] group shadow-2xl transition-all duration-300"
+                className="camera-card-anim premium-surface opacity-0 min-w-72.5 sm:min-w-87.5 md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-130 group shadow-2xl transition-all duration-300"
                 style={{
                   transformStyle: "preserve-3d",
                   willChange: "transform",
@@ -530,7 +530,7 @@ export default function Home() {
                         href={`/gear/${camera.slug}`}
                         onMouseMove={handleMagneticMove}
                         onMouseLeave={handleMagneticLeave}
-                        className="py-2.5 bg-transparent hover:bg-white/[0.03] text-ivory hover:text-gold text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 hover:border-gold-champagne transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="py-2.5 bg-transparent hover:bg-white/3 text-ivory hover:text-gold text-[10px] font-bold uppercase tracking-wider rounded border border-white/10 hover:border-gold-champagne transition flex items-center justify-center gap-1.5 cursor-pointer"
                         style={{
                           transform: "translateZ(40px)",
                           willChange: "transform",
@@ -598,7 +598,7 @@ export default function Home() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                className="category-card-anim premium-surface opacity-0 min-w-[250px] sm:min-w-[290px] md:min-w-0 snap-center relative h-96 rounded-xl overflow-hidden border border-white/5 group shadow-2xl flex flex-col justify-end transition-all duration-300"
+                className="category-card-anim premium-surface opacity-0 min-w-62.5 sm:min-w-72.5 md:min-w-0 snap-center relative h-96 rounded-xl overflow-hidden border border-white/5 group shadow-2xl flex flex-col justify-end transition-all duration-300"
                 style={{
                   transformStyle: "preserve-3d",
                   willChange: "transform",
@@ -623,7 +623,7 @@ export default function Home() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-[0.75] contrast-[1.05]"
                   />
                   {/* Subtle glass reflection overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/35 to-transparent z-10" />
                 </div>
 
                 {/* Inner Content overlay card with preserve-3d layers */}
@@ -740,7 +740,7 @@ export default function Home() {
 
       {/* 8. Cinematic MP4 Showcase */}
       <section data-reveal className="reveal-section relative py-24 bg-black border-t border-b border-white/5 z-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black z-10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-black z-10" />
         <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-20">
           <div className="space-y-6">
             <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">
