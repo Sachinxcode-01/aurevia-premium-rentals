@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, User, Menu, X, ShoppingCart, LogOut } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
@@ -242,9 +243,12 @@ export default function Navbar({
                   title={userProfile.full_name ?? "Account Dashboard"}
                 >
                   {userProfile.avatar_url ? (
-                    <img
+                    <Image
                       src={userProfile.avatar_url}
                       alt={userProfile.full_name ?? "Avatar"}
+                      width={28}
+                      height={28}
+                      unoptimized
                       className="w-7 h-7 rounded-full object-cover border border-gold-champagne/40"
                     />
                   ) : (
