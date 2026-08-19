@@ -2,6 +2,10 @@
   "name": "aurevia-admin",
   "version": "0.1.0",
   "private": true,
+  "allowScripts": {
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "scripts": {
     "dev": "next dev --webpack -p 3002",
     "dev:turbo": "next dev -p 3002",

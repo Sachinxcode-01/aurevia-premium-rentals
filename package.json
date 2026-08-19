@@ -2,6 +2,10 @@
   "name": "aurevia-app",
   "version": "0.1.0",
   "private": true,
+  "allowScripts": {
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev",
