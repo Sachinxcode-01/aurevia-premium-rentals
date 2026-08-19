@@ -9,6 +9,7 @@ import CanonScrollSequence from "@/components/cinematic/CanonScrollSequence";
 import CameraShowroom from "@/components/three/CameraShowroom";
 import Timeline from "@/components/features/Timeline";
 import AnimatedAccordion from "@/components/ui/AnimatedAccordion";
+import ScrollProgressIndicator from "@/components/ui/ScrollProgressIndicator";
 import { useCart } from "@/hooks/useCart";
 import { MOCK_PRODUCTS, MOCK_FAQS, MOCK_BRANDS } from "@/lib/db/mockData";
 import type { FAQ, Product } from "@/lib/db/mockData";
@@ -26,7 +27,6 @@ import {
   Star,
   Eye,
   CheckCircle2,
-  ChevronUp,
   Phone,
   MessageCircle,
   Mail,
@@ -44,7 +44,6 @@ export default function Home() {
 
   const [faqsList, setFaqsList] = React.useState<FAQ[]>([]);
   const [productsList, setProductsList] = React.useState<Product[]>([]);
-  const [showScrollTop, setShowScrollTop] = React.useState(false);
 
   React.useEffect(() => {
     db.getFAQs().then(setFaqsList);
@@ -93,18 +92,9 @@ export default function Home() {
       db.getProducts().then(setProductsList);
     });
 
-    const handleScrollBtn = () => {
-      if (window.scrollY > 600) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
-    };
-    window.addEventListener("scroll", handleScrollBtn, { passive: true });
     return () => {
       unsubReview();
       unsubInventory();
-      window.removeEventListener("scroll", handleScrollBtn);
     };
   }, []);
 
@@ -351,6 +341,9 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen bg-obsidian text-ivory overflow-x-hidden">
+      {/* Scroll Progress & Back-to-Top Widget */}
+      <ScrollProgressIndicator />
+
       {/* 1. Header Navigation */}
       <Navbar cartItemCount={cart.length} />
 
@@ -1045,16 +1038,6 @@ export default function Home() {
           </span>
         </div>
       </footer>
-
-      {/* Floating Scroll to Top Widget (Positioned on the Left to avoid right-side action triggers) */}
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className={`fixed bottom-8 left-8 z-40 p-3.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/30 text-gold-champagne backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-gold-champagne hover:text-obsidian shadow-xl ${showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6 pointer-events-none"
-          }`}
-        aria-label="Scroll to top"
-      >
-        <ChevronUp size={18} />
-      </button>
     </main>
   );
 }

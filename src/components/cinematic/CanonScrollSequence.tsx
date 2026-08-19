@@ -61,6 +61,12 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     objectFit: "cover",
   });
 
+  // Current frame index for HUD telemetry
+  const currentFrameNum = Math.max(
+    1,
+    Math.min(TOTAL_FRAMES, Math.floor(scrollProgress * (TOTAL_FRAMES - 1)) + 1)
+  );
+
   // Frame scrubbing callback
   const handleScrollProgress = useCallback(
     (progress: number) => {
@@ -82,9 +88,9 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
       const trigger = ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: isMobile ? "+=200%" : "+=350%",
+        end: isMobile ? "+=220%" : "+=380%",
         pin: pinWrapperRef.current,
-        scrub: 0.2,
+        scrub: 0.15,
         onUpdate: (self) => {
           handleScrollProgress(self.progress);
         },
@@ -96,6 +102,32 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     },
     { scope: containerRef, dependencies: [isReady, isMobile, prefersReducedMotion, handleScrollProgress] }
   );
+
+  // Handler to jump scroll position directly to a sequence stage
+  const jumpToStage = (targetProgress: number) => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const rect = container.getBoundingClientRect();
+    const scrollTop = window.scrollY || window.pageYOffset;
+    const startY = rect.top + scrollTop;
+    const scrollableDistance = rect.height - window.innerHeight;
+    const destinationY = startY + targetProgress * scrollableDistance;
+
+    window.scrollTo({
+      top: destinationY,
+      behavior: "smooth",
+    });
+  };
+
+  // Stage checkpoints
+  const stages = [
+    { label: "01 • Intro", progress: 0.05 },
+    { label: "02 • Optics", progress: 0.25 },
+    { label: "03 • Control", progress: 0.45 },
+    { label: "04 • Video", progress: 0.65 },
+    { label: "05 • Specs", progress: 0.82 },
+    { label: "06 • Reserve", progress: 0.95 },
+  ];
 
   // Reduced motion / fallback layout
   if (prefersReducedMotion) {
@@ -129,7 +161,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
       <div
         ref={containerRef}
         className="relative w-full bg-obsidian"
-        style={{ height: isMobile ? "250vh" : "400vh" }}
+        style={{ height: isMobile ? "250vh" : "420vh" }}
       >
         {/* Sequence Preloading Overlay */}
         {!isReady && <SequenceLoader progressPct={progressPct} />}
@@ -153,14 +185,49 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
           {/* Frame-Aware Cinematic Typography Overlay */}
           <CinematicText progress={scrollProgress} onExploreClick={onExploreClick} />
 
-          {/* Scroll Progress Bar & Hint */}
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 z-30 h-32 w-[1.5px] bg-white/10 overflow-hidden">
-            <div
-              className="w-full bg-gradient-to-b from-gold-champagne/40 to-gold-champagne origin-top transition-transform duration-75"
-              style={{ transform: `scaleY(${Math.max(0.02, scrollProgress)})` }}
-            />
+          {/* Real-Time Sequence Telemetry Badge (Bottom Left HUD) */}
+          <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-[10px] font-mono text-muted-gray">
+            <span className="w-2 h-2 rounded-full bg-gold-champagne animate-ping" />
+            <span className="text-ivory font-medium">FRAME {String(currentFrameNum).padStart(3, "0")} / {TOTAL_FRAMES}</span>
+            <span className="text-white/20">|</span>
+            <span className="text-gold-champagne font-semibold">8K RAW 30FPS</span>
           </div>
 
+          {/* Interactive Sequence Stage Navigation Dots (Right Side) */}
+          <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 flex flex-col items-end gap-4">
+            <div className="relative h-44 w-[1.5px] bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="w-full bg-gradient-to-b from-gold-champagne/40 to-gold-champagne origin-top transition-transform duration-75"
+                style={{ transform: `scaleY(${Math.max(0.02, scrollProgress)})` }}
+              />
+            </div>
+
+            <div className="hidden lg:flex flex-col gap-2.5 items-end pr-1">
+              {stages.map((stg) => {
+                const isActive = Math.abs(scrollProgress - stg.progress) < 0.12;
+                return (
+                  <button
+                    key={stg.label}
+                    onClick={() => jumpToStage(stg.progress)}
+                    className="group flex items-center gap-2 text-[9px] uppercase tracking-widest font-mono cursor-pointer transition-all duration-300"
+                  >
+                    <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? "text-gold-champagne opacity-100 font-bold" : "text-muted-gray"}`}>
+                      {stg.label}
+                    </span>
+                    <span
+                      className={`w-2 h-2 rounded-full border transition-all duration-300 ${
+                        isActive
+                          ? "bg-gold-champagne border-gold-champagne scale-125 shadow-[0_0_8px_rgba(216,179,106,0.8)]"
+                          : "bg-white/10 border-white/20 group-hover:border-gold-champagne"
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Scroll Hint */}
           <div
             className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-300 pointer-events-none text-center ${
               scrollProgress > 0.95 ? "opacity-0" : "opacity-100"
@@ -176,3 +243,4 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     </GridBackground>
   );
 }
+

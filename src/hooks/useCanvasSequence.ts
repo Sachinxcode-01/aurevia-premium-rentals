@@ -17,6 +17,7 @@ export function useCanvasSequence({
 }: UseCanvasSequenceOptions) {
   const animationFrameIdRef = useRef<number>(0);
   const currentFrameRef = useRef<number>(1);
+  const targetFrameRef = useRef<number>(1);
 
   const drawFrame = useCallback(
     (frameIndex: number) => {
@@ -26,7 +27,8 @@ export function useCanvasSequence({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      const img = getFrameImage(frameIndex);
+      const roundedIndex = Math.round(frameIndex);
+      const img = getFrameImage(roundedIndex);
       if (!img) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -97,14 +99,28 @@ export function useCanvasSequence({
     };
   }, [updateCanvasSize]);
 
+  // Smooth RAF lerp loop to reach target frame smoothly
   const renderFrame = useCallback(
-    (frameIndex: number) => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-      }
-      animationFrameIdRef.current = requestAnimationFrame(() => {
-        drawFrame(frameIndex);
-      });
+    (targetIndex: number) => {
+      targetFrameRef.current = targetIndex;
+
+      if (animationFrameIdRef.current) return;
+
+      const loop = () => {
+        const diff = targetFrameRef.current - currentFrameRef.current;
+        if (Math.abs(diff) < 0.05) {
+          drawFrame(targetFrameRef.current);
+          animationFrameIdRef.current = 0;
+          return;
+        }
+
+        // Smooth damping factor 0.35
+        const nextFrame = currentFrameRef.current + diff * 0.35;
+        drawFrame(nextFrame);
+        animationFrameIdRef.current = requestAnimationFrame(loop);
+      };
+
+      animationFrameIdRef.current = requestAnimationFrame(loop);
     },
     [drawFrame]
   );
@@ -114,3 +130,4 @@ export function useCanvasSequence({
     updateCanvasSize,
   };
 }
+
