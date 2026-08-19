@@ -3,7 +3,7 @@
 import React, { Suspense, useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, ContactShadows, RoundedBox } from "@react-three/drei";
+import { OrbitControls, ContactShadows, RoundedBox, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { animate } from "animejs";
@@ -17,7 +17,11 @@ import {
   Eye, 
   Video, 
   HelpCircle, 
-  Settings 
+  Settings,
+  Zap,
+  Sun,
+  Boxes,
+  Sparkles
 } from "lucide-react";
 
 // ----------------------------------------------------
@@ -133,7 +137,7 @@ function CameraController({
 }
 
 // ----------------------------------------------------
-// HIGH-FIDELITY PROCEDURAL CANON EOS R5 MODEL
+// HIGH-FIDELITY PROCEDURAL CANON EOS R5 MODEL WITH EXPLODED VIEW
 // ----------------------------------------------------
 function CanonEOSR5({
   activeLens,
@@ -142,6 +146,8 @@ function CanonEOSR5({
   activeHotspot,
   isUserInteracting,
   prefersReducedMotion,
+  isExploded,
+  showOpticsRay,
 }: {
   activeLens: string;
   lensOffset: number;
@@ -149,12 +155,21 @@ function CanonEOSR5({
   activeHotspot: HotspotInfo | null;
   isUserInteracting: boolean;
   prefersReducedMotion: boolean;
+  isExploded: boolean;
+  showOpticsRay: boolean;
 }) {
   const modelGroupRef = useRef<THREE.Group>(null);
+
+  // Smooth lerp progress for Exploded View
+  const explodeFactor = useRef(0);
 
   // Auto rotation & subtle cursor parallax
   useFrame((state) => {
     if (!modelGroupRef.current) return;
+
+    // Explode factor smooth interpolation
+    const targetExplode = isExploded ? 1 : 0;
+    explodeFactor.current = THREE.MathUtils.lerp(explodeFactor.current, targetExplode, 0.08);
 
     // Slow auto-rotation when user is not interacting and no hotspot is open
     if (!isUserInteracting && !activeHotspot && !prefersReducedMotion) {
@@ -180,70 +195,82 @@ function CanonEOSR5({
     }
   });
 
+  const ef = explodeFactor.current;
+
   return (
     <group ref={modelGroupRef}>
       {/* 1. Camera Main Body Block (Charcoal Obsidian) */}
-      <RoundedBox args={[2.0, 1.35, 0.7]} radius={0.06} smoothness={8} position={[0, 0, 0]}>
-        <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
-      </RoundedBox>
+      <group position={[0, 0, -ef * 0.2]}>
+        <RoundedBox args={[2.0, 1.35, 0.7]} radius={0.06} smoothness={8} position={[0, 0, 0]}>
+          <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
+        </RoundedBox>
+      </group>
 
-      {/* 2. Textured Hand Grip (Deep rough rubber) */}
-      <RoundedBox args={[0.5, 1.25, 0.82]} radius={0.08} smoothness={8} position={[-0.75, -0.05, 0.15]}>
-        <meshStandardMaterial color="#111112" roughness={0.92} metalness={0.08} />
-      </RoundedBox>
+      {/* 2. Textured Hand Grip (Deep rough rubber) - Explodes to left */}
+      <group position={[-ef * 0.4, 0, 0]}>
+        <RoundedBox args={[0.5, 1.25, 0.82]} radius={0.08} smoothness={8} position={[-0.75, -0.05, 0.15]}>
+          <meshStandardMaterial color="#111112" roughness={0.92} metalness={0.08} />
+        </RoundedBox>
+      </group>
 
-      {/* 3. Electronic Viewfinder Eye Hump (Top Center) */}
-      <mesh position={[0, 0.72, 0]}>
-        <boxGeometry args={[0.55, 0.28, 0.55]} />
-        <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
-      </mesh>
-      {/* EVF Slanted back visor */}
-      <mesh position={[0, 0.79, -0.1]} rotation={[-Math.PI / 10, 0, 0]}>
-        <boxGeometry args={[0.55, 0.16, 0.4]} />
-        <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
-      </mesh>
-      {/* Viewfinder rubber eyepiece pad */}
-      <mesh position={[0, 0.72, -0.32]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.16, 0.18, 0.08, 16]} />
-        <meshStandardMaterial color="#0c0c0d" roughness={0.95} metalness={0.05} />
-      </mesh>
-      {/* Eye Cup view sensor (glowing blue-green screen inside) */}
-      <mesh position={[0, 0.72, -0.36]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.1, 0.1, 0.01, 16]} />
-        <meshStandardMaterial color="#112520" emissive="#0b4034" emissiveIntensity={0.8} roughness={0.1} />
-      </mesh>
+      {/* 3. Electronic Viewfinder Eye Hump (Top Center) - Explodes upward */}
+      <group position={[0, ef * 0.5, 0]}>
+        <mesh position={[0, 0.72, 0]}>
+          <boxGeometry args={[0.55, 0.28, 0.55]} />
+          <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
+        </mesh>
+        {/* EVF Slanted back visor */}
+        <mesh position={[0, 0.79, -0.1]} rotation={[-Math.PI / 10, 0, 0]}>
+          <boxGeometry args={[0.55, 0.16, 0.4]} />
+          <meshStandardMaterial color="#1a1a1c" roughness={0.65} metalness={0.28} />
+        </mesh>
+        {/* Viewfinder rubber eyepiece pad */}
+        <mesh position={[0, 0.72, -0.32]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.16, 0.18, 0.08, 16]} />
+          <meshStandardMaterial color="#0c0c0d" roughness={0.95} metalness={0.05} />
+        </mesh>
+        {/* Eye Cup view sensor */}
+        <mesh position={[0, 0.72, -0.36]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.1, 0.1, 0.01, 16]} />
+          <meshStandardMaterial color="#112520" emissive="#0b4034" emissiveIntensity={0.8} roughness={0.1} />
+        </mesh>
+        {/* Luxury gold rim surrounding EVF top hump */}
+        <mesh position={[0, 0.88, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.1, 0.015, 8, 24]} />
+          <meshStandardMaterial color="#D8B36A" roughness={0.15} metalness={0.95} />
+        </mesh>
+        {/* Hot Shoe Mounting Bracket */}
+        <mesh position={[0, 0.87, -0.05]}>
+          <boxGeometry args={[0.22, 0.02, 0.25]} />
+          <meshStandardMaterial color="#2d2d30" roughness={0.3} metalness={0.95} />
+        </mesh>
 
-      {/* 4. Luxury gold rim surrounding EVF top hump */}
-      <mesh position={[0, 0.88, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.1, 0.015, 8, 24]} />
-        <meshStandardMaterial color="#D8B36A" roughness={0.15} metalness={0.95} />
-      </mesh>
+        {/* 3D Callout Label for EVF when exploded */}
+        {isExploded && (
+          <Html position={[0, 1.2, 0]} center>
+            <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-gold-champagne/40 text-[9px] font-mono text-gold-champagne whitespace-nowrap shadow-xl">
+              EVF • 5.76M-Dot OLED 120fps
+            </div>
+          </Html>
+        )}
+      </group>
 
-      {/* 5. Hot Shoe Mounting Bracket */}
-      <mesh position={[0, 0.87, -0.05]}>
-        <boxGeometry args={[0.22, 0.02, 0.25]} />
-        <meshStandardMaterial color="#2d2d30" roughness={0.3} metalness={0.95} />
-      </mesh>
-
-      {/* 6. Top Dials & Shutter controls */}
-      {/* Mode Dial left side */}
-      <mesh position={[-0.55, 0.72, 0]} rotation={[0, 0, 0]}>
+      {/* 4. Top Dials & Shutter controls */}
+      <mesh position={[-0.55, 0.72 + ef * 0.3, 0]}>
         <cylinderGeometry args={[0.15, 0.15, 0.08, 24]} />
         <meshStandardMaterial color="#121213" roughness={0.4} metalness={0.85} />
       </mesh>
-      {/* Right dial collar ring */}
-      <mesh position={[0.55, 0.72, 0]} rotation={[0, 0, 0]}>
+      <mesh position={[0.55, 0.72 + ef * 0.3, 0]}>
         <cylinderGeometry args={[0.16, 0.16, 0.06, 24]} />
         <meshStandardMaterial color="#D8B36A" roughness={0.15} metalness={0.95} />
       </mesh>
-      {/* Shutter button on angled grip mount */}
-      <mesh position={[-0.75, 0.65, 0.35]} rotation={[Math.PI / 8, 0, 0]}>
+      <mesh position={[-0.75 - ef * 0.2, 0.65 + ef * 0.2, 0.35]} rotation={[Math.PI / 8, 0, 0]}>
         <cylinderGeometry args={[0.08, 0.08, 0.05, 16]} />
         <meshStandardMaterial color="#cacace" roughness={0.2} metalness={0.95} />
       </mesh>
 
-      {/* 7. Vari-angle Screen Panel (Articulated on back) */}
-      <group position={[0.1, -0.05, -0.36]} rotation={[0, Math.PI / 18, 0]}>
+      {/* 5. Vari-angle Screen Panel (Articulated on back) - Explodes backwards */}
+      <group position={[0.1 + ef * 0.6, -0.05, -0.36 - ef * 0.5]} rotation={[0, Math.PI / 18 + ef * 0.5, 0]}>
         <RoundedBox args={[1.05, 0.75, 0.05]} radius={0.015} smoothness={4}>
           <meshStandardMaterial color="#111112" roughness={0.5} metalness={0.2} />
         </RoundedBox>
@@ -252,10 +279,18 @@ function CanonEOSR5({
           <planeGeometry args={[0.96, 0.66]} />
           <meshStandardMaterial color="#080809" roughness={0.08} metalness={0.9} transparent opacity={0.95} />
         </mesh>
+        {/* LCD 3D Label when exploded */}
+        {isExploded && (
+          <Html position={[0, 0.6, 0]} center>
+            <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-gold-champagne/40 text-[9px] font-mono text-gold-champagne whitespace-nowrap shadow-xl">
+              3.2" Vari-Angle Touch LCD
+            </div>
+          </Html>
+        )}
       </group>
 
-      {/* 8. Metal Lens Mount Ring Collar */}
-      <group position={[0.2, 0, 0.35]}>
+      {/* 6. Metal Lens Mount Ring Collar & CMOS Sensor */}
+      <group position={[0.2, 0, 0.35 + ef * 0.4]}>
         {/* Outer Silver collar */}
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <cylinderGeometry args={[0.48, 0.48, 0.1, 40]} />
@@ -271,35 +306,61 @@ function CanonEOSR5({
           <cylinderGeometry args={[0.43, 0.43, 0.04, 32]} />
           <meshStandardMaterial color="#1a1a1c" roughness={0.5} metalness={0.9} />
         </mesh>
-        {/* 12-pin Gold connection contacts array (represented as a curved plate) */}
-        <mesh position={[0, -0.34, 0.035]} rotation={[0, 0, 0]}>
+        {/* 12-pin Gold connection contacts array */}
+        <mesh position={[0, -0.34, 0.035]}>
           <boxGeometry args={[0.2, 0.015, 0.015]} />
           <meshStandardMaterial color="#D8B36A" roughness={0.1} metalness={1.0} />
         </mesh>
 
-        {/* 45 MP CMOS Sensor Wafer (Visible deep inside Mount Collar when lens is detached) */}
-        <mesh position={[0, 0, -0.1]} rotation={[0, 0, 0]}>
-          <planeGeometry args={[0.48, 0.32]} />
-          <meshStandardMaterial 
-            color="#08382c" 
-            roughness={0.02} 
-            metalness={0.98} 
-            emissive="#00261d" 
-            emissiveIntensity={0.7} 
-          />
-        </mesh>
-        {/* Sensor glass protective reflection ring */}
-        <mesh position={[0, 0, -0.09]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.3, 0.3, 0.01, 24, 1, true]} />
-          <meshStandardMaterial color="#1a3b5c" roughness={0.0} metalness={0.8} transparent opacity={0.4} />
-        </mesh>
+        {/* 45 MP CMOS Sensor Wafer */}
+        <group position={[0, 0, -0.1 - ef * 0.4]}>
+          <mesh position={[0, 0, 0]}>
+            <planeGeometry args={[0.48, 0.32]} />
+            <meshStandardMaterial 
+              color="#08382c" 
+              roughness={0.02} 
+              metalness={0.98} 
+              emissive="#00261d" 
+              emissiveIntensity={0.8} 
+            />
+          </mesh>
+          <mesh position={[0, 0, 0.01]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.3, 0.3, 0.01, 24, 1, true]} />
+            <meshStandardMaterial color="#1a3b5c" roughness={0.0} metalness={0.8} transparent opacity={0.4} />
+          </mesh>
+
+          {/* Sensor 3D Label when exploded */}
+          {isExploded && (
+            <Html position={[0, -0.4, 0]} center>
+              <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-emerald-400/50 text-[9px] font-mono text-emerald-400 whitespace-nowrap shadow-xl">
+                45MP Full-Frame Wafer • 8K IBIS
+              </div>
+            </Html>
+          )}
+        </group>
       </group>
 
+      {/* Optical Light Beam Ray Visualization */}
+      {showOpticsRay && (
+        <group position={[0.2, 0, 0]}>
+          {/* Incoming parallel light cone */}
+          <mesh position={[0, 0, 1.2]} rotation={[Math.PI / 2, 0, 0]}>
+            <coneGeometry args={[0.42, 1.8, 32, 1, true]} />
+            <meshBasicMaterial color="#D8B36A" transparent opacity={0.22} side={THREE.DoubleSide} />
+          </mesh>
+          {/* Focused focal point light beam */}
+          <mesh position={[0, 0, 0.15]} rotation={[-Math.PI / 2, 0, 0]}>
+            <coneGeometry args={[0.24, 0.5, 32, 1, true]} />
+            <meshBasicMaterial color="#00e5ff" transparent opacity={0.35} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+      )}
+
       {/* ========================================================
-          9. PROCEDURAL SWAPPABLE LENSES WITH SMOOTH DETACHMENT
+          7. PROCEDURAL SWAPPABLE LENSES WITH SMOOTH EXPLODED OFFSET
           ======================================================== */}
       {activeLens === "rf24-70" && (
-        <group position={[0.2, 0, 0.4 + lensOffset]}>
+        <group position={[0.2, 0, 0.4 + lensOffset + ef * 1.2]}>
           {/* Main Lens Body */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.42, 0.42, 1.1, 32]} />
@@ -344,17 +405,6 @@ function CanonEOSR5({
               opacity={lensOpacity} 
             />
           </mesh>
-          {/* Front filter threads mount */}
-          <mesh position={[0, 0, 0.53]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.41, 0.41, 0.04, 32]} />
-            <meshStandardMaterial 
-              color="#1a1a1c" 
-              roughness={0.3} 
-              metalness={0.8} 
-              transparent 
-              opacity={lensOpacity} 
-            />
-          </mesh>
           {/* Front Optic Convex Glass element */}
           <mesh position={[0, 0, 0.54]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.38, 0.38, 0.02, 32]} />
@@ -363,14 +413,23 @@ function CanonEOSR5({
               roughness={0.0} 
               metalness={0.98} 
               transparent 
-              opacity={0.7 * lensOpacity} 
+              opacity={0.75 * lensOpacity} 
             />
           </mesh>
+
+          {/* Lens 3D Label when exploded */}
+          {isExploded && (
+            <Html position={[0, 0.7, 0]} center>
+              <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-gold-champagne/50 text-[9px] font-mono text-gold-champagne whitespace-nowrap shadow-xl">
+                RF 24-70mm f/2.8L IS USM Optics
+              </div>
+            </Html>
+          )}
         </group>
       )}
 
       {activeLens === "rf50" && (
-        <group position={[0.2, 0, 0.4 + lensOffset]}>
+        <group position={[0.2, 0, 0.4 + lensOffset + ef * 1.2]}>
           {/* Thick compact body barrel */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.46, 0.44, 0.72, 32]} />
@@ -404,7 +463,7 @@ function CanonEOSR5({
               opacity={lensOpacity} 
             />
           </mesh>
-          {/* Front element glass aperture (Massive aperture glass!) */}
+          {/* Front element glass aperture */}
           <mesh position={[0, 0, 0.34]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.42, 0.42, 0.02, 32]} />
             <meshStandardMaterial 
@@ -412,14 +471,23 @@ function CanonEOSR5({
               roughness={0.0} 
               metalness={0.99} 
               transparent 
-              opacity={0.75 * lensOpacity} 
+              opacity={0.78 * lensOpacity} 
             />
           </mesh>
+
+          {/* Lens 3D Label when exploded */}
+          {isExploded && (
+            <Html position={[0, 0.7, 0]} center>
+              <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-gold-champagne/50 text-[9px] font-mono text-gold-champagne whitespace-nowrap shadow-xl">
+                RF 50mm f/1.2L USM Prime
+              </div>
+            </Html>
+          )}
         </group>
       )}
 
       {activeLens === "rf70-200" && (
-        <group position={[0.2, 0, 0.4 + lensOffset]}>
+        <group position={[0.2, 0, 0.4 + lensOffset + ef * 1.2]}>
           {/* Main White telephoto barrel */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.43, 0.43, 1.6, 32]} />
@@ -438,39 +506,6 @@ function CanonEOSR5({
               color="#0c0c0d" 
               roughness={0.88} 
               metalness={0.05} 
-              transparent 
-              opacity={lensOpacity} 
-            />
-          </mesh>
-          {/* Black Focus ring */}
-          <mesh position={[0, 0, 0.4]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.432, 0.432, 0.22, 32]} />
-            <meshStandardMaterial 
-              color="#0c0c0d" 
-              roughness={0.88} 
-              metalness={0.05} 
-              transparent 
-              opacity={lensOpacity} 
-            />
-          </mesh>
-          {/* Silver Tripod Collar Mount collar */}
-          <mesh position={[0, 0, -0.6]} rotation={[Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.445, 0.445, 0.12, 32]} />
-            <meshStandardMaterial 
-              color="#acacb2" 
-              roughness={0.2} 
-              metalness={0.9} 
-              transparent 
-              opacity={lensOpacity} 
-            />
-          </mesh>
-          {/* Tripod mounting foot */}
-          <mesh position={[0, -0.55, -0.6]}>
-            <boxGeometry args={[0.15, 0.15, 0.2]} />
-            <meshStandardMaterial 
-              color="#acacb2" 
-              roughness={0.2} 
-              metalness={0.9} 
               transparent 
               opacity={lensOpacity} 
             />
@@ -497,6 +532,15 @@ function CanonEOSR5({
               opacity={0.68 * lensOpacity} 
             />
           </mesh>
+
+          {/* Lens 3D Label when exploded */}
+          {isExploded && (
+            <Html position={[0, 0.7, 0]} center>
+              <div className="bg-black/90 backdrop-blur-md px-2.5 py-1 rounded border border-gold-champagne/50 text-[9px] font-mono text-gold-champagne whitespace-nowrap shadow-xl">
+                RF 70-200mm f/2.8L IS USM Telephoto
+              </div>
+            </Html>
+          )}
         </group>
       )}
     </group>
@@ -516,6 +560,11 @@ export default function CameraShowroom() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [threeSupport, setThreeSupport] = useState(true);
   const [isUserInteracting, setIsUserInteracting] = useState(false);
+
+  // Advanced Showroom Features
+  const [isExploded, setIsExploded] = useState(false);
+  const [showOpticsRay, setShowOpticsRay] = useState(false);
+  const [lightingMood, setLightingMood] = useState<"gold" | "studio" | "anamorphic">("gold");
 
   // Animation values for lens swap
   const [currentLensModel, setCurrentLensModel] = useState<string>("rf24-70");
@@ -670,7 +719,6 @@ export default function CameraShowroom() {
   };
 
   const endInteraction = () => {
-    // Brief delay before resuming automatic rotation
     setTimeout(() => {
       setIsUserInteracting(false);
     }, 4500);
@@ -680,13 +728,13 @@ export default function CameraShowroom() {
     <div 
       ref={containerRef}
       className={`w-full relative glass-panel border-white/5 rounded-lg overflow-hidden flex flex-col lg:flex-row shadow-2xl transition-all duration-300 ${
-        isFullscreen ? "h-screen bg-black" : "h-[580px] md:h-[640px]"
+        isFullscreen ? "h-screen bg-black" : "h-[620px] md:h-[680px]"
       }`}
     >
       
       {/* 3D Scene Viewport Canvas */}
       <div 
-        className="flex-1 h-[350px] lg:h-full bg-obsidian relative overflow-hidden"
+        className="flex-1 h-[380px] lg:h-full bg-obsidian relative overflow-hidden"
         onPointerDown={startInteraction}
         onPointerUp={endInteraction}
       >
@@ -703,17 +751,32 @@ export default function CameraShowroom() {
         >
           {threeSupport ? (
             <Canvas camera={{ position: DEFAULT_CAMERA_POS, fov: 45 }}>
-              {/* Studio Lights */}
-              <ambientLight intensity={0.4} />
+              {/* Studio Lighting Mood Setup */}
+              <ambientLight intensity={lightingMood === "studio" ? 0.75 : 0.4} />
               
-              {/* Gold rim light for champagne gold highlight */}
-              <directionalLight position={[3, 4, -2]} intensity={2.8} color="#D8B36A" />
-              
-              {/* Soft key light */}
-              <directionalLight position={[-4, 2, 3]} intensity={1.5} color="#ffffff" />
-              
-              {/* Fill light */}
-              <directionalLight position={[0, -2, -3]} intensity={0.5} color="#ffffff" />
+              {lightingMood === "gold" && (
+                <>
+                  <directionalLight position={[3, 4, -2]} intensity={2.8} color="#D8B36A" />
+                  <directionalLight position={[-4, 2, 3]} intensity={1.5} color="#ffffff" />
+                  <directionalLight position={[0, -2, -3]} intensity={0.5} color="#ffffff" />
+                </>
+              )}
+
+              {lightingMood === "studio" && (
+                <>
+                  <directionalLight position={[3, 5, 2]} intensity={2.2} color="#ffffff" />
+                  <directionalLight position={[-3, 3, -2]} intensity={1.2} color="#f0f4f8" />
+                  <directionalLight position={[0, -3, 0]} intensity={0.6} color="#ffffff" />
+                </>
+              )}
+
+              {lightingMood === "anamorphic" && (
+                <>
+                  <directionalLight position={[4, 3, -2]} intensity={3.0} color="#00e5ff" />
+                  <directionalLight position={[-4, 2, 3]} intensity={2.5} color="#ff9100" />
+                  <directionalLight position={[0, -2, -3]} intensity={0.4} color="#ffffff" />
+                </>
+              )}
 
               {/* Canon EOS R5 Mesh Group */}
               <CanonEOSR5 
@@ -723,6 +786,8 @@ export default function CameraShowroom() {
                 activeHotspot={activeHotspot}
                 isUserInteracting={isUserInteracting}
                 prefersReducedMotion={prefersReducedMotion}
+                isExploded={isExploded}
+                showOpticsRay={showOpticsRay}
               />
 
               {/* Dynamic shadow plane underneath camera */}
@@ -769,14 +834,78 @@ export default function CameraShowroom() {
           )}
         </Suspense>
 
-        {/* Viewport Control overlays */}
+        {/* Top Control Bar: Exploded View, Optical Ray, Lighting mood */}
+        <div className="absolute top-4 right-4 flex flex-wrap items-center gap-2 z-30 pointer-events-auto">
+          {/* Exploded View Toggle */}
+          <button
+            onClick={() => setIsExploded(!isExploded)}
+            className={`px-3 py-1.5 text-[9px] uppercase tracking-widest font-mono font-bold rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+              isExploded 
+                ? "bg-gold-champagne text-obsidian border-gold-champagne shadow-lg shadow-gold-champagne/20" 
+                : "bg-black/60 hover:bg-black text-ivory border-white/10 hover:border-gold-champagne"
+            }`}
+          >
+            <Boxes size={12} />
+            {isExploded ? "Exploded View" : "Explode Parts"}
+          </button>
+
+          {/* Optical Ray Beam Toggle */}
+          <button
+            onClick={() => setShowOpticsRay(!showOpticsRay)}
+            className={`px-3 py-1.5 text-[9px] uppercase tracking-widest font-mono font-bold rounded-full border transition-all cursor-pointer flex items-center gap-1.5 ${
+              showOpticsRay 
+                ? "bg-cyan-500 text-obsidian border-cyan-400 shadow-lg shadow-cyan-500/20" 
+                : "bg-black/60 hover:bg-black text-ivory border-white/10 hover:border-cyan-400"
+            }`}
+          >
+            <Zap size={12} />
+            Optics Ray
+          </button>
+
+          {/* Lighting Mood Switcher */}
+          <div className="bg-black/60 border border-white/10 rounded-full p-0.5 flex items-center gap-1">
+            <button
+              onClick={() => setLightingMood("gold")}
+              title="Cyber Gold Rim"
+              className={`p-1.5 rounded-full text-[9px] font-mono transition cursor-pointer ${
+                lightingMood === "gold" ? "bg-gold-champagne text-obsidian font-bold" : "text-muted-gray hover:text-ivory"
+              }`}
+            >
+              <Sparkles size={11} />
+            </button>
+            <button
+              onClick={() => setLightingMood("studio")}
+              title="Clean Daylight Studio"
+              className={`p-1.5 rounded-full text-[9px] font-mono transition cursor-pointer ${
+                lightingMood === "studio" ? "bg-white text-obsidian font-bold" : "text-muted-gray hover:text-ivory"
+              }`}
+            >
+              <Sun size={11} />
+            </button>
+            <button
+              onClick={() => setLightingMood("anamorphic")}
+              title="Anamorphic Cyan/Amber Rim"
+              className={`p-1.5 rounded-full text-[9px] font-mono transition cursor-pointer ${
+                lightingMood === "anamorphic" ? "bg-cyan-400 text-obsidian font-bold" : "text-muted-gray hover:text-ivory"
+              }`}
+            >
+              <Video size={11} />
+            </button>
+          </div>
+        </div>
+
+        {/* Viewport Bottom Controls */}
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none z-30">
           <span className="font-mono text-[8px] text-muted-gray uppercase tracking-[0.2em]">
             Drag to Rotate • Scroll to Zoom • Tap Hotspots
           </span>
           <div className="flex items-center gap-2 pointer-events-auto">
             <button
-              onClick={() => selectHotspot(null)}
+              onClick={() => {
+                selectHotspot(null);
+                setIsExploded(false);
+                setShowOpticsRay(false);
+              }}
               title="Reset View"
               className="w-8 h-8 rounded-full bg-black/60 hover:bg-black border border-white/10 hover:border-gold-champagne text-gold-champagne flex items-center justify-center transition cursor-pointer"
             >
@@ -908,9 +1037,13 @@ export default function CameraShowroom() {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-white/5">
+        <div className="pt-6 border-t border-white/5 flex flex-col gap-2">
           <button
-            onClick={() => selectHotspot(null)}
+            onClick={() => {
+              selectHotspot(null);
+              setIsExploded(false);
+              setShowOpticsRay(false);
+            }}
             className="w-full py-2.5 bg-white/5 border border-white/10 hover:border-gold-champagne text-gold-champagne text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center justify-center gap-1.5"
           >
             <RotateCcw size={12} />
@@ -922,3 +1055,4 @@ export default function CameraShowroom() {
     </div>
   );
 }
+
