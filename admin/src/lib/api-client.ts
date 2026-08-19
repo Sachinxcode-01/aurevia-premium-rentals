@@ -1,3 +1,5 @@
+import { createClient } from "@/utils/supabase/client";
+
 function getApiBase(): string {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (typeof window !== "undefined") {
@@ -13,12 +15,24 @@ function getApiBase(): string {
 async function fetchAdminApi<T>(endpoint: string, options: RequestInit = {}): Promise<{ success: boolean; data?: T; error?: { code: string; message: string }; message?: string }> {
   try {
     const baseUrl = getApiBase();
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(options.headers as Record<string, string>),
+    };
+
+    if (typeof window !== "undefined") {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          headers["Authorization"] = `Bearer ${data.session.access_token}`;
+        }
+      } catch {}
+    }
+
     const res = await fetch(`${baseUrl}${endpoint}`, {
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
