@@ -61,7 +61,7 @@ export async function signUpAction(
 
   const cleanEmail = email.toLowerCase().trim();
   const supabase = await createServerSupabaseClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://aurevia-app.vercel.app";
 
   // Attempt native Supabase Auth sign up (uses Supabase default email service)
   const { data, error } = await supabase.auth.signUp({
@@ -256,7 +256,7 @@ export async function sendResetEmailAction(email: string): Promise<AuthResult> {
 
   const cleanEmail = email.toLowerCase().trim();
   const supabase = await createServerSupabaseClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://aurevia-app.vercel.app";
 
   const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
     redirectTo: `${origin}/reset-password`,
@@ -303,7 +303,7 @@ export async function resendVerificationAction(email: string): Promise<AuthResul
     type: "signup",
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://aurevia-app.vercel.app"}/auth/callback`,
     },
   });
   if (error) return { success: false, error: error.message };

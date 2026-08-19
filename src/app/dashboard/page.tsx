@@ -110,6 +110,16 @@ export default function CustomerDashboard() {
   const toast = useToast();
   const { referrals: realtimeReferrals, totalRewardEarned, pendingReward } = useRealtimeReferrals();
 
+  const [originUrl, setOriginUrl] = useState<string>("https://aurevia-app.vercel.app");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOriginUrl(window.location.origin);
+    } else if (process.env.NEXT_PUBLIC_SITE_URL) {
+      setOriginUrl(process.env.NEXT_PUBLIC_SITE_URL);
+    }
+  }, []);
+
   const [profile, setProfile]           = useState<any | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [bookings, setBookings]         = useState<any[]>([]);
@@ -709,12 +719,12 @@ export default function CustomerDashboard() {
                   {/* Dynamic Share Tools */}
                   <div className="flex flex-wrap gap-2.5 items-center pt-2">
                     <div className="bg-black/50 border border-white/15 rounded-xl px-3 py-2 text-xs font-mono text-gold-champagne select-all truncate max-w-xs sm:max-w-md">
-                      {(typeof window !== "undefined" ? window.location.origin : "https://aurevia.com") + "/booking?ref=AUREVIA-REF-" + String(profile?.id || "PREM").slice(0, 5).toUpperCase()}
+                      {`${originUrl}/booking?ref=AUREVIA-REF-${String(profile?.id || "3F545").slice(0, 5).toUpperCase()}`}
                     </div>
 
                     <button
                       onClick={() => {
-                        const link = (typeof window !== "undefined" ? window.location.origin : "https://aurevia.com") + "/booking?ref=AUREVIA-REF-" + String(profile?.id || "PREM").slice(0, 5).toUpperCase();
+                        const link = `${originUrl}/booking?ref=AUREVIA-REF-${String(profile?.id || "3F545").slice(0, 5).toUpperCase()}`;
                         navigator.clipboard.writeText(link);
                         toast.success("Referral link copied to clipboard!");
                       }}
@@ -725,7 +735,7 @@ export default function CustomerDashboard() {
 
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(
-                        `Hey! Rent cinema cameras & optics on AUREVIA with an instant ₹200 discount using my referral link:\n${(typeof window !== "undefined" ? window.location.origin : "https://aurevia.com")}/booking?ref=AUREVIA-REF-${String(profile?.id || "PREM").slice(0, 5).toUpperCase()}`
+                        `Hey! Rent cinema cameras & optics on AUREVIA with an instant ₹200 discount using my referral link:\n${originUrl}/booking?ref=AUREVIA-REF-${String(profile?.id || "3F545").slice(0, 5).toUpperCase()}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
