@@ -8,7 +8,7 @@
 
 # AUREVIA
 
-### Premium Camera Rentals by Prem
+### Premium Camera Rentals by Prem & Sachin
 
 > *"Frame the Extraordinary."*
 
@@ -20,7 +20,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![Three.js](https://img.shields.io/badge/Three.js-R185-000000?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org)
-[![Anime.js](https://img.shields.io/badge/Anime.js-4.5-FF6B6B?style=for-the-badge)](https://animejs.com)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
 [![Build Status](https://img.shields.io/badge/Build-Passing-22c55e?style=flat-square)](.)
@@ -30,7 +29,6 @@
 <br/>
 
 [📋 View Repository](https://github.com/Sachinxcode-01/aurevia-premium-rentals) &nbsp;·&nbsp;
-[🎬 Live Demo](#) &nbsp;·&nbsp;
 [📖 Documentation](#table-of-contents) &nbsp;·&nbsp;
 [📞 Contact](#contact--credits)
 
@@ -41,783 +39,272 @@
 ## Table of Contents
 
 - [Project Overview](#project-overview)
-- [Key Features](#key-features)
-- [6-Digit Email OTP Authentication](#6-digit-email-otp-authentication)
-- [Admin Customer Engagement Suite](#admin-customer-engagement-suite)
-- [Real-Time Cross-App Sync Hub](#real-time-cross-app-sync-hub)
-- [Hero Scroll Animation](#hero-scroll-animation)
-- [Interactive 3D Optics Showroom](#interactive-3d-optics-showroom)
-- [Rental & Booking Workflow](#rental--booking-workflow)
-- [Customer Dashboard](#customer-dashboard)
-- [Admin Analytics Dashboard](#admin-analytics-dashboard)
+- [Key Production Features](#key-production-features)
+- [Supabase SSR Auth & Production Google OAuth](#supabase-ssr-auth--production-google-oauth)
+- [Realtime Viral Referral & Rewards System](#realtime-viral-referral--rewards-system)
+- [Pelican Flight-Case Dispatch & Inspection Terminal](#pelican-flight-case-dispatch--inspection-terminal)
+- [Interactive 3D Camera & Optics Showroom](#interactive-3d-camera--optics-showroom)
+- [Hero Scroll Canvas Animation](#hero-scroll-canvas-animation)
+- [Admin Operations & Customer Engagement Suite](#admin-operations--customer-engagement-suite)
+- [Supabase Database & Realtime Architecture](#supabase-database--realtime-architecture)
 - [Technology Stack](#technology-stack)
-- [System Architecture](#system-architecture)
-- [Application Workflow](#application-workflow)
-- [Project Structure](#project-structure)
-- [Database Overview](#database-overview)
 - [Environment Variables](#environment-variables)
 - [Installation & Setup](#installation--setup)
-- [Development Commands](#development-commands)
-- [Production Build](#production-build)
-- [Deployment](#deployment)
-- [Security Features](#security-features)
-- [Performance Optimizations](#performance-optimizations)
-- [Roadmap](#roadmap)
+- [Verification & Build Commands](#verification--build-commands)
+- [Deployment Guide](#deployment-guide)
+- [Security & Concurrency Protection](#security--concurrency-protection)
 - [Contact & Credits](#contact--credits)
-- [License](#license)
 
 ---
 
 ## Project Overview
 
-**AUREVIA** is a premium full-stack camera-rental platform crafted for professional photographers, cinematographers, and production houses. It provides an immersive, cinematic interface to browse, compare, book, and manage high-end cameras, cinema lenses, gimbals, professional lighting, audio equipment, and production accessories.
+**AUREVIA** is an enterprise-grade full-stack camera rental platform engineered for professional cinematographers, commercial directors, and film production houses. It provides a luxury editorial interface to discover, inspect in 3D, reserve, and manage flagship cinema cameras, anamorphic optics, gimbals, lighting rigs, and sound equipment.
 
-Built on **Next.js 16** with a **React 19 + TypeScript** architecture, AUREVIA delivers a luxury editorial experience through a **canvas-based scroll animation**, a **photorealistic Three.js camera showroom**, a **6-digit email OTP authentication system**, a **customer rental dashboard**, an **Admin Customer Engagement Suite** (Reviews Moderation, Online Enquiries, Support Tickets), and a **Real-Time Cross-App Sync Engine** — all backed by a production-ready **Supabase PostgreSQL** database schema.
-
-**Designed for:**
-
-- Commercial photographers and directors
-- Wedding and fashion cinematographers
-- Film productions and documentary crews
-- Production studios requiring on-demand gear rentals
+Built on **Next.js 16 (App Router)** with a **React 19 + TypeScript 5** architecture, AUREVIA delivers a state-of-the-art experience powered by **Supabase SSR Authentication & Google OAuth**, a **Realtime Referral & Rewards Architecture**, a **Canvas-Based Scroll Engine**, a **Photorealistic 3D Optics Showroom**, a **Pelican Flight-Case Dispatch Terminal**, an **Admin Management Console**, and a production-hardened **Supabase PostgreSQL** backend.
 
 ---
 
-## Key Features
+## Key Production Features
 
-| Feature | Details |
+| Feature | Description |
 |---|---|
-| 🔑 **6-Digit Email OTP Auth** | 100% on-website OTP verification for Registration and Password Reset via Gmail SMTP (zero link redirects) |
-| ⭐ **Customer Reviews Moderation** | Admin review approval queue (`/reviews`); approved reviews auto-publish to live public website |
-| 📩 **Online Enquiry Control** | Inquiry resolution center (`/enquiries`); direct email response to customers via Gmail SMTP |
-| 🎧 **Support Ticket Desk** | Threaded customer support ticket management (`/tickets`) with direct email notification triggers |
-| ⚡ **Real-Time Cross-App Sync** | Live event bus (`realtimeHub`) syncing Admin (`:3002`) and Public Site (`:3000`) instantly |
-| 🎬 **Canon Image Sequence Hero** | Scroll-mapped 210-frame canvas animation with progressive preloading and MP4 mobile fallback |
-| 🔭 **Interactive 3D Showroom** | Photorealistic Canon EOS R5 model with swappable lenses, hotspot inspection, and orbit controls |
-| 🎯 **3D Motion Cards** | GPU-accelerated parallax tilt cards with dynamic shadows, gloss sheen, and magnetic buttons |
-| 🛒 **Rental Cart & Booking** | Multi-item cart, accessory add-ons, date selection, availability checking, and checkout |
-| 📋 **Customer Dashboard** | Active rentals, booking history, wishlist, support tickets, and profile management |
-| 📊 **Admin Analytics** | Revenue charts, inventory status, booking pipeline, and advanced reporting via Recharts |
-| 🔐 **Secure Auth & RBAC** | Supabase Auth + custom RBAC middleware, 256-bit SSL, and rate-limited email dispatches |
-| 📱 **Fully Responsive** | Mobile-first design with touch interactions, swipe carousels, and simplified animations |
-| 🚀 **SEO Optimized** | Metadata API, Open Graph, Twitter cards, dynamic sitemap, and robots.txt |
+| 🔐 **Supabase SSR & Google OAuth** | Production-ready Supabase Auth layer with `@supabase/ssr`, Google Sign-In button, OAuth PKCE code exchange, and enforced `role: "customer"` RLS profile creation |
+| 🎁 **Realtime Referral System** | Dynamic viral referral code links (`AUREVIA-REF-XXXXX`), live Supabase WebSockets updates on customer dashboard, and full **Admin Referral Control Terminal** (`/referrals`) |
+| 🧳 **Pelican Inspection Terminal** | Interactive dispatch & return inspection terminal (`/returns`) with flight-case barcode scanning, serial checklist, sensor cleanliness certification, and PDF manifest generator |
+| 🔭 **Interactive 3D Optics Showroom** | Photorealistic Three.js / R3F camera showroom with Exploded View lerp mode, floating 3D Drei callouts, optical ray path, and lighting mood presets |
+| 🎬 **Hero Scroll Sequence** | Scroll-mapped 210-frame canvas animation with smooth lerped frame damping, telemetry HUD, and stage navigation controls |
+| 🎧 **Support Ticket System** | Threaded customer support desk with real-time websocket replies between customer dashboard and admin console |
+| ⚡ **Realtime Cross-App Engine** | Live multi-channel event sync bridging Admin (`:3002`) and Customer Website (`:3000`) for bookings, inventory, and support |
+| 📊 **Admin Operations Suite** | Analytics command center, booking pipeline management, KYC verification center, reviews moderation, and refund processing |
+| 🛡️ **PostgreSQL Concurrency Protection** | Transactional row-level locking (`FOR UPDATE SKIP LOCKED`) in `reserve_inventory_for_booking` to eliminate double-booking |
 
 ---
 
-## 6-Digit Email OTP Authentication
+## Supabase SSR Auth & Production Google OAuth
 
-AUREVIA uses a **100% on-website 6-Digit Email OTP Authentication Engine** powered by Gmail SMTP (`Nodemailer`). Email verification links and external page redirects have been completely eliminated for maximum security and user conversion.
-
-### Features & Workflow
+AUREVIA integrates **Supabase Auth** as its single authoritative authentication system for both email/password credentials and Google OAuth.
 
 ```
-1. Account Registration (/register)
-   └─ Enter Name, Email, Phone, Password → Click "Send Verification OTP"
-   └─ Receive branded email with 6-digit OTP code (e.g. 739102)
-   └─ Enter OTP directly on website → Account verified instantly!
-
-2. Forgot Password (/forgot-password)
-   └─ Enter Email → Receive branded email with 6-digit OTP code (e.g. 482910)
-   └─ Enter OTP on website → Prompted to enter New Password
-   └─ Password updated securely on website!
+Customer Website (/login or /register)
+  ├─ Click "Continue with Google"
+  ├─ Trigger supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: origin + '/auth/callback' } })
+  ├─ Redirect to Google OAuth → Consent → Supabase Auth Server
+  ├─ Redirect to /auth/callback?code=...
+  ├─ Exchange OAuth code for HTTP-only cookies via @supabase/ssr server client
+  ├─ Upsert profile in `profiles` table with enforced role: "customer"
+  └─ Redirect to /dashboard
 ```
 
-- **Clean Email Styling**: Minimalist, high-deliverability HTML email templates with logo header and no unnecessary markup.
-- **Idempotency & Expiry**: 6-digit OTP codes expire automatically in 10 minutes and support resend rate-limiting.
-
-> **Files:** [`src/lib/email/mailer.ts`](src/lib/email/mailer.ts) &nbsp;·&nbsp; [`src/lib/actions/auth.ts`](src/lib/actions/auth.ts)
-
----
-
-## Admin Customer Engagement Suite
-
-The **AUREVIA Admin Application** (`http://localhost:3002`) includes a dedicated **Customer Engagement & Operations Suite** for managing reviews, enquiries, and support tickets:
-
-### 1. ⭐ Customer Reviews Moderation (`/reviews`)
-- **Moderation Queue**: Inspect, approve, or reject customer ratings before they publish to the live site.
-- **Live Publishing**: Only **Approved** reviews populate the homepage Testimonials section.
-- **KPI Metrics**: Average Rating (e.g. 4.9 ★), Total Submissions, Pending Queue, and Approved Public Reviews.
-- **Admin Notes**: Attach internal moderation rationale or feedback notes.
-
-### 2. 📩 Online Enquiry Control (`/enquiries`)
-- **Query Resolution Center**: Track all online customer enquiries (`ENQ-9082`, etc.) with equipment of interest and rental dates.
-- **Direct Email Response**: Compose an admin reply directly inside the modal and click **"Send Email Response"** to dispatch a branded email to the customer via Gmail SMTP and mark the query `Resolved`.
-- **Priority & Status**: Filter by Priority (`High`, `Medium`, `Low`) and Status (`New`, `In Progress`, `Resolved`).
-
-### 3. 🎧 Support Ticket Center (`/tickets`)
-- **Concierge Desk**: View technical, billing, and pickup/delivery tickets (`TCK-4091`, etc.).
-- **Threaded History**: View full chronological message logs between customer and concierge.
-- **Instant Email Trigger**: Admin replies update the ticket thread and send an email notification to the customer.
-
-> **Files:** [`admin/src/app/(dashboard)/reviews/page.tsx`](admin/src/app/(dashboard)/reviews/page.tsx) &nbsp;·&nbsp; [`admin/src/app/(dashboard)/enquiries/page.tsx`](admin/src/app/(dashboard)/enquiries/page.tsx) &nbsp;·&nbsp; [`admin/src/app/(dashboard)/tickets/page.tsx`](admin/src/app/(dashboard)/tickets/page.tsx)
+### Features & Security
+- **OAuth Callback Handler**: `src/app/auth/callback/route.ts` exchanges OAuth code, updates profile avatar, and guarantees `role: "customer"`.
+- **Google OAuth Button**: `src/components/ui/GoogleSignInButton.tsx` with official 4-color Google G SVG and loading spinner.
+- **Navbar Profile Avatar**: Displays user Google avatar or initials badge via Next.js `<Image unoptimized />` component (`lh3.googleusercontent.com`).
+- **Protected Routes Proxy**: `src/proxy.ts` automatically guards `/dashboard`, `/profile`, `/checkout`, `/kyc`, `/notifications`, `/booking` and redirects unauthenticated users to `/login?redirect=...`.
 
 ---
 
-## Real-Time Cross-App Sync Hub
+## Realtime Viral Referral & Rewards System
 
-AUREVIA features a **Real-Time Cross-App Event Synchronization Engine** (`realtimeHub`) that connects the **Admin App** (`:3002`) and **Public Website** (`:3000`) live:
+AUREVIA features a production-level **Realtime Referral & Rewards Program** empowering creators to earn rental credits by inviting fellow filmmakers.
 
 ```
-┌───────────────────────────────────────┐            ┌───────────────────────────────────────┐
-│              ADMIN APP                │            │            PUBLIC WEBSITE             │
-│        (http://localhost:3002)        │            │        (http://localhost:3000)        │
-├───────────────────────────────────────┤            ├───────────────────────────────────────┤
-│ 1. Admin approves a Review            │ ─────────► │ 1. Immediately receives               │
-│ 2. Admin responds to Enquiry          │ Broadcast  │    "REVIEW_MODERATED" event           │
-│ 3. Admin replies to Support Ticket    │ Channel &  │ 2. Public Testimonials section        │
-│ 4. Admin updates Booking/Inventory    │ Local      │    updates live on screen without     │
-│                                       │ Storage    │    reloading the page!                │
-└───────────────────────────────────────┘            └───────────────────────────────────────┘
+1. Customer Shares Referral Link:
+   https://aurevia.com/booking?ref=AUREVIA-REF-PREM
+
+2. Friend Accepts & Books Gear:
+   - Friend gets instant ₹200 discount at checkout
+   - Referral record inserted into Supabase `referrals` table (status: 'pending')
+
+3. Realtime Dashboard Update:
+   - Referrer's Customer Dashboard receives instant Supabase WebSocket payload
+   - Referred Creators Roster and Pending Credits update live on screen!
+
+4. Admin Control Terminal (/referrals):
+   - Admin inspects referral analytics (Total Referred, Rewards Issued, Conversion Rate)
+   - Admin approves credit → Status changes to 'rewarded' → ₹500 rental credit released
 ```
 
-- **Architecture**: `BroadcastChannel("aurevia_realtime_sync_channel")` + `window.addEventListener("storage")` fallback for seamless cross-port communication.
-- **Event Types**: `REVIEW_MODERATED`, `ENQUIRY_UPDATED`, `TICKET_UPDATED`, `BOOKING_UPDATED`, `INVENTORY_UPDATED`.
-
-> **Files:** [`src/lib/realtime/realtimeHub.ts`](src/lib/realtime/realtimeHub.ts) &nbsp;·&nbsp; [`admin/src/lib/realtime/realtimeHub.ts`](admin/src/lib/realtime/realtimeHub.ts)
+### Admin Control Terminal (`admin/src/app/(dashboard)/referrals/page.tsx`)
+- **Analytics KPIs**: Total Viral Referrals, Total Rewards Issued, Pending Approvals, Conversion Rate %.
+- **Global Config Controls**: Adjust default Referrer Credit (₹500) and Friend Signup Discount (₹200).
+- **Realtime Approval Actions**: "Approve & Credit ₹500", "Reject Referral", and CSV manifest exporter.
 
 ---
 
-## Hero Scroll Animation
+## Pelican Flight-Case Dispatch & Inspection Terminal
 
-AUREVIA's hero section features a **cinematic Canon EOS R5 reveal** mapped precisely to scroll position — similar to Apple product pages — built entirely in-browser with zero video playback on desktop.
+Located in the Admin App at [`admin/src/app/(dashboard)/returns/page.tsx`](file:///c:/Users/kalin/OneDrive/Documents/Projects/aurevia-premium-rentals-main/aurevia-premium-rentals-main/admin/src/app/(dashboard)/returns/page.tsx), this terminal streamlines flight-case dispatch and return inspections.
 
-### How It Works
+### Features
+- **Barcode & Serial Scanner**: Instant lookup for Pelican flight cases (`PEL-R5-108`, `PEL-RED-204`, etc.).
+- **Serial Checklist**: Interactive verification of camera body, cine prime lens, batteries, charger, and memory cards.
+- **Sensor Cleanliness Certification**: 5-point optical sensor inspection with cleanliness rating.
+- **Damage Fee Calculator**: Dynamic fee assessment for scratched elements or missing accessories.
+- **PDF Packing Manifest Generator**: Generates and prints official dispatch manifests with signature blocks.
+
+---
+
+## Interactive 3D Camera & Optics Showroom
+
+Built with **React Three Fiber (R3F)**, **Drei**, and **Three.js** at [`src/components/three/CameraShowroom.tsx`](file:///c:/Users/kalin/OneDrive/Documents/Projects/aurevia-premium-rentals-main/aurevia-premium-rentals-main/src/components/three/CameraShowroom.tsx).
+
+### Highlights
+- **Exploded View Mode**: Interactive lerp slider exploding camera body, mount flange, sensor block, and lens assembly into 3D space.
+- **Floating 3D Callout Labels**: HTML callouts attached directly to 3D mesh nodes inspecting sensor resolution, mount type, and optics.
+- **Optical Ray Path**: Visualized light ray trace passing through lens elements onto the full-frame CMOS sensor.
+- **Studio Lighting Moods**: Toggleable lighting presets (`gold`, `studio`, `anamorphic`).
+
+---
+
+## Hero Scroll Canvas Animation
+
+Located at [`src/components/hero/HeroScrollSequence.tsx`](file:///c:/Users/kalin/OneDrive/Documents/Projects/aurevia-premium-rentals-main/aurevia-premium-rentals-main/src/components/hero/HeroScrollSequence.tsx).
+
+- **210-Frame Render Loop**: Preloaded canvas sequence rendering camera assembly mapped to scroll depth.
+- **Frame Damping**: RAF lerped frame interpolation eliminating scroll stutter.
+- **Telemetry HUD**: Displays current frame index, camera angle, and scroll percentage.
+- **Stage Navigation**: Clickable dots for instant jumping between story milestones.
+
+---
+
+## Admin Operations & Customer Engagement Suite
+
+The **AUREVIA Admin App** (`http://localhost:3002`) provides complete operational management:
+
+- **Bookings & Calendar**: Live timeline schedule of fleet reservations and availability blocks.
+- **Fleet Inventory**: Unit-level tracking (`inventory_units`) by serial number, condition, and status.
+- **KYC Center**: Identity verification document review queue (`aadhaar`, `driving_licence`, `pan`).
+- **Reviews Moderation**: Admin queue (`/reviews`) approving customer ratings for public homepage display.
+- **Support Tickets**: Threaded customer support ticket resolution (`/tickets`) with real-time websocket sync.
+- **Payments & Refunds**: Razorpay transaction logs, webhook verification, and refund requests.
+
+---
+
+## Supabase Database & Realtime Architecture
+
+AUREVIA is backed by a 32-table **Supabase PostgreSQL** database schema managed via structured SQL migrations:
 
 ```
-Page Load
-  └─ Preload frames 1–30 + key milestones [50, 75, 100, 125, 150, 175, 200, 210]
-  └─ Decode off-screen via img.decode() to prevent main-thread jank
-  └─ Draw frame 1 instantly — no blank screen
-
-User Scrolls (400vh track → sticky 100vh canvas)
-  └─ requestAnimationFrame tick loop maps scroll position → target frame index
-  └─ Lerp(currentFrame, targetFrame, 0.55) for smooth deceleration
-  └─ Cache-miss fallback searches nearest loaded frame — eliminates flickering
-  └─ IntersectionObserver pauses tick loop when hero leaves viewport
-
-Scroll Milestones → Anime.js Stage Gates
-  ├─ 0–12%   Empty studio reveal — Intro text fade in
-  ├─ 12–30%  Camera materialises — Main heading animation
-  ├─ 75–95%  Full reveal — Technical spec panel slide in
-  └─ 82–100% Canvas scale(0.92) + fade out → transition to next section
+Database Schema:
+  profiles ────────► bookings ────────► booking_items ────────► inventory_units
+     │                  │                     │                      │
+     ├─ kyc_documents   ├─ payments           └─ product_addons      └─ maintenance_records
+     ├─ referrals       ├─ refunds
+     ├─ support_tickets └─ returns ──────────► damage_reports
+     └─ notifications
 ```
 
-### Technical Specifications
-
-| Property | Value |
-|---|---|
-| **Total frames** | 210 JPEG images |
-| **Frame format** | `/assets/canon-sequence/frame-{n}.jpg` |
-| **Scroll height** | `400vh` container, `100vh` sticky canvas |
-| **Lerp factor** | `0.55` (responsive + smooth deceleration) |
-| **HiDPI** | `window.devicePixelRatio` scaled canvas |
-| **Mobile fallback** | MP4 video (`/assets/videos/canonvideo.mp4`) |
-| **Reduced motion** | Instant video fallback, no frame preloading |
-| **Cache strategy** | Progressive batches of 15 frames, 50ms gaps |
-
-> **File:** [`src/components/hero/HeroScrollSequence.tsx`](src/components/hero/HeroScrollSequence.tsx)
-
----
-
-## Interactive 3D Optics Showroom
-
-The **AUREVIA Optics Showroom** is a fully interactive, photorealistic virtual studio built with **React Three Fiber**, **Drei**, and **Three.js**.
-
-### Studio Configuration
-
-- **Environment**: Dark obsidian studio with champagne-gold rim lighting
-- **Shadows**: `ContactShadows` for realistic contact depth
-- **Floor**: Subtle reflective obsidian surface
-- **Controls**: Drag to orbit, scroll to zoom, touch-pinch to pinch-zoom
-
-### Camera Body — Canon EOS R5
-
-Built from scratch using Drei `RoundedBox` primitives with **Physically Based Rendering (PBR)** materials:
-
-- Charcoal matte body + rubber handgrip texture
-- Mode dial, shutter button, top OLED screen, viewfinder hump
-- Canon EF-RF mount flange with throat indicator
-- Articulating rear touchscreen with button panel
-
-### Swappable Lens System
-
-| Lens | Description |
-|---|---|
-| **RF 24-70mm f/2.8L** | Matte black barrel, red L-series ring, convex front element |
-| **RF 50mm f/1.2L** | Thick barrel, large front element, gold USM ring |
-| **RF 70-200mm f/2.8L** | White telephoto barrel, silver collar, black focus rings |
-
-### Clickable Hotspots
-
-Four interactive inspection zones trigger smooth Anime.js camera coordinate transitions:
-
-- **Sensor** — unmounts lens, reveals sensor cavity
-- **Viewfinder** — zooms to EVF and shooting controls
-- **Screen** — reveals articulating monitor with menu UI
-- **Lens Mount** — inspects the RF mount throat
-
-> **File:** [`src/components/three/CameraShowroom.tsx`](src/components/three/CameraShowroom.tsx)
-
----
-
-## Rental & Booking Workflow
-
-```mermaid
-flowchart TD
-    A[🔍 Explore Gear] --> B[📷 Select Product]
-    B --> C[📅 Choose Rental Dates]
-    C --> D{✅ Check Availability}
-    D -- Available --> E[➕ Add Accessories]
-    D -- Unavailable --> C
-    E --> F[💰 Review Pricing]
-    F --> G{🔐 Authenticated?}
-    G -- No --> H[🔑 Login / Register]
-    H --> F
-    G -- Yes --> I[🛒 Cart & Checkout]
-    I --> J[📋 Booking Confirmation]
-    J --> K[⚙️ Admin Processing]
-    K --> L[📦 Equipment Pickup / Delivery]
-    L --> M[🎥 Rental Period]
-    M --> N[📬 Return Gear]
-    N --> O[💳 Deposit Released]
-```
-
-### Booking Engine Features
-
-- **Daily & weekly pricing** with pro-rated daily calculation
-- **Security deposit** tracking per product
-- **Coupon codes** with percentage discount and expiry
-- **Delivery method** — studio pickup or location delivery
-- **Add-ons** — CFexpress cards, batteries, external monitors
-- **Reference codes** — unique booking ID for tracking
-- **WhatsApp enquiry** for non-standard bookings
-
----
-
-## Customer Dashboard
-
-Authenticated customers access a personal dashboard at `/dashboard`:
-
-- **Active Bookings** — current rental status with pickup/return timeline
-- **Booking History** — all past and cancelled bookings with reference codes
-- **Wishlist** — saved gear for future rentals
-- **Profile Management** — name, email, phone, and saved addresses
-- **Booking Detail View** — itemised gear list, add-ons, pricing breakdown, and payment status
-
-> **File:** [`src/app/dashboard/page.tsx`](src/app/dashboard/page.tsx)
-
----
-
-## Admin Analytics Dashboard
-
-The admin panel at `/admin` provides a comprehensive operations view:
-
-| Panel | Description |
-|---|---|
-| **Revenue Overview** | Monthly revenue Recharts bar chart and trend lines |
-| **Booking Pipeline** | Active pending, confirmed, picked-up, and returned bookings |
-| **Inventory Status** | Per-unit availability, maintenance status, and serial tracking |
-| **Equipment Utilisation** | Most rented gear, revenue per product |
-| **Customer Insights** | New registrations, repeat customers, top spenders |
-| **Damage & Deposits** | Open damage reports and deposit hold status |
-
-> **File:** [`src/app/admin/page.tsx`](src/app/admin/page.tsx)
+### Realtime Publications (`supabase_realtime`)
+Realtime WebSockets are enabled on key operational tables:
+`bookings`, `inventory_units`, `profiles`, `support_tickets`, `ticket_replies`, `notifications`, `payments`, `referrals`.
 
 ---
 
 ## Technology Stack
 
-### Frontend
-
-| Technology | Version | Purpose |
-|---|---|---|
-| [Next.js](https://nextjs.org) | `16.2.10` | App Router, SSR, SSG, API routes |
-| [React](https://react.dev) | `19.2.4` | Component framework |
-| [TypeScript](https://www.typescriptlang.org) | `^5` | Type safety across the full stack |
-| [Tailwind CSS](https://tailwindcss.com) | `^4` | Utility-first responsive styling |
-| [Anime.js](https://animejs.com) | `^4.5.0` | Scroll animations, entrance reveals, transitions |
-| [Three.js](https://threejs.org) | `^0.185.1` | 3D rendering engine |
-| [React Three Fiber](https://docs.pmnd.rs/react-three-fiber) | `^9.6.1` | React renderer for Three.js |
-| [Drei](https://github.com/pmndrs/drei) | `^10.7.7` | Three.js helper components |
-| [Lucide React](https://lucide.dev) | `^1.24.0` | Icon system |
-| [Recharts](https://recharts.org) | `^3.9.2` | Admin analytics charts |
-
-### Forms & Validation
-
-| Technology | Version | Purpose |
-|---|---|---|
-| [React Hook Form](https://react-hook-form.com) | `^7.81.0` | Performant form state |
-| [Zod](https://zod.dev) | `^4.4.3` | Schema validation |
-| [@hookform/resolvers](https://github.com/react-hook-form/resolvers) | `^5.4.0` | RHF + Zod integration |
-
-### Backend & Database
-
-| Technology | Version | Purpose |
-|---|---|---|
-| [Supabase](https://supabase.com) | `^2.110.5` | PostgreSQL, Auth, Storage, Row Level Security |
-| [@supabase/ssr](https://supabase.com/docs/guides/auth/server-side) | `^0.12.3` | Server-side session management |
-
-### Fonts
-
-| Font | Usage |
-|---|---|
-| [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) | Serif headings, editorial typography |
-| [Inter](https://fonts.google.com/specimen/Inter) | UI text, labels, body copy |
-
----
-
-## System Architecture
-
-```mermaid
-graph TD
-    User(["👤 User / Browser"])
-
-    subgraph Frontend ["Next.js 16 — App Router"]
-        Pages["📄 Pages & Routes\n/explore, /gear/:slug, /booking\n/dashboard, /admin"]
-        Components["🧩 Components\nNavbar, HeroScrollSequence\nCameraShowroom, Cards"]
-        Hooks["🪝 Hooks\nuseCart, useAuth"]
-        AnimeJS["🎬 Anime.js\nScroll Animations\nEntrance Reveals"]
-        ThreeJS["🔭 Three.js / R3F\n3D Camera Showroom\nOrbit Controls"]
-    end
-
-    subgraph Auth ["Authentication"]
-        SupabaseAuth["🔐 Supabase Auth\nEmail + Password\nSSR Session Cookies"]
-        RLS["🛡️ Row Level Security\nCustomer / Staff / Admin Roles"]
-    end
-
-    subgraph Database ["Supabase PostgreSQL"]
-        Profiles["👤 profiles"]
-        Products["📷 products\nbrands, categories\nproduct_images, specs"]
-        Inventory["📦 inventory_units\navailability_blocks"]
-        Bookings["📋 bookings\nbooking_items, booking_addons"]
-        Payments["💳 payments\ndeposits, returns"]
-        Analytics["📊 Analytics Views\nRevenue, Utilisation"]
-    end
-
-    User --> Pages
-    Pages --> Components
-    Components --> AnimeJS
-    Components --> ThreeJS
-    Pages --> Hooks
-    Hooks --> SupabaseAuth
-    SupabaseAuth --> RLS
-    RLS --> Profiles
-    RLS --> Products
-    RLS --> Inventory
-    RLS --> Bookings
-    RLS --> Payments
-    Bookings --> Analytics
-```
-
----
-
-## Application Workflow
-
-```mermaid
-sequenceDiagram
-    actor Customer
-    participant Web as AUREVIA Web
-    participant Auth as Supabase Auth
-    participant DB as PostgreSQL
-
-    Customer->>Web: Browse /explore — filter gear
-    Web->>DB: Query products + availability
-    DB-->>Web: Product list
-    Customer->>Web: Open product detail /gear/:slug
-    Customer->>Web: Add to Cart + select dates
-    Customer->>Web: Proceed to /booking
-    Web->>Auth: Check session
-    Auth-->>Web: Unauthenticated
-    Web->>Customer: Redirect to /login
-    Customer->>Auth: Submit credentials
-    Auth-->>Web: Session established
-    Customer->>Web: Complete checkout
-    Web->>DB: INSERT booking + booking_items
-    DB-->>Web: Booking reference code
-    Web->>Customer: Confirmation page
-    Web->>Customer: WhatsApp notification link
-    Note over Web,DB: Admin reviews booking at /admin
-```
-
----
-
-## Project Structure
-
-```
-aurevia-camera-rentals/
-│
-├── public/
-│   ├── assets/
-│   │   ├── canon-sequence/        # 210 JPEG frames for scroll animation
-│   │   │   ├── frame-1.jpg
-│   │   │   ├── frame-2.jpg
-│   │   │   └── ...frame-210.jpg
-│   │   └── videos/
-│   │       └── canonvideo.mp4     # Mobile fallback video
-│   └── readme/                    # README documentation assets
-│       ├── aurevia-banner.png
-│       └── aurevia-logo.png
-│
-├── src/
-│   ├── app/                       # Next.js App Router
-│   │   ├── page.tsx               # Homepage (hero, categories, featured gear)
-│   │   ├── layout.tsx             # Root layout (fonts, metadata, providers)
-│   │   ├── globals.css            # Design tokens, clamp typography, animations
-│   │   ├── about/                 # About AUREVIA page
-│   │   ├── admin/                 # Admin analytics dashboard
-│   │   ├── booking/               # Checkout & booking confirmation
-│   │   ├── contact/               # Contact & enquiry page
-│   │   ├── dashboard/             # Customer rental dashboard
-│   │   ├── explore/               # Equipment catalogue + filters
-│   │   │   └── compare/           # Side-by-side gear comparison
-│   │   ├── faq/                   # Frequently asked questions
-│   │   ├── gear/[slug]/           # Individual product detail page
-│   │   ├── login/                 # Authentication — sign in
-│   │   ├── register/              # Authentication — create account
-│   │   ├── rental-process/        # How renting works page
-│   │   ├── privacy/               # Privacy policy
-│   │   ├── terms/                 # Terms & conditions
-│   │   ├── robots.ts              # SEO — robots.txt generation
-│   │   └── sitemap.ts             # SEO — dynamic sitemap generation
-│   │
-│   ├── components/
-│   │   ├── hero/
-│   │   │   └── HeroScrollSequence.tsx  # Canvas scroll animation engine
-│   │   ├── navigation/
-│   │   │   └── Navbar.tsx              # Responsive glass navbar
-│   │   └── three/
-│   │       └── CameraShowroom.tsx      # Three.js photorealistic showroom
-│   │
-│   ├── hooks/
-│   │   └── useCart.tsx            # Cart state management (Context + localStorage)
-│   │
-│   └── lib/
-│       └── db/
-│           ├── mockData.ts        # Typed product seed data (brands, categories, products)
-│           └── store.ts           # Data access layer (queries, filters, sorting)
-│
-├── supabase/
-│   └── migrations/
-│       └── 20260715000000_schema.sql  # Full PostgreSQL schema
-│
-├── package.json
-├── next.config.ts
-├── tsconfig.json
-├── tailwind.config (via postcss)
-└── eslint.config.mjs
-```
-
----
-
-## Database Overview
-
-The PostgreSQL schema (via Supabase) covers the complete rental operation:
-
-```mermaid
-erDiagram
-    profiles ||--o{ bookings : "places"
-    profiles ||--o{ wishlists : "saves"
-    profiles ||--o{ addresses : "has"
-
-    bookings ||--|{ booking_items : "contains"
-    bookings ||--o{ booking_addons : "includes"
-    bookings ||--o{ payments : "has"
-    bookings ||--o| deposits : "requires"
-    bookings ||--o| returns : "results in"
-
-    products ||--o{ booking_items : "rented via"
-    products ||--o{ product_images : "shown by"
-    products ||--o{ product_specifications : "described by"
-    products ||--o{ inventory_units : "tracked as"
-    products ||--o{ availability_blocks : "blocked by"
-    products }o--|| brands : "made by"
-    products }o--|| categories : "belongs to"
-
-    product_addons ||--o{ booking_addons : "added to"
-```
-
-### Core Tables
-
-| Table | Description |
-|---|---|
-| `profiles` | Customer accounts linked to Supabase Auth |
-| `addresses` | Customer delivery addresses |
-| `brands` | Equipment brands (Canon, Sony, Nikon, DJI, RED) |
-| `categories` | 8 gear categories (Mirrorless, Cinema, Lenses, etc.) |
-| `products` | Equipment catalogue with daily/weekly pricing |
-| `product_images` | Multiple images per product |
-| `product_specifications` | Key-value spec pairs for filtering |
-| `inventory_units` | Physical units with serial numbers and status |
-| `availability_blocks` | Manual hold periods (maintenance, events) |
-| `product_addons` | Rentable accessories (cards, batteries, monitors) |
-| `wishlists` | Customer saved gear |
-| `bookings` | Rental reservations with full pricing breakdown |
-| `booking_items` | Line items per booking (product + unit assignment) |
-| `booking_addons` | Add-on selections per booking |
-| `payments` | Transaction records |
-| `deposits` | Security deposit lifecycle tracking |
-| `returns` | Equipment return records |
-
-### Enums
-
-```sql
-user_role:        customer | staff | admin
-inventory_status: available | rented | maintenance | decommissioned
-booking_status:   pending | confirmed | picked_up | returned | cancelled | rejected
-payment_status:   unpaid | paid | refunded
-deposit_status:   held | released | forfeited
-```
+- **Framework**: [Next.js 16.2](https://nextjs.org) (App Router)
+- **UI Core**: [React 19](https://react.dev) · [TypeScript 5](https://www.typescriptlang.org)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com) · Lucide Icons
+- **Database & Auth**: [Supabase PostgreSQL](https://supabase.com) · `@supabase/ssr` · Supabase Auth
+- **3D Graphics**: [Three.js](https://threejs.org) · [React Three Fiber](https://r3f.docs.pmnd.rs) · Drei
+- **Animations**: Anime.js · Motion
+- **Payments**: Razorpay Node SDK & Webhooks
+- **Deployment**: Vercel
 
 ---
 
 ## Environment Variables
 
-Create a `.env.local` file in the project root. **Never commit real credentials.**
+Configure these variables in `.env.local` (and in your Vercel Project Settings):
 
-```env
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
+```ini
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+NEXT_PUBLIC_SUPABASE_URL=https://uoutovqmmxzawhvpahcg.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_1NFW4MM4sCE7qVZVvFUjEQ_bU3VH4TI
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_URL=postgresql://postgres:...@db.uoutovqmmxzawhvpahcg.supabase.co:5432/postgres
 
-# Database (Direct connection for migrations)
-DATABASE_URL=postgresql://postgres:password@db.your-project-id.supabase.co:5432/postgres
+# App URLs
+NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
+NEXT_PUBLIC_SITE_URL=https://your-domain.vercel.app
 
-# Business Contact
-NEXT_PUBLIC_WHATSAPP_NUMBER=9686909048
+# Razorpay Payments
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=your-secret
+RAZORPAY_WEBHOOK_SECRET=your-webhook-secret
+
+# Email / WhatsApp
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=sachiii8827@gmail.com
+SMTP_APP_PASSWORD=your-app-password
+NEXT_PUBLIC_CONCIERGE_WHATSAPP=919686909048
 ```
-
-> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` grants full database access. Keep it **server-side only** and never expose it to the browser.
 
 ---
 
 ## Installation & Setup
 
-### Prerequisites
-
-- Node.js `v18.17+`
-- npm `v9+`
-- A [Supabase](https://supabase.com) project (free tier works for development)
-
-### 1. Clone & Install
-
 ```bash
+# Clone the repository
 git clone https://github.com/Sachinxcode-01/aurevia-premium-rentals.git
 cd aurevia-premium-rentals
+
+# Install root dependencies
 npm install
+
+# Install admin dependencies
+cd admin
+npm install
+cd ..
 ```
-
-### 2. Configure Environment
-
-```bash
-cp .env.example .env.local
-```
-
-Edit `.env.local` with your Supabase project credentials (see [Environment Variables](#environment-variables)).
-
-### 3. Supabase Database Setup
-
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Navigate to **SQL Editor** in your project dashboard
-3. Copy and run the migration file:
-
-```bash
-# Run via Supabase CLI (if installed)
-npx supabase db push
-
-# Or manually paste supabase/migrations/20260715000000_schema.sql
-# into the Supabase SQL Editor and execute
-```
-
-### 4. Configure Supabase Storage
-
-In your Supabase project dashboard:
-1. Go to **Storage** → **Create a new bucket** → Name it `product-images`
-2. Set the bucket to **Public**
-3. Configure CORS if using file uploads
-
-### 5. Start Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Development Commands
+## Verification & Build Commands
 
 ```bash
-# Start the development server with hot reload
+# Run root development server (http://localhost:3000)
 npm run dev
 
-# Compile TypeScript and check for errors (no output)
-npx tsc --noEmit
+# Run admin development server (http://localhost:3002)
+cd admin && npm run dev
 
-# Run ESLint across the codebase
-npm run lint
+# Run TypeScript compilation check across root project
+npm run typecheck
 
-# Build for production
+# Run TypeScript compilation check across admin project
+cd admin && npm run typecheck
+
+# Run Next.js production build
 npm run build
-
-# Start the production server (after build)
-npm start
 ```
 
 ---
 
-## Production Build
+## Security & Concurrency Protection
 
-```bash
-# Create optimised production bundle
-npm run build
-
-# Review the route output
-# ○ Static   — pre-rendered at build time
-# ƒ Dynamic  — server-rendered on demand
-
-# Start production server locally
-npm start
-```
-
-The production build outputs all static routes as pre-rendered HTML and uses server-rendering only for dynamic routes such as `/gear/[slug]`.
-
----
-
-## Deployment
-
-### Deploy to Vercel (Recommended)
-
-1. Push your repository to GitHub
-2. Import the project at [vercel.com/new](https://vercel.com/new)
-3. Add all environment variables from `.env.local` in the **Vercel Project Settings → Environment Variables** panel
-4. Vercel auto-detects Next.js — click **Deploy**
-
-### Environment Variables on Vercel
-
-| Variable | Scope |
-|---|---|
-| `NEXT_PUBLIC_APP_URL` | Production URL (e.g. `https://aurevia.vercel.app`) |
-| `NEXT_PUBLIC_SUPABASE_URL` | Client-side |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client-side |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-side only |
-| `DATABASE_URL` | Server-side only |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Client-side |
-
----
-
-## Security Features
-
-| Feature | Implementation |
-|---|---|
-| **Authentication** | Supabase Auth with secure session cookies via `@supabase/ssr` |
-| **Row Level Security** | PostgreSQL RLS policies enforce data isolation per user role |
-| **Role-Based Access** | `customer`, `staff`, `admin` roles control page and data access |
-| **Input Validation** | All forms validated with Zod schemas before any DB operation |
-| **No Credential Exposure** | Service role key restricted to server-side only |
-| **HTTPS Enforced** | Vercel enforces TLS on all production traffic |
-| **Deposit Protection** | Security deposits tracked independently with lifecycle states |
-
----
-
-## Performance Optimizations
-
-| Area | Technique |
-|---|---|
-| **Canvas Animation** | `requestAnimationFrame` + lerp interpolation at 60 FPS |
-| **Frame Preloading** | Progressive batched preloading with `img.decode()` off-screen |
-| **Anti-Flicker** | Nearest-frame fallback rendering prevents blank canvas |
-| **Visibility Pausing** | `IntersectionObserver` halts tick loop when hero is off-screen |
-| **Font Loading** | `next/font` with `display: swap` prevents layout shift |
-| **Static Generation** | All stable pages pre-rendered at build time |
-| **CSS Animations** | `transform-only` and `will-change: transform, opacity` for GPU compositing |
-| **Image Optimisation** | `next/image` with WebP and AVIF format negotiation |
-| **Responsive Typography** | `clamp()` fluid sizing system eliminates breakpoint-specific overrides |
-| **3D Rendering** | Drei `ContactShadows`, baked environment maps, and frustum culling |
-| **Reduced Motion** | Full `prefers-reduced-motion` fallback — no heavy animation on sensitive systems |
-
----
-
-## Roadmap
-
-> Features planned for future development cycles.
-
-- [ ] **Razorpay / Stripe Payment Integration** — Online payment collection at checkout
-- [ ] **Real-time Availability Calendar** — Live unit-level availability via Supabase Realtime
-- [ ] **Equipment Comparison Tool** — Side-by-side spec comparison (route exists at `/explore/compare`)
-- [ ] **Supabase Storage** — Admin product image upload with CDN delivery
-- [ ] **Email Notifications** — Booking confirmation and status updates via Resend
-- [ ] **SMS Alerts** — Pickup reminders via Twilio
-- [ ] **Staff Portal** — Equipment check-in/check-out with condition reports
-- [ ] **Damage Waiver Checkout** — Optional damage protection add-on at booking
-- [ ] **Customer Reviews** — Post-return equipment rating system
-- [ ] **Loyalty Points** — Repeat rental rewards programme
-- [ ] **Multi-language Support** — Kannada and Hindi locale support
+1. **Row Level Security (RLS)**: Enforced across all Supabase tables (`profiles`, `bookings`, `referrals`, `kyc_documents`, `support_tickets`). Customers can only read and write their own records.
+2. **Double-Booking Elimination**: `reserve_inventory_for_booking` PostgreSQL function uses `FOR UPDATE SKIP LOCKED` transaction locking to guarantee physical units cannot be double-booked.
+3. **Idempotent Webhooks**: Razorpay payment webhooks verify HMAC SHA256 signatures and check `processed_events` to prevent duplicate processing.
+4. **Role Isolation**: OAuth and registration handlers strictly enforce `role: "customer"` to prevent privilege escalation to admin status.
 
 ---
 
 ## Contact & Credits
 
-<table>
-<tr>
-<td width="50%" align="center">
-
-### 🏪 Business Owner
-
-**Prem Mundargi**
-
-Owner, AUREVIA Camera Rentals
-
-📧 [premmundargi135@gmail.com](mailto:premmundargi135@gmail.com)  
-📞 +91 96869 09048
-
-*Prem owns and operates the AUREVIA camera rental business, manages the equipment fleet, customer relations, and rental operations.*
-
-</td>
-<td width="50%" align="center">
-
-### 💻 Technical Manager
-
-**Sachin**
-
-Website Designer & Technical Lead
-
-📧 [sachiii8827@gmail.com](mailto:sachiii8827@gmail.com)  
-📞 +91 98807 62623  
-🐙 [github.com/Sachinxcode-01](https://github.com/Sachinxcode-01)
-
-*Sachin designed and developed the AUREVIA web platform end-to-end, covering architecture, UI/UX design, 3D systems, animation engine, database schema, and deployment.*
-
-</td>
-</tr>
-</table>
-
----
-
-## License
-
-This project is **proprietary software** developed exclusively for AUREVIA Camera Rentals by Prem Mundargi.
-
-All source code, design assets, and brand identity are copyright © 2026 AUREVIA / Prem Mundargi. Unauthorised reproduction, distribution, or use of this codebase is strictly prohibited.
+- **Owner & Founder**: Prem Mundargi (`+91 96869 09048`)
+- **Lead Engineering**: Sachin (`sachiii8827@gmail.com`)
+- **Repository**: [Sachinxcode-01/aurevia-premium-rentals](https://github.com/Sachinxcode-01/aurevia-premium-rentals)
 
 ---
 
 <div align="center">
 
-<br/>
-
-<img src="public/readme/aurevia-logo.png" alt="AUREVIA" width="60" height="60" />
-
-**AUREVIA Camera Rentals**
-
-*Frame the Extraordinary.*
-
-<br/>
-
-[![GitHub](https://img.shields.io/badge/GitHub-Sachinxcode--01-181717?style=flat-square&logo=github)](https://github.com/Sachinxcode-01)
+**AUREVIA — Frame the Extraordinary.**  
+*Built with precision for cinematography professionals.*
 
 </div>
