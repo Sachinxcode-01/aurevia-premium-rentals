@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Gift, Users, DollarSign, CheckCircle2, XCircle, Clock, Search,
-  Download, RefreshCw, Loader2, ArrowUpRight, Filter, ShieldCheck, Sparkles
+  Download, RefreshCw, Loader2, ArrowUpRight, Filter, Sparkles
 } from "lucide-react";
 import { getAdminReferralsAction, updateReferralStatusAction, ReferralRecord } from "@/lib/actions/referrals";
 
@@ -20,6 +20,11 @@ export default function AdminReferralsPage() {
   const [referrerReward, setReferrerReward] = useState("500");
   const [friendDiscount, setFriendDiscount] = useState("200");
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  }, []);
 
   const fetchReferrals = useCallback(async () => {
     try {
@@ -76,16 +81,11 @@ export default function AdminReferralsPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     fetchReferrals();
   }, [fetchReferrals]);
-
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3000);
-  };
 
   const handleUpdateStatus = async (id: string, status: "completed" | "rewarded" | "rejected") => {
     setActionLoadingId(id);

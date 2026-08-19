@@ -108,6 +108,7 @@ export default function CustomerDashboard() {
   const router = useRouter();
   const { cart, addToCart } = useCart();
   const toast = useToast();
+  const { referrals: realtimeReferrals, totalRewardEarned, pendingReward } = useRealtimeReferrals();
 
   const [profile, setProfile]           = useState<any | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
