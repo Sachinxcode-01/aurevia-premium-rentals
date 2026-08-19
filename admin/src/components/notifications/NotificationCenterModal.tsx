@@ -2,7 +2,7 @@
 
 import React from "react";
 import { X, MessageSquare, Send, CheckCircle2 } from "lucide-react";
-import { generateWhatsAppLink, sendSimulatedSMS } from "../../../../src/lib/services/notificationService";
+import { generateWhatsAppLink, sendSimulatedSMS } from "@/lib/services/notificationService";
 
 interface NotificationCenterModalProps {
   booking: any;

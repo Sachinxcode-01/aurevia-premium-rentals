@@ -12,7 +12,7 @@ import { useAdminRealtime } from "@/lib/realtime";
 import ConditionInspectionModal from "../../../components/inspection/ConditionInspectionModal";
 import QRScannerModal from "../../../components/scanner/QRScannerModal";
 import NotificationCenterModal from "../../../components/notifications/NotificationCenterModal";
-import { printOrDownloadInvoice } from "../../../../../src/lib/utils/pdfGenerator";
+import { printOrDownloadInvoice } from "@/lib/utils/pdfGenerator";
 
 interface BookingItem {
   id: string;
@@ -389,7 +389,7 @@ export default function AdminBookingsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 bg-white/[0.02] text-[#9a9995] font-mono text-[10px] uppercase">
+              <tr className="border-b border-white/10 bg-white/2 text-[#9a9995] font-mono text-[10px] uppercase">
                 <th className="p-4">Booking ID</th>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Equipment</th>
