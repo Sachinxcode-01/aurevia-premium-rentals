@@ -347,15 +347,16 @@ export default function CustomerDashboard() {
 
   // Animate on tab change
   useEffect(() => {
-    setTimeout(() => {
+    try {
       animate(".dash-card", {
-        opacity: [0, 1],
-        translateY: [12, 0],
-        delay: stagger(50),
-        duration: 500,
+        translateY: [10, 0],
+        delay: stagger(30),
+        duration: 400,
         easing: "easeOutQuad",
       });
-    }, 50);
+    } catch {
+      // Elements remain fully visible
+    }
   }, [activeTab, bookingFilter]);
 
   // New booking notification
@@ -601,7 +602,7 @@ export default function CustomerDashboard() {
             {activeTab === "overview" && (
               <div className="space-y-6">
                 {/* Customer Profile Details Card */}
-                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-linear-to-r from-gold-champagne/10 via-obsidian to-black relative overflow-hidden space-y-4">
+                <div className="dash-card glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-linear-to-r from-gold-champagne/10 via-obsidian to-black relative overflow-hidden space-y-4">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-2xl bg-gold-champagne/15 border border-gold-champagne/40 flex items-center justify-center text-gold-champagne font-bold text-xl font-mono shadow-lg shrink-0">
@@ -655,7 +656,7 @@ export default function CustomerDashboard() {
                     { label: "Completed",value: stats.completed,icon: <CheckCircle size={14} />, color: "text-emerald-400" },
                     { label: "Cancelled",value: stats.cancelled, icon: <XCircle size={14} />,  color: "text-rose-400" },
                   ].map((s) => (
-                    <div key={s.label} className="dash-card opacity-0 glass-panel border-white/5 rounded-lg p-4 space-y-2">
+                    <div key={s.label} className="dash-card glass-panel border-white/5 rounded-lg p-4 space-y-2">
                       <div className={`flex items-center gap-1.5 text-[9px] uppercase font-mono tracking-wider ${s.color}`}>
                         {s.icon} {s.label}
                       </div>
@@ -665,7 +666,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Referral Architecture & Rewards Command Center */}
-                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-gold-champagne/5 relative overflow-hidden space-y-4">
+                <div className="dash-card glass-panel border-gold-champagne/30 rounded-2xl p-6 bg-gold-champagne/5 relative overflow-hidden space-y-4">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
                       <span className="text-[9px] uppercase font-mono tracking-widest text-gold-champagne font-bold block">CREATOR VIRAL REFERRAL &amp; REWARDS PROGRAM</span>
@@ -739,7 +740,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Recent bookings */}
-                <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                <div className="dash-card glass-panel border-white/5 rounded-xl p-6">
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-[11px] uppercase font-mono tracking-widest text-muted-gray">Recent Reservations</h3>
                     <button onClick={() => setActiveTab("bookings")} className="text-[10px] text-gold-champagne hover:underline flex items-center gap-1">
@@ -785,7 +786,7 @@ export default function CustomerDashboard() {
                       key={q.label}
                       href={q.href}
                       target={q.external ? "_blank" : undefined}
-                      className="dash-card opacity-0 glass-panel border-white/5 hover:border-gold-border/30 rounded-lg p-4 flex items-center gap-3 transition group"
+                      className="dash-card glass-panel border-white/5 hover:border-gold-border/30 rounded-lg p-4 flex items-center gap-3 transition group"
                     >
                       <div className="w-8 h-8 rounded-lg bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0 group-hover:bg-gold-champagne/20 transition">
                         {q.icon}
@@ -799,7 +800,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Aurevia Rewards & Referral Center */}
-                <div className="dash-card opacity-0 glass-panel border-gold-champagne/30 bg-gold-champagne/5 rounded-xl p-6 space-y-4">
+                <div className="dash-card glass-panel border-gold-champagne/30 bg-gold-champagne/5 rounded-xl p-6 space-y-4">
                   <div className="flex items-center justify-between border-b border-white/10 pb-3">
                     <div className="flex items-center gap-2">
                       <Gift className="text-gold-champagne" size={18} />
@@ -827,7 +828,7 @@ export default function CustomerDashboard() {
                   </div>
                 </div>
                 {favoritesList.length > 0 && (
-                  <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                  <div className="dash-card glass-panel border-white/5 rounded-xl p-6">
                     <h3 className="text-[11px] uppercase font-mono tracking-widest text-gold-champagne mb-5">Your Favorite Gear</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {favoritesList.map((g) => (
@@ -850,7 +851,7 @@ export default function CustomerDashboard() {
 
                 {/* Recently Viewed Section */}
                 {recentlyViewedList.length > 0 && (
-                  <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                  <div className="dash-card glass-panel border-white/5 rounded-xl p-6">
                     <h3 className="text-[11px] uppercase font-mono tracking-widest text-muted-gray mb-5">Recently Viewed</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {recentlyViewedList.map((g) => (
@@ -944,7 +945,7 @@ export default function CustomerDashboard() {
                       const isTerminal = ["cancelled","rejected","payment_failed"].includes(b.status);
 
                       return (
-                        <div key={b.id} className="dash-card opacity-0 glass-panel border-white/5 hover:border-white/10 rounded-xl p-5 space-y-4 transition">
+                        <div key={b.id} className="dash-card glass-panel border-white/5 hover:border-white/10 rounded-xl p-5 space-y-4 transition">
                           {/* Header */}
                           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/5 pb-4">
                             <div>
@@ -1324,7 +1325,7 @@ export default function CustomerDashboard() {
                       const equipName = b.booking_items?.[0]?.product?.name || b.items?.[0]?.name || "Professional Camera Package";
 
                       return (
-                        <div key={b.id} className="dash-card opacity-0 glass-panel border-white/10 hover:border-gold-border/40 rounded-xl p-5 space-y-4 transition bg-black/40">
+                        <div key={b.id} className="dash-card glass-panel border-white/10 hover:border-gold-border/40 rounded-xl p-5 space-y-4 transition bg-black/40">
                           <div className="flex items-center justify-between border-b border-white/10 pb-3">
                             <div>
                               <span className="text-[9px] text-gold-champagne font-mono font-bold uppercase tracking-widest block">TAX INVOICE</span>
@@ -1638,7 +1639,7 @@ export default function CustomerDashboard() {
             {activeTab === "settings" && (
               <div className="space-y-5">
                 {/* Profile info */}
-                <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                <div className="dash-card glass-panel border-white/5 rounded-xl p-6">
                   <h3 className="text-[10px] uppercase font-mono tracking-widest text-muted-gray mb-5">Profile Information</h3>
                   <form onSubmit={handleSaveProfile} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1684,7 +1685,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Change password */}
-                <div className="dash-card opacity-0 glass-panel border-white/5 rounded-xl p-6">
+                <div className="dash-card glass-panel border-white/5 rounded-xl p-6">
                   <h3 className="text-[10px] uppercase font-mono tracking-widest text-muted-gray mb-5">Change Password</h3>
                   <form onSubmit={handleChangePassword} className="space-y-4">
                     <div className="space-y-1.5">
@@ -1729,7 +1730,7 @@ export default function CustomerDashboard() {
                 </div>
 
                 {/* Danger zone */}
-                <div className="dash-card opacity-0 glass-panel border-rose-500/10 rounded-xl p-6">
+                <div className="dash-card glass-panel border-rose-500/10 rounded-xl p-6">
                   <h3 className="text-[10px] uppercase font-mono tracking-widest text-rose-400/60 mb-4">Account Actions</h3>
                   <div className="flex flex-wrap gap-3">
                     <button
