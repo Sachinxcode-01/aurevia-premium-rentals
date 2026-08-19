@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, Wrench, RefreshCw, Plus } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
