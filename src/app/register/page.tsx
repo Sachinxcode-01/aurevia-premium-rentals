@@ -13,6 +13,7 @@ import Link from "next/link";
 import { requestSignUpOTPAction, verifySignUpOTPAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
+import { GoogleSignInButton } from "@/components/ui/GoogleSignInButton";
 
 export default function RegisterPage() {
   const { cart } = useCart();
@@ -131,106 +132,120 @@ export default function RegisterPage() {
             </div>
           ) : step === "details" ? (
             /* STEP 1: Registration Details Form */
-            <form onSubmit={handleRequestOTP} className="space-y-4">
-              {/* Full Name */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Full Name</label>
-                <div className="relative">
-                  <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-                  <input
-                    type="text" required id="reg-name"
-                    placeholder="Your full name"
-                    value={name} onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
-                  />
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Email Address</label>
-                <div className="relative">
-                  <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-                  <input
-                    type="email" required id="reg-email"
-                    placeholder="your@email.com"
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Phone Number <span className="text-muted-gray/50">(optional)</span></label>
-                <div className="relative">
-                  <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-                  <input
-                    type="tel" id="reg-phone"
-                    placeholder="+91 98000 00000"
-                    value={phone} onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Password</label>
-                <div className="relative">
-                  <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-                  <input
-                    type={showPw ? "text" : "password"} required id="reg-password"
-                    minLength={6} placeholder="Min 6 characters"
-                    value={password} onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 pr-10 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
-                  />
-                  <button type="button" onClick={() => setShowPw(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-gray hover:text-ivory transition cursor-pointer" tabIndex={-1}>
-                    {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
-                  </button>
-                </div>
-                {password.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1 flex-1">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${i <= pwStrength ? strengthColor : "bg-white/10"}`} />
-                      ))}
-                    </div>
-                    <span className="text-[9px] font-mono text-muted-gray">{strengthLabel}</span>
+            <>
+              <form onSubmit={handleRequestOTP} className="space-y-4">
+                {/* Full Name */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Full Name</label>
+                  <div className="relative">
+                    <User size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                    <input
+                      type="text" required id="reg-name"
+                      placeholder="Your full name"
+                      value={name} onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
+                    />
                   </div>
-                )}
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Confirm Password</label>
-                <div className="relative">
-                  <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
-                  <input
-                    type={showCfm ? "text" : "password"} required id="reg-confirm"
-                    placeholder="Repeat password"
-                    value={confirm} onChange={(e) => setConfirm(e.target.value)}
-                    className={`w-full bg-white/5 border text-xs rounded-lg p-2.5 pl-8 pr-10 focus:outline-none transition placeholder-white/20 ${confirm.length > 0 && confirm !== password ? "border-rose-500/50 focus:border-rose-500/70" : "border-white/10 focus:border-gold-champagne/50"}`}
-                  />
-                  <button type="button" onClick={() => setShowCfm(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-gray hover:text-ivory transition cursor-pointer" tabIndex={-1}>
-                    {showCfm ? <EyeOff size={13} /> : <Eye size={13} />}
-                  </button>
                 </div>
-                {confirm.length > 0 && confirm !== password && (
-                  <p className="text-[10px] text-rose-400 font-mono">Passwords do not match</p>
-                )}
+
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Email Address</label>
+                  <div className="relative">
+                    <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                    <input
+                      type="email" required id="reg-email"
+                      placeholder="your@email.com"
+                      value={email} onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Phone Number <span className="text-muted-gray/50">(optional)</span></label>
+                  <div className="relative">
+                    <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                    <input
+                      type="tel" id="reg-phone"
+                      placeholder="+91 98000 00000"
+                      value={phone} onChange={(e) => setPhone(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Password</label>
+                  <div className="relative">
+                    <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                    <input
+                      type={showPw ? "text" : "password"} required id="reg-password"
+                      minLength={6} placeholder="Min 6 characters"
+                      value={password} onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 text-xs rounded-lg p-2.5 pl-8 pr-10 focus:outline-none focus:border-gold-champagne/50 transition placeholder-white/20"
+                    />
+                    <button type="button" onClick={() => setShowPw(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-gray hover:text-ivory transition cursor-pointer" tabIndex={-1}>
+                      {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                  {password.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1 flex-1">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className={`h-0.5 flex-1 rounded-full transition-all duration-300 ${i <= pwStrength ? strengthColor : "bg-white/10"}`} />
+                        ))}
+                      </div>
+                      <span className="text-[9px] font-mono text-muted-gray">{strengthLabel}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Confirm Password</label>
+                  <div className="relative">
+                    <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-gray pointer-events-none" />
+                    <input
+                      type={showCfm ? "text" : "password"} required id="reg-confirm"
+                      placeholder="Repeat password"
+                      value={confirm} onChange={(e) => setConfirm(e.target.value)}
+                      className={`w-full bg-white/5 border text-xs rounded-lg p-2.5 pl-8 pr-10 focus:outline-none transition placeholder-white/20 ${confirm.length > 0 && confirm !== password ? "border-rose-500/50 focus:border-rose-500/70" : "border-white/10 focus:border-gold-champagne/50"}`}
+                    />
+                    <button type="button" onClick={() => setShowCfm(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-gray hover:text-ivory transition cursor-pointer" tabIndex={-1}>
+                      {showCfm ? <EyeOff size={13} /> : <Eye size={13} />}
+                    </button>
+                  </div>
+                  {confirm.length > 0 && confirm !== password && (
+                    <p className="text-[10px] text-rose-400 font-mono">Passwords do not match</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit" id="reg-submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2 mt-2"
+                >
+                  {loading ? <><Loader2 size={13} className="animate-spin" /> Sending Code...</> : <><ArrowRight size={13} /> Send Verification OTP</>}
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="relative flex items-center justify-center my-4">
+                <div className="border-t border-white/10 w-full" />
+                <span className="bg-obsidian px-2.5 text-[9px] text-muted-gray uppercase font-mono tracking-widest shrink-0">
+                  or sign up with
+                </span>
+                <div className="border-t border-white/10 w-full" />
               </div>
 
-              <button
-                type="submit" id="reg-submit"
-                disabled={loading}
-                className="w-full py-3 bg-gold-champagne hover:bg-gold-warm disabled:opacity-60 text-obsidian text-xs font-bold uppercase tracking-wider rounded-lg transition cursor-pointer flex items-center justify-center gap-2 mt-2"
-              >
-                {loading ? <><Loader2 size={13} className="animate-spin" /> Sending Code...</> : <><ArrowRight size={13} /> Send Verification OTP</>}
-              </button>
-            </form>
+              {/* Google Sign-In */}
+              <GoogleSignInButton label="Sign up with Google" />
+            </>
           ) : (
             /* STEP 2: Verify 6-Digit OTP Form */
             <form onSubmit={handleVerifyOTP} className="space-y-4">

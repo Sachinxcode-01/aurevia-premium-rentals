@@ -13,6 +13,7 @@ import Link from "next/link";
 import { signInAction, resendVerificationAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
+import { GoogleSignInButton } from "@/components/ui/GoogleSignInButton";
 
 function LoginPageContent() {
   const { cart } = useCart();
@@ -193,6 +194,18 @@ function LoginPageContent() {
               }
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative flex items-center justify-center my-4">
+            <div className="border-t border-white/10 w-full" />
+            <span className="bg-obsidian px-2.5 text-[9px] text-muted-gray uppercase font-mono tracking-widest shrink-0">
+              or continue with
+            </span>
+            <div className="border-t border-white/10 w-full" />
+          </div>
+
+          {/* Google Sign-In */}
+          <GoogleSignInButton redirectPath={redirectPath} />
 
           {/* Footer */}
           <div className="text-center text-[11px] text-muted-gray space-y-1.5 pt-1">

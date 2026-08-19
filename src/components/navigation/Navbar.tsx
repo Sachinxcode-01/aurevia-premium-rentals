@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, User, Menu, X, ShoppingCart } from "lucide-react";
+import { Search, User, Menu, X, ShoppingCart, LogOut } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
 import MagneticButton from "@/components/motion/MagneticButton";
-
 import SearchModal from "@/components/ui/SearchModal";
+import { createClient } from "@/lib/supabase/client";
+import { signOutAction } from "@/lib/actions/auth";
 
 interface NavbarProps {
   cartItemCount?: number;
@@ -28,6 +29,11 @@ export default function Navbar({
   const [searchQuery, setSearchQuery] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    full_name?: string;
+    avatar_url?: string;
+    email?: string;
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -91,6 +97,60 @@ export default function Navbar({
     } else {
       setSearchModalOpen(true);
     }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const supabase = createClient();
+
+    const loadProfile = async (userId: string, email?: string, meta?: any) => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url, email")
+        .eq("id", userId)
+        .single();
+
+      if (mounted) {
+        setUserProfile(
+          prof ?? {
+            full_name: meta?.full_name || meta?.name || email?.split("@")[0],
+            avatar_url: meta?.avatar_url || meta?.picture,
+            email,
+          }
+        );
+      }
+    };
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        loadProfile(user.id, user.email, user.user_metadata);
+      } else if (mounted) {
+        setUserProfile(null);
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        loadProfile(session.user.id, session.user.email, session.user.user_metadata);
+      } else if (mounted) {
+        setUserProfile(null);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOutAction();
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUserProfile(null);
+    router.push("/login");
   };
 
   return (
@@ -173,13 +233,43 @@ export default function Navbar({
               )}
             </Link>
 
-            {/* Customer Account Dashboard */}
-            <Link
-              href="/dashboard"
-              className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center"
-            >
-              <User className="w-[18px] h-[18px] xl:w-[19px] xl:h-[19px] stroke-[2]" />
-            </Link>
+            {/* Customer Account Dashboard / Avatar */}
+            {userProfile ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-white/5 transition border border-gold-champagne/40"
+                  title={userProfile.full_name ?? "Account Dashboard"}
+                >
+                  {userProfile.avatar_url ? (
+                    <img
+                      src={userProfile.avatar_url}
+                      alt={userProfile.full_name ?? "Avatar"}
+                      className="w-7 h-7 rounded-full object-cover border border-gold-champagne/40"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-gold-champagne/20 text-gold-champagne flex items-center justify-center text-xs font-bold font-mono">
+                      {(userProfile.full_name ?? "A")[0].toUpperCase()}
+                    </div>
+                  )}
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  title="Sign Out"
+                  className="p-1.5 text-muted-gray hover:text-rose-400 transition cursor-pointer"
+                >
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center text-xs font-mono uppercase tracking-wider"
+              >
+                <User className="w-[18px] h-[18px] stroke-[2] mr-1" />
+                <span>Sign In</span>
+              </Link>
+            )}
 
             {/* Magnetic CTA Book Now */}
             <MagneticButton onClick={() => router.push("/booking")}>
