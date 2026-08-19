@@ -120,7 +120,7 @@ export default function ContactPage() {
               </a>
 
               <a
-                href="https://www.instagram.com/ohh_itz_sachin_?igsh=eWRkeDBmdzc3MzBl&igsi=eWRkeDBmdzc3MzBl"
+                href="https://www.instagram.com/mr__prem___.135?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==&igsi=ZDNlZDc0MzIxNw=="
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 group"
@@ -133,7 +133,7 @@ export default function ContactPage() {
                 <div>
                   <p className="text-[10px] text-muted-gray uppercase font-mono tracking-wider">Instagram</p>
                   <p className="text-sm font-semibold text-ivory group-hover:text-gold-champagne transition">
-                    @ohh_itz_sachin_
+                    @mr__prem___.135
                   </p>
                 </div>
               </a>
