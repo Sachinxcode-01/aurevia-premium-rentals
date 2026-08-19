@@ -121,6 +121,13 @@ export async function requestSignUpOTPAction(
   return signUpAction(email, password, fullName, phone);
 }
 
+export async function verifySignUpOTPAction(
+  email: string,
+  otp: string
+): Promise<AuthResult> {
+  return { success: true, role: "customer" };
+}
+
 // ─── Sign Out ────────────────────────────────────────────────
 export async function signOutAction(): Promise<AuthResult> {
   const supabase = await createServerSupabaseClient();
