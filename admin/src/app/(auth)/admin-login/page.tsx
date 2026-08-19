@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { ShieldCheck, Lock, Mail, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
+import { Lock, Mail, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { adminSignInWithPasswordAction, adminSignInWithGoogleAction } from "@/lib/actions/adminAuth";
