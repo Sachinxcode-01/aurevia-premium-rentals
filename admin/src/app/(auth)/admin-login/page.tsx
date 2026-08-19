@@ -80,15 +80,13 @@ function AdminLoginForm() {
       className="relative z-10 w-full max-w-md bg-[#121212]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl space-y-6"
     >
       {/* Header */}
-      <div className="text-center space-y-3 flex flex-col items-center">
-        <div className="relative w-44 h-12">
-          <AdminLogo variant="wordmark" width={180} height={46} />
-        </div>
-        <div>
-          <h1 className="text-sm font-mono tracking-widest text-[#d8b36a] font-bold uppercase mt-1">
+      <div className="text-center flex flex-col items-center space-y-3 pb-1">
+        <AdminLogo variant="wordmark" width={150} height={38} className="my-1" />
+        <div className="space-y-1">
+          <h1 className="text-xs font-mono tracking-widest text-[#d8b36a] font-bold uppercase">
             ENTERPRISE SECURITY &amp; OPERATIONS TERMINAL
           </h1>
-          <p className="text-xs text-[#9a9995] font-light mt-0.5">
+          <p className="text-[11px] text-[#9a9995] font-light">
             AUREVIA Concierge Operations &amp; Fleet Control Center
           </p>
         </div>
