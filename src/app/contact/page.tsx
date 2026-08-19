@@ -120,6 +120,25 @@ export default function ContactPage() {
               </a>
 
               <a
+                href="https://www.instagram.com/ohh_itz_sachin_?igsh=eWRkeDBmdzc3MzBl&igsi=eWRkeDBmdzc3MzBl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-8 h-8 rounded bg-white/5 group-hover:bg-gold-champagne/10 flex items-center justify-center transition">
+                  <svg className="w-3.5 h-3.5 text-gold-champagne fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-gray uppercase font-mono tracking-wider">Instagram</p>
+                  <p className="text-sm font-semibold text-ivory group-hover:text-gold-champagne transition">
+                    @ohh_itz_sachin_
+                  </p>
+                </div>
+              </a>
+
+              <a
                 href={`https://wa.me/919686909048?text=${encodeURIComponent("Hi Prem, I'm interested in renting from AUREVIA. Could you help me with availability and pricing?")}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -153,7 +172,7 @@ export default function ContactPage() {
             </div>
 
             <p className="text-xs text-muted-gray leading-relaxed font-light">
-              Contact Sachin for website issues, technical bugs, feature requests, performance matters, or any question related to the online platform. Sachin manages all technical operations for AUREVIA&apos;s digital presence.
+              Contact Sachin for website issues, technical bugs, feature requests, performance matters, or if you would like to build a custom modern website for your business.
             </p>
 
             <div className="space-y-3">
@@ -187,9 +206,93 @@ export default function ContactPage() {
                 </div>
               </a>
 
-              <div className="mt-2 flex items-center gap-2 py-2.5 px-4 border border-white/10 rounded text-[11px] text-muted-gray font-light italic">
-                <span className="text-gold-champagne">Note:</span>&nbsp;For camera rentals, please contact Prem above.
+              <a
+                href="https://github.com/Sachinxcode-01"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-8 h-8 rounded bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition">
+                  <svg className="w-3.5 h-3.5 text-ivory/70 fill-current group-hover:text-ivory transition" viewBox="0 0 24 24">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-gray uppercase font-mono tracking-wider">GitHub</p>
+                  <p className="text-sm font-semibold text-ivory group-hover:text-ivory/80 transition">
+                    github.com/Sachinxcode-01
+                  </p>
+                </div>
+              </a>
+
+              <a
+                href="https://www.instagram.com/ohh_itz_sachin_?igsh=eWRkeDBmdzc3MzBl&igsi=eWRkeDBmdzc3MzBl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-8 h-8 rounded bg-white/5 group-hover:bg-white/10 flex items-center justify-center transition">
+                  <svg className="w-3.5 h-3.5 text-ivory/70 fill-current group-hover:text-ivory transition" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-gray uppercase font-mono tracking-wider">Instagram</p>
+                  <p className="text-sm font-semibold text-ivory group-hover:text-ivory/80 transition">
+                    @ohh_itz_sachin_
+                  </p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Want to Build a Website? Contact Sachin Banner ── */}
+        <div className="glass-panel-gold rounded-xl p-8 space-y-6 relative overflow-hidden bg-gradient-to-r from-gold-champagne/10 via-obsidian to-gold-champagne/5 border border-gold-champagne/30 shadow-2xl">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold-champagne/15 border border-gold-champagne/30 rounded-full text-gold-champagne text-[10px] font-mono uppercase tracking-widest font-semibold">
+                <Code2 size={12} />
+                Web Design &amp; Full-Stack Development
               </div>
+              <h2 className="serif-heading text-2xl md:text-3xl font-light text-ivory">
+                Want to build a modern website for your business?
+              </h2>
+              <p className="text-xs text-muted-gray leading-relaxed font-light">
+                Need a high-performance custom website, web app, or e-commerce platform like AUREVIA? Contact <strong className="text-ivory font-semibold">Sachin</strong> for bespoke development services built with Next.js, React, and modern UI design.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3 shrink-0">
+              <a
+                href="https://github.com/Sachinxcode-01"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-ivory text-xs font-semibold rounded border border-white/15 transition"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                GitHub Profile
+              </a>
+              <a
+                href="https://www.instagram.com/ohh_itz_sachin_?igsh=eWRkeDBmdzc3MzBl&igsi=eWRkeDBmdzc3MzBl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-semibold rounded shadow transition"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                Instagram
+              </a>
+              <a
+                href="tel:+919880762623"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold rounded transition"
+              >
+                <Phone size={13} />
+                Call Sachin
+              </a>
             </div>
           </div>
         </div>
