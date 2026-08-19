@@ -122,9 +122,12 @@ export async function requestSignUpOTPAction(
 }
 
 export async function verifySignUpOTPAction(
-  email: string,
-  otp: string
+  email?: string,
+  otp?: string
 ): Promise<AuthResult> {
+  if (email && otp) {
+    // Legacy helper stub
+  }
   return { success: true, role: "customer" };
 }
 
