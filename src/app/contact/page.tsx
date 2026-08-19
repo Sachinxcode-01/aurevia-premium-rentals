@@ -304,7 +304,7 @@ export default function ContactPage() {
           </div>
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest text-gold-champagne mb-0.5">Studio &amp; Collection Point</p>
-            <p className="text-sm font-semibold text-ivory">12th Main Road, Indiranagar, Bangalore, India</p>
+            <p className="text-sm font-semibold text-ivory">Javalli Galli, Gadag, Karnataka - 582101, India</p>
             <p className="text-[11px] text-muted-gray mt-0.5 font-light">Equipment pickup and return by appointment only. Contact Prem to schedule.</p>
           </div>
         </div>

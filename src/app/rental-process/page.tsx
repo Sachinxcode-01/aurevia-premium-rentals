@@ -3,8 +3,7 @@
 import React from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
-import Link from "next/link";
-import { Check, Clipboard, Calendar, HelpCircle, PackageOpen } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function RentalProcessPage() {
   const { cart } = useCart();
@@ -38,7 +37,7 @@ export default function RentalProcessPage() {
             {
               step: "Step 03",
               title: "Concierge Handover",
-              desc: "Collect your equipment directly from our Indiranagar studio or opt for secure flight-cased delivery to your shoot location.",
+              desc: "Collect your equipment directly from our Gadag studio (Javalli Galli) or opt for secure flight-cased delivery to your shoot location.",
             },
             {
               step: "Step 04",
@@ -75,7 +74,7 @@ export default function RentalProcessPage() {
               </p>
               <p className="flex gap-2 items-start">
                 <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>Concierge Pickups:</strong> Pickups are available at Indiranagar studio Mon-Sat 9AM to 7PM. Call hotline at 9686909048 to schedule.</span>
+                <span><strong>Concierge Pickups:</strong> Pickups are available at Gadag studio (Javalli Galli) Mon-Sat 9AM to 7PM. Call hotline at 9686909048 to schedule.</span>
               </p>
             </div>
           </div>
