@@ -3,7 +3,7 @@
  * Handles automated transactional alerts for camera rentals & concierge dispatches.
  */
 
-import { createServiceSupabaseClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export type NotificationType =
   | "BOOKING_CONFIRMED"
@@ -165,7 +165,11 @@ async function recordNotificationInDB(
   status: string
 ) {
   try {
-    const supabase = await createServiceSupabaseClient();
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://uoutovqmmxzawhvpahcg.supabase.co";
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+    if (!url || !key) return;
+
+    const supabase = createSupabaseClient(url, key);
     await supabase.from("notifications").insert([
       {
         title: `WhatsApp Alert: ${type}`,
