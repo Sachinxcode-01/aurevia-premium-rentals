@@ -71,8 +71,14 @@ export function useAdminRealtime(): UseAdminRealtimeReturn {
     }
 
     const supabase = getClient();
+    const channelName = "admin:bookings:all";
+    const existingChannel = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}` || ch.topic === channelName);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
     const channel = supabase
-      .channel("admin:bookings:all")
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bookings" },
@@ -127,8 +133,14 @@ export function useAdminRealtime(): UseAdminRealtimeReturn {
     channelRef.current = channel;
 
     return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
     };
   }, [fetchBookings, addAlert]);
 

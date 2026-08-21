@@ -37,7 +37,7 @@ export function useRealtimeBookings(): UseRealtimeBookingsReturn {
       const data = await getUserBookingsAction();
       setBookings(data as BookingWithItems[]);
       setError(null);
-    } catch (e) {
+    } catch {
       setError("Failed to load bookings.");
     } finally {
       setLoading(false);
@@ -50,14 +50,21 @@ export function useRealtimeBookings(): UseRealtimeBookingsReturn {
     if (!isSupabase) return;
 
     const supabase = getClient();
+    let isCancelled = false;
 
     // Get current user for filtered subscription
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
+      if (!user || isCancelled) return;
+
+      const channelName = `bookings:user:${user.id}`;
+      const existingChannel = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}` || ch.topic === channelName);
+      if (existingChannel) {
+        supabase.removeChannel(existingChannel);
+      }
 
       // Subscribe to INSERT / UPDATE on bookings filtered by profile_id
       const channel: RealtimeChannel = supabase
-        .channel(`bookings:user:${user.id}`)
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -87,8 +94,15 @@ export function useRealtimeBookings(): UseRealtimeBookingsReturn {
     });
 
     return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
-      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      isCancelled = true;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
     };
   }, [fetchBookings]);
 

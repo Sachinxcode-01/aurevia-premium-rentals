@@ -68,12 +68,19 @@ export function useRealtimeReferrals(): UseRealtimeReferralsReturn {
     if (!isSupabase) return;
 
     const supabase = getClient();
+    let isCancelled = false;
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
+      if (!user || isCancelled) return;
+
+      const channelName = `referrals:user:${user.id}`;
+      const existingChannel = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}` || ch.topic === channelName);
+      if (existingChannel) {
+        supabase.removeChannel(existingChannel);
+      }
 
       const channel = supabase
-        .channel(`referrals:user:${user.id}`)
+        .channel(channelName)
         .on(
           "postgres_changes",
           {
@@ -92,8 +99,10 @@ export function useRealtimeReferrals(): UseRealtimeReferralsReturn {
     });
 
     return () => {
+      isCancelled = true;
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [fetchReferrals]);

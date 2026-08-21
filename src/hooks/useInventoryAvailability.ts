@@ -33,8 +33,14 @@ export function useInventoryAvailability(productId: string | null) {
       });
 
     // Subscribe to changes
+    const channelName = `inventory:product:${productId}`;
+    const existingChannel = supabase.getChannels().find((ch) => ch.topic === `realtime:${channelName}` || ch.topic === channelName);
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
     const channel = supabase
-      .channel(`inventory:product:${productId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -58,7 +64,10 @@ export function useInventoryAvailability(productId: string | null) {
     channelRef.current = channel;
 
     return () => {
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [productId]);
 
