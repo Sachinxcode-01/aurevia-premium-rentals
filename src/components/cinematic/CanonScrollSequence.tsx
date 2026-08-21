@@ -30,21 +30,15 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
-  // Lazy state initializers to prevent synchronous setState inside effect
-  const [isMobile] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
-
-  const [prefersReducedMotion] = useState(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    }
-    return false;
-  });
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
 
   // Progressive image preloader hook
   const { progressPct, isReady, getFrameImage } = useImageSequence({
@@ -90,7 +84,10 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
   // GSAP ScrollTrigger pinning and scrubbing setup
   useGSAP(
     () => {
-      if (prefersReducedMotion || !containerRef.current || !pinWrapperRef.current) return;
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reducedMotion || !containerRef.current || !pinWrapperRef.current) return;
+
+      const isMobile = window.innerWidth < 768;
 
       const trigger = ScrollTrigger.create({
         trigger: containerRef.current,
@@ -107,7 +104,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
         trigger.kill();
       };
     },
-    { scope: containerRef, dependencies: [isReady, isMobile, prefersReducedMotion, handleScrollProgress] }
+    { scope: containerRef, dependencies: [isReady, handleScrollProgress] }
   );
 
   // Handler to jump scroll position directly to a sequence stage
@@ -167,8 +164,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     <GridBackground className="w-full bg-obsidian">
       <div
         ref={containerRef}
-        className="relative w-full bg-obsidian"
-        style={{ height: isMobile ? "250vh" : "420vh" }}
+        className="relative w-full bg-obsidian h-[250vh] md:h-[420vh]"
       >
         {/* Sequence Preloading Overlay */}
         {!isReady && <SequenceLoader progressPct={progressPct} />}
