@@ -28,11 +28,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Aurevia Premium Camera Rentals | Professional Cameras & Lenses for Rent",
   description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
-  metadataBase: new URL("https://aurevia-app.vercel.app"),
+  metadataBase: new URL("https://aurevia-premium-rentals.vercel.app"),
   icons: {
-    icon: "/readme/aurevia-logo.png",
-    shortcut: "/readme/aurevia-logo.png",
-    apple: "/readme/aurevia-logo.png",
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" }
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
   manifest: "/manifest.json",
   appleWebApp: {
@@ -43,16 +46,25 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     title: "Aurevia Premium Camera Rentals",
-    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
-    url: "/",
+    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
+    url: "https://aurevia-premium-rentals.vercel.app",
     siteName: "AUREVIA",
+    images: [
+      {
+        url: "/readme/aurevia-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "AUREVIA Premium Camera Rentals",
+      },
+    ],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Aurevia Premium Camera Rentals",
-    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
+    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
+    images: ["/readme/aurevia-banner.png"],
   },
   verification: {
     google: "google2af6b85353900719",
@@ -73,6 +85,47 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${playfair.variable} ${inter.variable} h-full antialiased`}>
       <head>
+        {/* WebSite structured JSON-LD data for Google Search Site Name */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "AUREVIA",
+              "alternateName": [
+                "Aurevia Premium Rentals",
+                "Aurevia Camera Rentals",
+                "Aurevia Cinema Vault"
+              ],
+              "url": "https://aurevia-premium-rentals.vercel.app"
+            })
+          }}
+        />
+        {/* Organization structured JSON-LD data with official brand logo */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "AUREVIA Premium Camera Rentals",
+              "url": "https://aurevia-premium-rentals.vercel.app",
+              "logo": "https://aurevia-premium-rentals.vercel.app/icon.svg",
+              "founder": {
+                "@type": "Person",
+                "name": "Prem Mundargi"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+919686909048",
+                "contactType": "customer service",
+                "areaServed": "IN",
+                "availableLanguage": ["English", "Kannada", "Hindi"]
+              }
+            })
+          }}
+        />
         {/* LocalBusiness structured JSON-LD data */}
         <script
           type="application/ld+json"
@@ -81,7 +134,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "LocalBusiness",
               "name": "AUREVIA Premium Camera Rentals",
-              "image": "https://aurevia-premium-rentals.vercel.app/assets/images/canon.jpg",
+              "image": "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
               "telephone": "+919686909048",
               "email": "prem@aurevia.com",
               "address": {

@@ -1,16 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Champagne Gold Gradient -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
   <defs>
     <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#F5F1E8" />
-      <stop offset="50%" stop-color="#D8B36A" />
-      <stop offset="100%" stop-color="#B98A43" />
+      <stop offset="0%" stop-color="#FAF5E8" />
+      <stop offset="35%" stop-color="#D8B36A" />
+      <stop offset="70%" stop-color="#C29B4A" />
+      <stop offset="100%" stop-color="#8C671D" />
     </linearGradient>
+    <radialGradient id="discGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#181818" />
+      <stop offset="100%" stop-color="#080808" />
+    </radialGradient>
   </defs>
-  <!-- Background circle matching AUREVIA obsidian -->
-  <circle cx="50" cy="50" r="48" fill="#080808" />
-  <!-- Thin Gold Border -->
-  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#goldGrad)" stroke-width="3" />
-  <!-- Stylized Serif "A" Monogram in Playfair/Georgia styling -->
-  <text x="50" y="68" font-family="Georgia, serif" font-size="52" font-weight="bold" fill="url(#goldGrad)" text-anchor="middle">A</text>
+  
+  <!-- Outer Disc -->
+  <circle cx="50" cy="50" r="48" fill="url(#discGrad)" />
+  
+  <!-- Inner Ring Accents (Aperture / Viewfinder Theme) -->
+  <circle cx="50" cy="50" r="44" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" />
+  <circle cx="50" cy="50" r="41" fill="none" stroke="rgba(216, 179, 106, 0.25)" stroke-width="0.75" stroke-dasharray="2 2" />
+  
+  <!-- Subtle Crosshairs / Viewfinder Ticks -->
+  <line x1="50" y1="4" x2="50" y2="8" stroke="url(#goldGrad)" stroke-width="1.5" />
+  <line x1="50" y1="92" x2="50" y2="96" stroke="url(#goldGrad)" stroke-width="1.5" />
+  <line x1="4" y1="50" x2="8" y2="50" stroke="url(#goldGrad)" stroke-width="1.5" />
+  <line x1="92" y1="50" x2="96" y2="50" stroke="url(#goldGrad)" stroke-width="1.5" />
+
+  <!-- Iconic Serif "A" Monogram -->
+  <text 
+    x="50" 
+    y="67" 
+    font-family="Playfair Display, Georgia, serif" 
+    font-size="50" 
+    font-weight="bold" 
+    fill="url(#goldGrad)" 
+    text-anchor="middle"
+    letter-spacing="-1"
+  >A</text>
 </svg>
