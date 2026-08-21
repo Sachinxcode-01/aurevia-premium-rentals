@@ -119,7 +119,7 @@ export default function Home() {
           observer.unobserve(entry.target);
         });
       },
-      { rootMargin: "0px 0px -12% 0px", threshold: 0.08 }
+      { rootMargin: "60px 0px 0px 0px", threshold: 0.02 }
     );
 
     sections.forEach((section) => observer.observe(section));

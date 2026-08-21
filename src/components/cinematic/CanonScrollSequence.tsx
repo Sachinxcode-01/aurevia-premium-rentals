@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -60,6 +60,13 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     getFrameImage,
     objectFit: "cover",
   });
+
+  // Immediately render frame 1 as soon as image sequence is ready
+  useEffect(() => {
+    if (isReady) {
+      renderFrame(1);
+    }
+  }, [isReady, renderFrame]);
 
   // Current frame index for HUD telemetry
   const currentFrameNum = Math.max(
@@ -169,11 +176,11 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
         {/* Pinned Viewport Section */}
         <div
           ref={pinWrapperRef}
-          className="sticky top-0 w-full h-[100vh] overflow-hidden flex items-center justify-center select-none"
+          className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center select-none"
         >
           {/* Volumetric ambient background lighting */}
           <div className="absolute inset-0 bg-gold-champagne/10 blur-[130px] pointer-events-none z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-obsidian/80 pointer-events-none z-15" />
+          <div className="absolute inset-0 bg-linear-to-t from-obsidian via-transparent to-obsidian/80 pointer-events-none z-15" />
 
           {/* High-DPI Canvas Sequence */}
           <canvas
@@ -197,7 +204,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
           <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 flex flex-col items-end gap-4">
             <div className="relative h-44 w-[1.5px] bg-white/10 rounded-full overflow-hidden">
               <div
-                className="w-full bg-gradient-to-b from-gold-champagne/40 to-gold-champagne origin-top transition-transform duration-75"
+                className="w-full bg-linear-to-b from-gold-champagne/40 to-gold-champagne origin-top transition-transform duration-75"
                 style={{ transform: `scaleY(${Math.max(0.02, scrollProgress)})` }}
               />
             </div>
@@ -236,7 +243,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             <span className="text-[9px] uppercase tracking-[0.3em] text-muted-gray/80 font-mono block mb-2">
               Scroll to Scrub Sequence
             </span>
-            <div className="w-[1px] h-10 mx-auto bg-gradient-to-b from-gold-champagne to-transparent animate-pulse" />
+            <div className="w-px h-10 mx-auto bg-linear-to-b from-gold-champagne to-transparent animate-pulse" />
           </div>
         </div>
       </div>

@@ -10,7 +10,10 @@ interface CinematicTextProps {
 }
 
 const clamp = (val: number, min = 0, max = 1) => Math.min(max, Math.max(min, val));
-const range = (val: number, start: number, end: number) => clamp((val - start) / (end - start));
+const range = (val: number, start: number, end: number) => {
+  if (start === end) return 1;
+  return clamp((val - start) / (end - start));
+};
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
 
 const getOpacity = (
@@ -21,14 +24,18 @@ const getOpacity = (
   outEnd: number
 ) => {
   if (progress < inStart || progress > outEnd) return 0;
-  if (progress >= inStart && progress <= inEnd) return smoothstep(range(progress, inStart, inEnd));
+  if (progress >= inStart && progress <= inEnd) {
+    if (inStart === inEnd) return 1;
+    return smoothstep(range(progress, inStart, inEnd));
+  }
   if (progress >= inEnd && progress <= outStart) return 1;
+  if (outStart === outEnd) return 0;
   return 1 - smoothstep(range(progress, outStart, outEnd));
 };
 
 export default function CinematicText({ progress, onExploreClick }: CinematicTextProps) {
-  // Calculated Opacities for smooth crossfading without gaps
-  const op1 = getOpacity(progress, 0.01, 0.05, 0.12, 0.16);
+  // Calculated Opacities for smooth crossfading - Intro is 100% visible on first load (progress 0)
+  const op1 = getOpacity(progress, 0, 0, 0.12, 0.16);
   const op2 = getOpacity(progress, 0.15, 0.20, 0.31, 0.36);
   const op3 = getOpacity(progress, 0.35, 0.40, 0.51, 0.56);
   const op4 = getOpacity(progress, 0.55, 0.60, 0.70, 0.75);
@@ -36,7 +43,7 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
   const op6 = getOpacity(progress, 0.89, 0.94, 0.99, 1.0);
 
   // Transform translations
-  const y1 = (1 - range(progress, 0.01, 0.05)) * 24 - range(progress, 0.12, 0.16) * 20;
+  const y1 = -range(progress, 0.12, 0.16) * 20;
   const x2 = (1 - range(progress, 0.15, 0.20)) * -40 + range(progress, 0.31, 0.36) * -30;
   const x3 = (1 - range(progress, 0.35, 0.40)) * 40 - range(progress, 0.51, 0.56) * 30;
   const y4 = (1 - range(progress, 0.55, 0.60)) * 35 - range(progress, 0.70, 0.75) * 25;

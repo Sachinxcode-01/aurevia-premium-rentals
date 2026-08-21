@@ -176,6 +176,12 @@ textarea {
   transform: translate3d(0, 0, 0);
 }
 
+.reveal-section.is-visible .premium-surface,
+.reveal-section.is-visible .camera-card-anim,
+.reveal-section.is-visible .category-card-anim {
+  opacity: 1;
+}
+
 .reveal-section.is-visible .premium-surface {
   animation: premium-surface-in 900ms var(--motion-expo) both;
 }
