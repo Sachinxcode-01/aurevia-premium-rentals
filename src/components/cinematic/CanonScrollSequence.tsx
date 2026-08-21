@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useImageSequence } from "@/hooks/useImageSequence";
 import { useCanvasSequence } from "@/hooks/useCanvasSequence";
-import SequenceLoader from "./SequenceLoader";
 import CinematicText from "./CinematicText";
 import GridBackground from "@/components/effects/GridBackground";
 
@@ -166,9 +165,6 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
         ref={containerRef}
         className="relative w-full bg-obsidian h-[250vh] md:h-[420vh]"
       >
-        {/* Sequence Preloading Overlay */}
-        {!isReady && <SequenceLoader progressPct={progressPct} />}
-
         {/* Pinned Viewport Section */}
         <div
           ref={pinWrapperRef}
@@ -178,10 +174,23 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
           <div className="absolute inset-0 bg-gold-champagne/10 blur-[130px] pointer-events-none z-10" />
           <div className="absolute inset-0 bg-linear-to-t from-obsidian via-transparent to-obsidian/80 pointer-events-none z-15" />
 
-          {/* High-DPI Canvas Sequence */}
+          {/* Instant SSR / Fallback Frame 1 Image */}
+          <div className="absolute inset-0 w-full h-full pointer-events-none z-12">
+            <Image
+              src="/assets/canon-sequence/frame-001.jpg"
+              alt="Canon EOS R5 Cinema Pack"
+              fill
+              priority
+              sizes="100vw"
+              className="w-full h-full object-cover"
+              style={{ filter: "brightness(0.96) contrast(1.04)" }}
+            />
+          </div>
+
+          {/* High-DPI Canvas Sequence (renders over the static image once scrolling starts) */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none z-14"
             style={{ filter: "brightness(0.96) contrast(1.04)" }}
           />
 
@@ -190,8 +199,10 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
 
           {/* Real-Time Sequence Telemetry Badge (Bottom Left HUD) */}
           <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-[10px] font-mono text-muted-gray">
-            <span className="w-2 h-2 rounded-full bg-gold-champagne animate-ping" />
-            <span className="text-ivory font-medium">FRAME {String(currentFrameNum).padStart(3, "0")} / {TOTAL_FRAMES}</span>
+            <span className={`w-2 h-2 rounded-full ${isReady ? "bg-gold-champagne animate-ping" : "bg-emerald-400 animate-pulse"}`} />
+            <span className="text-ivory font-medium">
+              {isReady ? `FRAME ${String(currentFrameNum).padStart(3, "0")} / ${TOTAL_FRAMES}` : `PREPARING 8K SEQUENCE (${progressPct}%)`}
+            </span>
             <span className="text-white/20">|</span>
             <span className="text-gold-champagne font-semibold">8K RAW 30FPS</span>
           </div>
