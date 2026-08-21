@@ -71,38 +71,6 @@ function canCancel(status: string) {
   return ["pending_payment", "paid", "approval_pending"].includes(status);
 }
 
-/* ─── Print invoice helper ───────────────────────────────────── */
-export function printInvoice(booking: Record<string, unknown>, profile: Record<string, unknown> | null) {
-  const referenceCode = String(booking.referenceCode || booking.reference_code || "INV-001");
-  const createdAt = String(booking.createdAt || booking.created_at || new Date().toISOString());
-  const customerName = String(profile?.full_name || booking.contactName || booking.contact_name || "Valued Customer");
-  const customerEmail = String(profile?.email || booking.contactEmail || booking.contact_email || "customer@aurevia.com");
-  const customerPhone = String(profile?.phone || booking.contactPhone || booking.contact_phone || "+91 96869 09048");
-  const startDate = String(booking.startDate || booking.start_date || new Date().toISOString().split("T")[0]);
-  const endDate = String(booking.endDate || booking.end_date || new Date().toISOString().split("T")[0]);
-  const rentalFee = Number(booking.totalRentalFee || booking.total_rental_fee || 0);
-  const discountFee = Number(booking.discountAmount || booking.discount_amount || 0);
-  const couponCode = String(booking.couponApplied || booking.coupon_applied || "");
-  const totalPayable = Number(booking.totalPayable ?? booking.total_payable ?? (rentalFee - discountFee));
-  const status = String(booking.status || "confirmed");
-  const paymentStatus = String(booking.paymentStatus || booking.payment_status || "paid");
-
-  printOrDownloadInvoice({
-    referenceCode,
-    createdAt,
-    customerName,
-    customerEmail,
-    customerPhone,
-    startDate,
-    endDate,
-    rentalFee,
-    discountFee,
-    couponCode,
-    totalPayable,
-    status,
-    paymentStatus
-  });
-}
 
 /* ─── Main Component ──────────────────────────────────────────── */
 export default function CustomerDashboard() {
