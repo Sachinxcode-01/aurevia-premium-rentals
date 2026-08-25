@@ -161,12 +161,12 @@ export default function Navbar({
       <SearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
       <ReferralModal isOpen={referralModalOpen} onClose={() => setReferralModalOpen(false)} />
       {announcementActive && announcementText && (
-        <div className="fixed top-0 left-0 w-full bg-gold-champagne text-obsidian text-[9px] md:text-[10px] font-bold h-[32px] flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
+        <div className="fixed top-0 left-0 w-full bg-gold-champagne text-obsidian text-[9px] md:text-[10px] font-bold h-8 flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
           <span>{announcementText}</span>
         </div>
       )}
       <header
-        className={`fixed left-0 w-full z-40 transition-all duration-300 h-[86px] flex items-center border-b ${
+        className={`fixed left-0 w-full z-40 transition-all duration-300 h-21.5 flex items-center border-b ${
           scrolled
             ? "bg-obsidian/85 backdrop-blur-xl border-gold-champagne/15 shadow-lg shadow-black/80"
             : "bg-obsidian/30 backdrop-blur-md border-white/5"
@@ -195,11 +195,11 @@ export default function Navbar({
                   {isActive ? (
                     <motion.span
                       layoutId="activeNavIndicator"
-                      className="absolute bottom-[-6px] left-0 w-full h-[1.5px] bg-gold-champagne"
+                      className="absolute -bottom-1.5 left-0 w-full h-[1.5px] bg-gold-champagne"
                       transition={{ type: "spring", stiffness: 350, damping: 30 }}
                     />
                   ) : (
-                    <span className="absolute bottom-[-6px] left-0 w-0 h-[1.5px] bg-gold-champagne transition-all duration-300 group-hover:w-full" />
+                    <span className="absolute -bottom-1.5 left-0 w-0 h-[1.5px] bg-gold-champagne transition-all duration-300 group-hover:w-full" />
                   )}
                 </Link>
               );
@@ -216,7 +216,7 @@ export default function Navbar({
               className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 xl:w-44 2xl:w-52 px-2.5 xl:px-3.5 flex items-center justify-center xl:justify-between transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center gap-2">
-                <Search size={15} className="stroke-[2] text-gold-champagne shrink-0" />
+                <Search size={15} className="stroke-2 text-gold-champagne shrink-0" />
                 <span className="hidden xl:inline text-[11px] 2xl:text-xs">Search gear...</span>
               </div>
               <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[8px] 2xl:text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
@@ -229,7 +229,7 @@ export default function Navbar({
               href="/booking"
               className="relative text-ivory/80 hover:text-gold-champagne transition duration-300 flex items-center p-1.5"
             >
-              <ShoppingCart className="w-[18px] h-[18px] xl:w-[19px] xl:h-[19px] stroke-[2]" />
+              <ShoppingCart className="w-4.5 h-4.5 xl:w-4.75 xl:h-4.75 stroke-2" />
               {cartItemCount > 0 && (
                 <span className="absolute top-0.5 right-0.5 bg-gold-champagne text-obsidian text-[8px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
@@ -273,7 +273,7 @@ export default function Navbar({
                 href="/login"
                 className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center text-xs font-mono uppercase tracking-wider"
               >
-                <User className="w-[18px] h-[18px] stroke-[2] mr-1" />
+                <User className="w-4.5 h-4.5 stroke-2 mr-1" />
                 <span>Sign In</span>
               </Link>
             )}
@@ -305,7 +305,7 @@ export default function Navbar({
               aria-label="Gift 15% Off Referral Pass"
               title="Gift 15% Off"
             >
-              <Gift size={19} className="stroke-[2]" />
+              <Gift size={19} className="stroke-2" />
             </button>
             {/* Mobile Search Trigger */}
             <button
@@ -313,14 +313,14 @@ export default function Navbar({
               className="text-ivory/80 hover:text-gold-champagne transition flex items-center p-1.5 cursor-pointer"
               aria-label="Search gear"
             >
-              <Search size={19} className="stroke-[2] text-gold-champagne" />
+              <Search size={19} className="stroke-2 text-gold-champagne" />
             </button>
             {/* Mobile Cart */}
             <Link
               href="/booking"
               className="relative text-ivory/80 hover:text-gold-champagne transition flex items-center p-1.5"
             >
-              <ShoppingCart size={20} className="stroke-[2]" />
+              <ShoppingCart size={20} className="stroke-2" />
               {cartItemCount > 0 && (
                 <span className="absolute top-0 right-0 bg-gold-champagne text-obsidian text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {cartItemCount}
@@ -334,7 +334,7 @@ export default function Navbar({
               className="text-ivory/80 hover:text-gold-champagne transition duration-300 focus:outline-none p-1.5 cursor-pointer flex items-center"
               aria-label="Open navigation menu"
             >
-              <Menu size={22} className="stroke-[2]" />
+              <Menu size={22} className="stroke-2" />
             </button>
           </div>
         </div>
@@ -366,7 +366,7 @@ export default function Navbar({
                 className="text-ivory/80 hover:text-gold-champagne transition duration-300 focus:outline-none p-1.5 cursor-pointer flex items-center"
                 aria-label="Close navigation menu"
               >
-                <X size={22} className="stroke-[2]" />
+                <X size={22} className="stroke-2" />
               </button>
             </div>
 
@@ -381,7 +381,7 @@ export default function Navbar({
                   className="w-full bg-white/5 border border-white/10 text-sm text-ivory rounded-full px-5 py-3 pr-10 focus:outline-none focus:border-gold-champagne/50"
                 />
                 <button type="submit" className="absolute right-4 text-muted-gray hover:text-gold-champagne cursor-pointer">
-                  <Search size={16} className="stroke-[2]" />
+                  <Search size={16} className="stroke-2" />
                 </button>
               </form>
             </div>
@@ -431,7 +431,7 @@ export default function Navbar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 text-sm text-ivory/70 hover:text-gold-champagne transition duration-300 self-start font-mono uppercase tracking-wider"
                 >
-                  <User size={16} className="stroke-[2]" />
+                  <User size={16} className="stroke-2" />
                   My Account
                 </Link>
 
