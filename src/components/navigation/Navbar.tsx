@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, User, Menu, X, ShoppingCart, LogOut } from "lucide-react";
+import { Search, User, Menu, X, ShoppingCart, LogOut, Gift } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
 import MagneticButton from "@/components/motion/MagneticButton";
 import SearchModal from "@/components/ui/SearchModal";
+import ReferralModal from "@/components/referral/ReferralModal";
 import { createClient } from "@/lib/supabase/client";
 import { signOutAction } from "@/lib/actions/auth";
 
@@ -27,6 +28,7 @@ export default function Navbar({
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
@@ -157,6 +159,7 @@ export default function Navbar({
   return (
     <>
       <SearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+      <ReferralModal isOpen={referralModalOpen} onClose={() => setReferralModalOpen(false)} />
       {announcementActive && announcementText && (
         <div className="fixed top-0 left-0 w-full bg-gold-champagne text-obsidian text-[9px] md:text-[10px] font-bold h-[32px] flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
           <span>{announcementText}</span>
@@ -275,6 +278,16 @@ export default function Navbar({
               </Link>
             )}
 
+            {/* VIP Referral Pass Trigger */}
+            <button
+              onClick={() => setReferralModalOpen(true)}
+              title="Refer & Get 15% Off"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/25 text-gold-champagne hover:bg-gold-champagne hover:text-obsidian transition-all duration-300 text-[10px] font-mono font-semibold uppercase tracking-wider cursor-pointer group"
+            >
+              <Gift size={13} className="shrink-0 group-hover:scale-110 transition-transform" />
+              <span>Gift 15% Off</span>
+            </button>
+
             {/* Magnetic CTA Book Now */}
             <MagneticButton onClick={() => router.push("/booking")}>
               <div className="h-9 xl:h-10 px-3.5 xl:px-5 bg-gold-champagne text-obsidian text-[10px] xl:text-[11px] 2xl:text-[12px] font-bold uppercase tracking-wider xl:tracking-widest rounded shadow hover:bg-gold-champagne/90 transition-colors duration-300 cursor-pointer flex items-center justify-center shrink-0">
@@ -285,6 +298,15 @@ export default function Navbar({
 
           {/* Mobile Header Actions (Visible on screens < lg) */}
           <div className="flex lg:hidden items-center gap-3">
+            {/* Mobile Referral Trigger */}
+            <button
+              onClick={() => setReferralModalOpen(true)}
+              className="text-gold-champagne hover:text-amber-300 transition flex items-center p-1.5 cursor-pointer"
+              aria-label="Gift 15% Off Referral Pass"
+              title="Gift 15% Off"
+            >
+              <Gift size={19} className="stroke-[2]" />
+            </button>
             {/* Mobile Search Trigger */}
             <button
               onClick={handleOpenSearch}

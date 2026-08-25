@@ -19,6 +19,7 @@ import { engagementStore, CustomerReview } from "@/lib/db/engagementStore";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
+import ReferralModal from "@/components/referral/ReferralModal";
 import {
   ShieldCheck,
   TrendingUp,
@@ -30,6 +31,8 @@ import {
   Phone,
   MessageCircle,
   Mail,
+  Gift,
+  Share2,
 } from "lucide-react";
 
 export default function HomeClient() {
@@ -44,6 +47,7 @@ export default function HomeClient() {
 
   const [faqsList, setFaqsList] = React.useState<FAQ[]>([]);
   const [productsList, setProductsList] = React.useState<Product[]>([]);
+  const [referralModalOpen, setReferralModalOpen] = React.useState(false);
 
   React.useEffect(() => {
     db.getFAQs().then(setFaqsList);
@@ -952,6 +956,71 @@ export default function HomeClient() {
           </div>
         </div>
       </section>
+
+      {/* 15.5 VIP Referral Pass Section */}
+      <section className="py-16 px-6 md:px-12 bg-obsidian border-t border-white/5 relative z-20 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="glass-panel border-gold-champagne/30 rounded-2xl p-6 md:p-12 relative overflow-hidden bg-linear-to-r from-charcoal/90 via-obsidian to-charcoal/90 shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              {/* Text & Action */}
+              <div className="lg:col-span-7 space-y-4">
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-champagne/10 border border-gold-champagne/25 text-gold-champagne text-[10px] font-mono font-semibold uppercase tracking-widest">
+                  <Gift size={13} /> Exclusive VIP Concierge Reward
+                </span>
+                <h3 className="serif-heading text-3xl md:text-4xl font-light text-ivory">
+                  Gift <span className="text-gold font-normal">15% OFF</span> via WhatsApp
+                </h3>
+                <p className="text-xs md:text-sm text-muted-gray max-w-xl font-light leading-relaxed">
+                  Refer fellow filmmakers, photographers, or production studios. They receive an instant <strong className="text-ivory font-medium">15% discount</strong> voucher pass, and you earn <strong className="text-gold-champagne font-medium">₹500 in rental credits</strong> credited directly to your account.
+                </p>
+                
+                <div className="pt-2 flex flex-wrap gap-4 items-center">
+                  <button
+                    onClick={() => setReferralModalOpen(true)}
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg border border-emerald-400/30 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <MessageCircle size={18} className="fill-current" />
+                    Share Pass on WhatsApp
+                  </button>
+                  
+                  <button
+                    onClick={() => setReferralModalOpen(true)}
+                    className="px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/15 text-ivory text-xs font-semibold uppercase tracking-wider rounded-xl flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <Share2 size={15} />
+                    Get Referral Link
+                  </button>
+                </div>
+              </div>
+
+              {/* VIP Banner Preview Card */}
+              <div className="lg:col-span-5 relative group cursor-pointer" onClick={() => setReferralModalOpen(true)}>
+                <div className="aspect-video relative rounded-xl overflow-hidden border border-gold-champagne/30 shadow-2xl transition-transform duration-500 group-hover:scale-103">
+                  <Image
+                    src="/referral-banner.jpg"
+                    alt="AUREVIA VIP Referral Pass Banner"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <span className="px-4 py-2 bg-obsidian/90 border border-gold-champagne/40 text-gold-champagne text-[10px] font-mono font-bold uppercase tracking-wider rounded-full shadow-2xl backdrop-blur-md">
+                      Click to Share Pass
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Referral Modal Popup */}
+      <ReferralModal
+        isOpen={referralModalOpen}
+        onClose={() => setReferralModalOpen(false)}
+      />
 
       {/* 16. Luxury Footer */}
       <footer className="bg-black border-t border-white/5 py-16 px-6 md:px-12 relative z-20">
