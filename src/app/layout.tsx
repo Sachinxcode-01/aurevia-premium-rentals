@@ -26,8 +26,28 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Aurevia Premium Camera Rentals | Professional Cameras & Lenses for Rent",
-  description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
+  title: {
+    default: "AUREVIA Premium Camera Rentals | Professional Cameras & Lenses for Rent",
+    template: "%s | AUREVIA Premium Rentals",
+  },
+  description: "Rent premium DSLR, mirrorless, cinema cameras, cinema lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
+  keywords: [
+    "camera rental",
+    "camera rentals Gadag",
+    "lens rental",
+    "cinema camera rental",
+    "Sony FX3 for rent",
+    "Canon EOS R5 rental",
+    "RED Komodo rental",
+    "rent mirrorless camera",
+    "dslr camera rental Karnataka",
+    "Aurevia camera rentals",
+    "Prem Mundargi camera rentals",
+    "photography gear hire",
+  ],
+  authors: [{ name: "Prem Mundargi", url: "https://aurevia-premium-rentals.vercel.app" }],
+  creator: "Prem Mundargi",
+  publisher: "AUREVIA Premium Camera Rentals",
   metadataBase: new URL("https://aurevia-premium-rentals.vercel.app"),
   icons: {
     icon: [
@@ -43,18 +63,18 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "AUREVIA",
   },
-  alternates: { canonical: "/" },
+  alternates: { canonical: "https://aurevia-premium-rentals.vercel.app" },
   openGraph: {
-    title: "Aurevia Premium Camera Rentals",
+    title: "AUREVIA Premium Camera Rentals | Frame the Extraordinary",
     description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
     url: "https://aurevia-premium-rentals.vercel.app",
-    siteName: "AUREVIA",
+    siteName: "AUREVIA Premium Rentals",
     images: [
       {
-        url: "/readme/aurevia-banner.png",
+        url: "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
         width: 1200,
         height: 630,
-        alt: "AUREVIA Premium Camera Rentals",
+        alt: "AUREVIA Premium Camera Rentals Concierge",
       },
     ],
     locale: "en_US",
@@ -64,7 +84,19 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Aurevia Premium Camera Rentals",
     description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
-    images: ["/readme/aurevia-banner.png"],
+    images: ["https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png"],
+    creator: "@aurevia_rentals",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   verification: {
     google: "google2af6b85353900719",
@@ -147,26 +179,6 @@ export default function RootLayout({
               },
               "priceRange": "INR",
               "url": "https://aurevia-premium-rentals.vercel.app"
-            })
-          }}
-        />
-        {/* Product structured JSON-LD data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Product",
-              "name": "Canon EOS R5 Renter Pack",
-              "image": "https://aurevia-premium-rentals.vercel.app/assets/images/canon.jpg",
-              "description": "Rent premium Canon EOS R5 camera body in Gadag. High resolution 45MP sensor for creative visual art projects.",
-              "offers": {
-                "@type": "Offer",
-                "price": "799.00",
-                "priceCurrency": "INR",
-                "availability": "https://schema.org/InStock",
-                "url": "https://aurevia-premium-rentals.vercel.app/gear/canon-eos-r5"
-              }
             })
           }}
         />

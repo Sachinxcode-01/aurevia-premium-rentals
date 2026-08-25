@@ -1,85 +1,75 @@
-"use client";
+import { Metadata } from "next";
+import RentalProcessClient from "@/components/pages/RentalProcessClient";
 
-import React from "react";
-import Navbar from "@/components/navigation/Navbar";
-import { useCart } from "@/hooks/useCart";
-import { Check } from "lucide-react";
+export const metadata: Metadata = {
+  title: "How Camera Rental Works | Rental Guidelines & Verification | AUREVIA",
+  description:
+    "Step-by-step guide to renting high-end camera bodies and lenses from AUREVIA. Learn about identity verification, pickup, delivery, and equipment returns.",
+  alternates: {
+    canonical: "https://aurevia-premium-rentals.vercel.app/rental-process",
+  },
+  openGraph: {
+    title: "How AUREVIA Camera Rentals Work",
+    description:
+      "Seamless 4-step camera rental process: Gear Selection, KYC Verification, Studio Pickup or Dispatch, and Easy Return.",
+    url: "https://aurevia-premium-rentals.vercel.app/rental-process",
+    siteName: "AUREVIA Premium Rentals",
+    images: [
+      {
+        url: "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
+        width: 1200,
+        height: 630,
+        alt: "AUREVIA Rental Process Guide",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "How AUREVIA Camera Rentals Work",
+    description:
+      "4 simple steps to rent premium cinema cameras and lenses.",
+    images: ["https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png"],
+  },
+};
 
 export default function RentalProcessPage() {
-  const { cart } = useCart();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "How to Rent Camera Gear from AUREVIA Premium Rentals",
+    "description": "Step-by-step instructions for booking, verifying, receiving, and returning camera equipment.",
+    "step": [
+      {
+        "@type": "HowToStep",
+        "name": "1. Reserve & Configure",
+        "text": "Select your camera body, cinema lenses, or lighting accessories. Specify your start and end rental dates.",
+      },
+      {
+        "@type": "HowToStep",
+        "name": "2. Verify Identity (KYC)",
+        "text": "Upload valid government ID and address verification for quick automated security clearance.",
+      },
+      {
+        "@type": "HowToStep",
+        "name": "3. Dispatch or Studio Handover",
+        "text": "Collect your gear directly at our Gadag vault studio or request expedited doorstep dispatch.",
+      },
+      {
+        "@type": "HowToStep",
+        "name": "4. Shoot & Return",
+        "text": "Execute your visual production project and return equipment smoothly at the end of the rental window.",
+      },
+    ],
+  };
 
   return (
-    <div className="min-h-screen bg-obsidian text-ivory pb-20">
-      <Navbar cartItemCount={cart.length} />
-
-      <div className="pt-32 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block mb-2">
-          Operations Guide
-        </span>
-        <h1 className="serif-heading text-4xl md:text-5xl lg:text-6xl font-light text-ivory">
-          How AUREVIA <span className="text-gold">Rentals Work</span>
-        </h1>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 space-y-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {[
-            {
-              step: "Step 01",
-              title: "Vault Selection",
-              desc: "Browse our premium DSLR, mirrorless, and cinema camera catalogs. Filter by category, lens length, and technical specifications.",
-            },
-            {
-              step: "Step 02",
-              title: "Availability Locking",
-              desc: "Enter pickup and return dates. Our real-time calendar checks stock and ensures you are never double-booked.",
-            },
-            {
-              step: "Step 03",
-              title: "Concierge Handover",
-              desc: "Collect your equipment directly from our Gadag studio (Javalli Galli) or opt for secure flight-cased delivery to your shoot location.",
-            },
-            {
-              step: "Step 04",
-              title: "Return & Completion",
-              desc: "Return the checked-out gear. Once inspected by our staff, the booking status is marked completed in your dashboard.",
-            },
-          ].map((item) => (
-            <div key={item.step} className="glass-panel border-white/5 p-6 rounded-lg space-y-4">
-              <span className="text-xs font-mono text-gold-champagne uppercase tracking-widest block">{item.step}</span>
-              <h3 className="serif-heading text-lg font-light text-ivory">{item.title}</h3>
-              <p className="text-xs text-muted-gray leading-relaxed font-light">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="glass-panel p-8 rounded-lg border-white/5 space-y-6">
-          <h3 className="serif-heading text-xl text-ivory border-b border-white/5 pb-2">Frequently Audited Guidelines</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-muted-gray font-light leading-relaxed">
-            <div className="space-y-3">
-              <p className="flex gap-2 items-start">
-                <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>Required Identification:</strong> Creators must present a government photo ID card (Aadhaar, Passport, DL) matching order credentials upon collection.</span>
-              </p>
-              <p className="flex gap-2 items-start">
-                <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>No Security Deposits:</strong> AUREVIA charges zero security deposits or collateral holds. Pay only the flat rate!</span>
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <p className="flex gap-2 items-start">
-                <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>Extensions:</strong> Rental extensions must be filed 24 hours before return slots to prevent inventory conflicts.</span>
-              </p>
-              <p className="flex gap-2 items-start">
-                <Check size={14} className="text-gold-champagne shrink-0 mt-0.5" />
-                <span><strong>Concierge Pickups:</strong> Pickups are available at Gadag studio (Javalli Galli) Mon-Sat 9AM to 7PM. Call hotline at 9686909048 to schedule.</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <RentalProcessClient />
+    </>
   );
 }

@@ -22,13 +22,21 @@ export async function generateMetadata({ params }: GearPageProps): Promise<Metad
   const pageUrl = `${siteUrl}/gear/${product.slug}`;
 
   return {
-    title: `${product.name} | Rent Professional Cinema Gear | AUREVIA`,
-    description: product.description.slice(0, 160),
+    title: `${product.name} | Rent Professional Cinema Gear`,
+    description: `Rent ${product.name} starting at ₹${product.dailyPrice}/day from AUREVIA Premium Camera Rentals. ${product.description.slice(0, 120)}`,
+    keywords: [
+      product.name,
+      `rent ${product.name}`,
+      `${product.brandId} camera rental`,
+      `${product.categoryId} rental`,
+      "camera equipment rental",
+      "Aurevia camera vault",
+    ],
     alternates: {
       canonical: pageUrl,
     },
     openGraph: {
-      title: `${product.name} — Premium Camera Rentals`,
+      title: `${product.name} — Rent at ₹${product.dailyPrice}/day | AUREVIA`,
       description: product.description,
       url: pageUrl,
       siteName: "AUREVIA Premium Rentals",
@@ -44,7 +52,7 @@ export async function generateMetadata({ params }: GearPageProps): Promise<Metad
     },
     twitter: {
       card: "summary_large_image",
-      title: `${product.name} | AUREVIA`,
+      title: `${product.name} | Rent at AUREVIA`,
       description: product.description,
       images: [product.imagePrimary],
     },
@@ -61,28 +69,59 @@ export default async function GearDetailsPage({ params }: GearPageProps) {
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://aurevia-premium-rentals.vercel.app";
 
-  // Structured Data (JSON-LD) for SEO
+  // Structured Data (JSON-LD) for SEO (Product + Breadcrumbs)
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    image: product.images,
-    description: product.description,
-    sku: product.id,
-    brand: {
-      "@type": "Brand",
-      name: "AUREVIA",
-    },
-    offers: {
-      "@type": "Offer",
-      url: `${siteUrl}/gear/${product.slug}`,
-      priceCurrency: "INR",
-      price: product.dailyPrice,
-      availability: product.isArchived
-        ? "https://schema.org/OutOfStock"
-        : "https://schema.org/InStock",
-      itemCondition: "https://schema.org/UsedCondition",
-    },
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": siteUrl,
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Explore Catalog",
+            "item": `${siteUrl}/explore`,
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": product.name,
+            "item": `${siteUrl}/gear/${product.slug}`,
+          },
+        ],
+      },
+      {
+        "@type": "Product",
+        "name": product.name,
+        "image": product.images && product.images.length > 0 ? product.images : [product.imagePrimary],
+        "description": product.description,
+        "sku": product.id,
+        "brand": {
+          "@type": "Brand",
+          "name": product.brandId ? product.brandId.toUpperCase() : "AUREVIA",
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": `${siteUrl}/gear/${product.slug}`,
+          "priceCurrency": "INR",
+          "price": product.dailyPrice,
+          "availability": product.isArchived
+            ? "https://schema.org/OutOfStock"
+            : "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/UsedCondition",
+          "seller": {
+            "@type": "Organization",
+            "name": "AUREVIA Premium Camera Rentals",
+          },
+        },
+      },
+    ],
   };
 
   return (

@@ -1,41 +1,22 @@
-"use client";
+import { Metadata } from "next";
+import TermsClient from "@/components/pages/TermsClient";
 
-import React from "react";
-import Navbar from "@/components/navigation/Navbar";
-import { useCart } from "@/hooks/useCart";
+export const metadata: Metadata = {
+  title: "Terms of Service & Rental Agreement | AUREVIA",
+  description:
+    "Terms of service, equipment care rules, rental deposit policies, and user agreements for AUREVIA Premium Camera Rentals.",
+  alternates: {
+    canonical: "https://aurevia-premium-rentals.vercel.app/terms",
+  },
+  openGraph: {
+    title: "Terms of Service | AUREVIA Camera Rentals",
+    description: "Rental terms and conditions for camera equipment hire.",
+    url: "https://aurevia-premium-rentals.vercel.app/terms",
+    siteName: "AUREVIA Premium Rentals",
+    type: "website",
+  },
+};
 
 export default function TermsPage() {
-  const { cart } = useCart();
-
-  return (
-    <div className="min-h-screen bg-obsidian text-ivory pb-20">
-      <Navbar cartItemCount={cart.length} />
-
-      <div className="pt-32 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-white/5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block mb-2">
-          Legal Agreement
-        </span>
-        <h1 className="serif-heading text-4xl md:text-5xl lg:text-6xl font-light text-ivory">
-          Rental <span className="text-gold">Terms & Conditions</span>
-        </h1>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 text-xs text-muted-gray leading-relaxed font-light">
-        <div className="space-y-3">
-          <h3 className="serif-heading text-lg font-medium text-ivory">1. Equipment Inspection</h3>
-          <p>The renter agrees to inspect all items (lens glass, sensor bodies, stabilizer calibration) upon handover. Any noted aesthetic or functional defects must be documented. Unreported defects discovered upon return will be assumed to have occurred during the rental term.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="serif-heading text-lg font-medium text-ivory">2. Rental Rates & Payments</h3>
-          <p>Aurevia does not charge any security deposits. Rental fees are billed at a flat rate of ₹799 per day (or ₹600 per day if an authorized promo code is applied). Checkout payment must be fully cleared before gear pickup handover.</p>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="serif-heading text-lg font-medium text-ivory">3. Damage and Waiver Policies</h3>
-          <p>Our optional damage waiver protects against accidental impact or moisture damages. It does not cover complete loss, theft, cosmetic scrapes, or gross negligence. Uncovered damages are evaluated according to physical repair cost assessments.</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <TermsClient />;
 }
