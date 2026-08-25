@@ -51,7 +51,21 @@ Hey! I'm sharing an exclusive 15% discount pass for renting premium cinema camer
 
 Frame the Extraordinary! 📷`;
 
-  const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
+  const handleWhatsAppDirectShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const encodedText = encodeURIComponent(whatsappMessage);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    if (isMobile) {
+      // Launch native WhatsApp application directly on mobile
+      window.location.href = `whatsapp://send?text=${encodedText}`;
+    } else {
+      // Open WhatsApp Web directly in a new tab on desktop/laptop
+      window.open(`https://web.whatsapp.com/send?text=${encodedText}`, "_blank");
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -88,7 +102,8 @@ Frame the Extraordinary! 📷`;
         }
       }
     } else {
-      window.open(whatsappShareUrl, "_blank");
+      const encodedText = encodeURIComponent(whatsappMessage);
+      window.open(`https://web.whatsapp.com/send?text=${encodedText}`, "_blank");
     }
   };
 
@@ -216,15 +231,13 @@ Frame the Extraordinary! 📷`;
               {/* Action Sharing Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 {/* WhatsApp Button */}
-                <a
-                  href={whatsappShareUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={handleWhatsAppDirectShare}
                   className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs uppercase tracking-wider rounded-xl shadow-lg border border-emerald-400/30 flex items-center justify-center gap-2 transition cursor-pointer"
                 >
                   <MessageCircle size={18} className="fill-current" />
                   Share on WhatsApp
-                </a>
+                </button>
 
                 {/* Native Share / General Share Button */}
                 <button
