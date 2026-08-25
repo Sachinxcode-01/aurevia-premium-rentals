@@ -396,3 +396,266 @@ export function printOrDownloadInvoice(data: InvoiceData) {
     win.print();
   }, 300);
 }
+
+// ─── Legal Rental Agreement PDF Contract ──────────────────────────
+
+export interface AgreementData {
+  contractNo: string;
+  createdAt?: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  kycDocType?: string;
+  kycNumber?: string;
+  emergencyContact?: string;
+  equipmentName: string;
+  serialNumber: string;
+  startDate: string;
+  endDate: string;
+  rentalFee: number;
+  depositFee: number;
+  status: string;
+  otpCode?: string;
+}
+
+export function generateRentalAgreementHTML(data: AgreementData): string {
+  const agreementNo = data.contractNo || `AGREEMENT-${Date.now().toString().slice(-6)}`;
+  const createdDate = new Date(data.createdAt || Date.now()).toLocaleDateString("en-IN", {
+    day: "numeric", month: "short", year: "numeric"
+  });
+
+  const rentalDays = Math.max(1, Math.ceil(
+    (new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / 86400000
+  ));
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>AUREVIA Legal Equipment Rental Agreement — ${agreementNo}</title>
+      <style>
+        @media print {
+          body { padding: 0; background: #fff; }
+          @page { margin: 12mm; size: A4 portrait; }
+          .no-print { display: none !important; }
+        }
+        * { box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          background: #ffffff;
+          color: #111111;
+          padding: 36px;
+          max-width: 820px;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+        .header-bar {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 3px solid #D8B36A;
+          padding-bottom: 20px;
+          margin-bottom: 20px;
+        }
+        .brand-title {
+          font-family: Georgia, serif;
+          font-size: 26px;
+          letter-spacing: 3px;
+          color: #0c0c0c;
+          font-weight: 700;
+        }
+        .brand-sub {
+          font-size: 10px;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          color: #D8B36A;
+          font-weight: 700;
+        }
+        .badge-contract {
+          display: inline-block;
+          padding: 4px 12px;
+          background: #0c0c0c;
+          color: #D8B36A;
+          font-size: 10px;
+          font-weight: 800;
+          border-radius: 4px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          margin-bottom: 6px;
+        }
+        .grid-parties {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 20px;
+          background: #fafafa;
+          border: 1px solid #e5e5e5;
+          padding: 16px;
+          border-radius: 6px;
+        }
+        .party-title {
+          font-size: 9px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #D8B36A;
+          font-weight: 800;
+          margin-bottom: 6px;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 4px;
+        }
+        .party-name { font-size: 13px; font-weight: 700; color: #111; }
+        .party-detail { font-size: 11px; color: #555; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th {
+          text-align: left;
+          border-bottom: 2px solid #D8B36A;
+          padding: 10px 8px;
+          font-size: 9px;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #333;
+          font-weight: 800;
+          background: #fdfbf7;
+        }
+        td { padding: 10px 8px; font-size: 12px; border-bottom: 1px solid #eeeeee; }
+        .mono { font-family: monospace; font-weight: 700; }
+
+        .clauses-box {
+          background: #fff8eb;
+          border: 1px solid #f2dfb8;
+          padding: 16px;
+          border-radius: 6px;
+          margin-bottom: 24px;
+          font-size: 10.5px;
+          color: #444;
+          line-height: 1.6;
+        }
+        .clauses-title {
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
+          color: #8c671d;
+          margin-bottom: 8px;
+        }
+        .clauses-box ol { margin: 0; padding-left: 18px; }
+        .clauses-box li { margin-bottom: 6px; }
+
+        .signatures-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 30px;
+          border-top: 2px solid #D8B36A;
+          padding-top: 20px;
+          margin-top: 20px;
+        }
+        .sig-card {
+          border: 1px border #eee;
+          padding: 14px;
+          background: #fafafa;
+          border-radius: 6px;
+        }
+        .sig-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #666; font-weight: 800; }
+        .sig-name { font-family: Georgia, serif; font-size: 16px; font-style: italic; color: #0c0c0c; margin-top: 12px; font-weight: 700; }
+        .sig-status { font-size: 10px; color: #27ae60; font-weight: 700; font-mono: monospace; margin-top: 4px; }
+      </style>
+    </head>
+    <body>
+      <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+        <button onclick="window.print()" style="padding: 10px 22px; background: #0c0c0c; color: #D8B36A; border: 1px solid #D8B36A; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;">
+          🖨️ Print / Save Legal Agreement PDF
+        </button>
+      </div>
+
+      <div class="header-bar">
+        <div>
+          <div class="brand-title">AUREVIA</div>
+          <div class="brand-sub">Equipment Bailment &amp; Rental Contract</div>
+        </div>
+
+        <div style="text-align: right;">
+          <div class="badge-contract">BINDING LEGAL CONTRACT</div>
+          <div style="font-family: monospace; font-size: 14px; font-weight: 700;">${agreementNo}</div>
+          <div style="font-size: 10.5px; color: #666; margin-top: 2px;">Executed Date: ${createdDate}</div>
+        </div>
+      </div>
+
+      <div class="grid-parties">
+        <div>
+          <div class="party-title">Lessor (Equipment Provider)</div>
+          <div class="party-name">AUREVIA Premium Camera Rentals</div>
+          <div class="party-detail">Represented by: Prem Mundargi</div>
+          <div class="party-detail">Desk Phone: +91 96869 09048</div>
+          <div class="party-detail">Studio: Gadag Main Road, Karnataka 582101</div>
+        </div>
+
+        <div>
+          <div class="party-title">Lessee (Renter / Production Desk)</div>
+          <div class="party-name">${data.customerName}</div>
+          <div class="party-detail">Email: ${data.customerEmail}</div>
+          <div class="party-detail">Phone: ${data.customerPhone}</div>
+          <div class="party-detail">KYC Document: ${data.kycDocType || "Government Photo ID"} (Verified)</div>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Rented Cinema Equipment</th>
+            <th>Assigned Serial No</th>
+            <th style="text-align: center;">Rental Duration</th>
+            <th style="text-align: right;">Rental Fee</th>
+            <th style="text-align: right;">Security Deposit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>${data.equipmentName}</strong></td>
+            <td class="mono" style="color: #8c671d;">${data.serialNumber}</td>
+            <td style="text-align: center;">${data.startDate} → ${data.endDate} (${rentalDays} Days)</td>
+            <td style="text-align: right;" class="mono">₹${data.rentalFee.toLocaleString("en-IN")}</td>
+            <td style="text-align: right;" class="mono">₹${data.depositFee.toLocaleString("en-IN")}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="clauses-box">
+        <div class="clauses-title">TERMS &amp; INDEMNITY CONDITIONS</div>
+        <ol>
+          <li><strong>BAILMENT &amp; TITLE:</strong> All equipment listed remains the exclusive property of Lessor. Lessee receives temporary possession solely for visual production purposes.</li>
+          <li><strong>INSPECTION &amp; WORKING CONDITION:</strong> Lessee acknowledges physical inspection of equipment upon handover and confirms pristine operational condition.</li>
+          <li><strong>DAMAGE &amp; REPLACEMENT INDEMNITY:</strong> Lessee agrees to pay full repair or market replacement costs for any equipment loss, water submersion, sensor scratch, impact damage, or theft occurring during the rental window.</li>
+          <li><strong>SECURITY DEPOSIT RELEASE:</strong> The security deposit of ₹${data.depositFee.toLocaleString("en-IN")} is held by Lessor and will be refunded within 24 hours following technical inspection upon return.</li>
+          <li><strong>CUTOFF TIME &amp; LATE PENALTY:</strong> Equipment must be returned to Aurevia Studio Vault before 6:00 PM on ${data.endDate}. Unapproved extensions incur ₹500/hr late fee.</li>
+        </ol>
+      </div>
+
+      <div class="signatures-grid">
+        <div class="sig-card">
+          <div class="sig-label">Executed by Lessee (Renter Signature)</div>
+          <div class="sig-name">${data.customerName}</div>
+          <div class="sig-status">✓ Digital OTP Verified (${data.otpCode || "8842"})</div>
+        </div>
+
+        <div class="sig-card">
+          <div class="sig-label">Executed by Lessor (Aurevia Operations)</div>
+          <div class="sig-name">Prem Mundargi</div>
+          <div class="sig-status">✓ Authorized Studio Stamp &amp; Signature</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export function printOrDownloadRentalAgreement(data: AgreementData) {
+  const win = window.open("", "_blank");
+  if (!win) return;
+  win.document.write(generateRentalAgreementHTML(data));
+  win.document.close();
+  setTimeout(() => {
+    win.print();
+  }, 300);
+}

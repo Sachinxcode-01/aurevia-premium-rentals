@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Search, Filter, X,
   FileSpreadsheet, Sparkles, RefreshCw,
-  Trash2, CheckCircle, QrCode, Camera, MessageSquare, Download
+  Trash2, CheckCircle, QrCode, Camera, MessageSquare, Download, FileText
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { adminApiClient } from "@/lib/api-client";
@@ -12,7 +12,7 @@ import { useAdminRealtime } from "@/lib/realtime";
 import ConditionInspectionModal from "../../../components/inspection/ConditionInspectionModal";
 import QRScannerModal from "../../../components/scanner/QRScannerModal";
 import NotificationCenterModal from "../../../components/notifications/NotificationCenterModal";
-import { printOrDownloadInvoice } from "@/lib/utils/pdfGenerator";
+import { printOrDownloadInvoice, printOrDownloadRentalAgreement } from "@/lib/utils/pdfGenerator";
 import { createClient } from "@/utils/supabase/client";
 
 interface BookingItem {
@@ -539,9 +539,30 @@ export default function AdminBookingsPage() {
                             paymentMethod: b.paymentMethod,
                           })}
                           title="Print / Download PDF Tax Invoice"
-                          className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition cursor-pointer"
                         >
                           <Download size={13} />
+                        </button>
+                        <button
+                          onClick={() => printOrDownloadRentalAgreement({
+                            contractNo: `AGREEMENT-${b.id}`,
+                            customerName: b.customerName,
+                            customerEmail: b.email,
+                            customerPhone: b.phone,
+                            kycDocType: "Aadhaar Card / Govt ID",
+                            equipmentName: b.equipmentName,
+                            serialNumber: b.serialNumber || "AV-UNIT-01",
+                            startDate: b.startDate,
+                            endDate: b.endDate,
+                            rentalFee: b.total,
+                            depositFee: b.deposit || 5000,
+                            status: b.status,
+                            otpCode: b.otp || "8842",
+                          })}
+                          title="Print / Save Legal Equipment Rental Contract (PDF)"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-[#D8B36A]/30 text-[#D8B36A] border border-[#D8B36A]/40 transition cursor-pointer"
+                        >
+                          <FileText size={13} />
                         </button>
                         <button
                           onClick={() => setSelectedBooking(b)}

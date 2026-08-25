@@ -14,6 +14,7 @@ interface InventoryItem {
   brand: string;
   category: "camera" | "lens" | "lighting" | "audio" | "accessory";
   serialNumber: string;
+  vaultLocation?: string;
   dailyPrice: number;
   deposit: number;
   status: "AVAILABLE" | "RENTED" | "MAINTENANCE" | "DAMAGED" | "RESERVED";
@@ -28,6 +29,7 @@ const INITIAL_INVENTORY: InventoryItem[] = [
     brand: "Canon",
     category: "camera",
     serialNumber: "CN-R5C-88421",
+    vaultLocation: "Vault Rack A-01",
     dailyPrice: 4999,
     deposit: 5000,
     status: "AVAILABLE",
@@ -40,6 +42,7 @@ const INITIAL_INVENTORY: InventoryItem[] = [
     brand: "Sony",
     category: "camera",
     serialNumber: "SN-FX6-99320",
+    vaultLocation: "Vault Rack B-03",
     dailyPrice: 5500,
     deposit: 6000,
     status: "RENTED",
@@ -52,6 +55,7 @@ const INITIAL_INVENTORY: InventoryItem[] = [
     brand: "RED",
     category: "camera",
     serialNumber: "RED-KM-7721",
+    vaultLocation: "Vault Locker 04",
     dailyPrice: 6500,
     deposit: 10000,
     status: "RENTED",
@@ -197,7 +201,12 @@ export default function AdminInventoryPage() {
                 </span>
               </div>
               <h3 className="text-sm font-semibold text-[#f5f1e8] mt-1">{item.name}</h3>
-              <p className="text-[11px] font-mono text-[#9a9995] mt-0.5">SN: {item.serialNumber}</p>
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#9a9995] mt-1">
+                <span>SN: {item.serialNumber}</span>
+                <span className="text-[#d8b36a]/80 bg-[#d8b36a]/10 px-2 py-0.5 rounded text-[10px] border border-[#d8b36a]/20">
+                  📍 {item.vaultLocation || "Studio Vault Rack A-01"}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs font-mono">

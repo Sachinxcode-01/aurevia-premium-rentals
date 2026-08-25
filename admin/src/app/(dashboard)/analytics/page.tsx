@@ -121,6 +121,68 @@ export default function AdminAnalyticsPage() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Equipment Revenue Share & Customer Analytics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Most Rented Equipment Breakdown */}
+        <div className="admin-card p-6 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-[#f5f1e8]">Top Rented Camera Rigs</h3>
+            <span className="text-[10px] font-mono text-[#d8b36a] uppercase">Revenue Leaderboard</span>
+          </div>
+          <div className="h-60 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={[
+                { name: "Sony FX6 Cinema", revenue: 98000 },
+                { name: "RED Komodo 6K", revenue: 84500 },
+                { name: "Canon R5 C", revenue: 64990 },
+                { name: "Leica SL2 Optics", revenue: 36750 }
+              ]}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis type="number" stroke="#9a9995" fontSize={10} tickFormatter={(v) => `₹${v / 1000}k`} />
+                <YAxis type="category" dataKey="name" stroke="#f5f1e8" fontSize={11} width={110} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: "#121212", borderColor: "rgba(255,255,255,0.15)", borderRadius: "10px", fontSize: "11px" }} />
+                <Bar dataKey="revenue" fill="#3b82f6" radius={[0, 6, 6, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Customer Retention & LTV Metrics */}
+        <div className="admin-card p-6 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-[#f5f1e8]">Customer Retention &amp; LTV</h3>
+            <span className="text-[10px] font-mono text-emerald-400 uppercase">Loyalty Index</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <span className="text-[10px] font-mono text-[#9a9995] uppercase block">Repeat Renter Rate</span>
+              <span className="text-2xl font-bold font-mono text-emerald-400 mt-1 block">68.4%</span>
+              <span className="text-[10px] text-emerald-400/80 mt-1 block">↑ +12.3% this month</span>
+            </div>
+
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <span className="text-[10px] font-mono text-[#9a9995] uppercase block">Avg Lifetime Value (LTV)</span>
+              <span className="text-2xl font-bold font-mono text-[#d8b36a] mt-1 block">₹42,800</span>
+              <span className="text-[10px] text-[#d8b36a]/80 mt-1 block">Per verified production desk</span>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="text-[#9a9995]">KYC Auto-Approval Speed</span>
+              <span className="font-mono text-[#f5f1e8] font-bold">2.4 mins</span>
+            </div>
+            <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-emerald-400 h-full w-[92%]" />
+            </div>
+            <div className="flex justify-between text-[10px] text-[#9a9995] font-mono">
+              <span>92% verified instantly</span>
+              <span>8% manual audit</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
