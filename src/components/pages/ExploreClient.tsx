@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "@/components/navigation/Navbar";
 import { db } from "@/lib/db/store";
 import { Product, MOCK_CATEGORIES, MOCK_BRANDS } from "@/lib/db/mockData";
 import { useCart } from "@/hooks/useCart";
-import { Search, SlidersHorizontal, Heart, RefreshCw, Info, ArrowRight, Eye, X } from "lucide-react";
+import { Search, SlidersHorizontal, Heart, RefreshCw, Info, ArrowRight, Eye, X, ArrowDownUp, CheckCircle2, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { animate, stagger } from "animejs";
 import HoverCard from "@/components/motion/HoverCard";
+import { getTomorrowDate, getDefaultReturnDate } from "@/lib/utils/dates";
 
 function ExplorePageContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,8 @@ function ExplorePageContent() {
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "rating" | "name">("featured");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,9 +40,9 @@ function ExplorePageContent() {
   // Wishlist State
   const [wishlist, setWishlist] = useState<string[]>([]);
 
-  // Date selections for product cards
-  const [startDate, setStartDate] = useState("2026-07-20");
-  const [endDate, setEndDate] = useState("2026-07-23");
+  // Dynamic Date selections for product cards
+  const [startDate, setStartDate] = useState(getTomorrowDate(1));
+  const [endDate, setEndDate] = useState(getDefaultReturnDate(3));
 
   // Load products based on filters
   useEffect(() => {
@@ -75,6 +78,24 @@ function ExplorePageContent() {
 
     fetchProducts();
   }, [searchQuery, selectedCategory, selectedBrand]);
+
+  // Filtered & Sorted products computation
+  const filteredAndSortedProducts = useMemo(() => {
+    let list = [...products];
+    if (availableOnly) {
+      list = list.filter((p) => p.inventoryQty > 0);
+    }
+    if (sortBy === "price-asc") {
+      list.sort((a, b) => a.dailyPrice - b.dailyPrice);
+    } else if (sortBy === "price-desc") {
+      list.sort((a, b) => b.dailyPrice - a.dailyPrice);
+    } else if (sortBy === "rating") {
+      list.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === "name") {
+      list.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return list;
+  }, [products, availableOnly, sortBy]);
 
   // Handle wishlist toggle
   const toggleWishlist = (id: string) => {
@@ -231,7 +252,53 @@ function ExplorePageContent() {
         </div>
 
         {/* Product Catalog Grid */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-6">
+          {/* Top Control Bar: Active count, Availability filter, and Sort options */}
+          <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-white/2 border border-white/5 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-champagne/10 border border-gold-champagne/20 text-gold-champagne text-[11px] font-mono font-medium">
+                <Sparkles size={12} />
+                {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? "Instrument" : "Instruments"}
+              </span>
+              {availableOnly && (
+                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                  <CheckCircle2 size={11} /> Filtered by live stock
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Available Only Toggle */}
+              <button
+                onClick={() => setAvailableOnly(!availableOnly)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  availableOnly
+                    ? "bg-emerald-950/70 border-emerald-500/40 text-emerald-300"
+                    : "bg-white/5 border-white/10 text-muted-gray hover:text-ivory"
+                }`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${availableOnly ? "bg-emerald-400 animate-pulse" : "bg-muted-gray"}`} />
+                Available Now
+              </button>
+
+              {/* Sort By Dropdown */}
+              <div className="flex items-center gap-1.5 text-xs text-muted-gray font-mono">
+                <ArrowDownUp size={13} className="text-gold-champagne" />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-obsidian border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-ivory focus:border-gold-champagne outline-none cursor-pointer"
+                >
+                  <option value="featured" className="bg-obsidian text-ivory">Sort: Featured</option>
+                  <option value="price-asc" className="bg-obsidian text-ivory">Price: Low to High</option>
+                  <option value="price-desc" className="bg-obsidian text-ivory">Price: High to Low</option>
+                  <option value="rating" className="bg-obsidian text-ivory">Highest Rated</option>
+                  <option value="name" className="bg-obsidian text-ivory">Name: A to Z</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -241,27 +308,29 @@ function ExplorePageContent() {
                 </div>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredAndSortedProducts.length === 0 ? (
             <div className="glass-panel border-white/5 rounded-lg p-16 text-center space-y-4">
               <Info size={32} className="text-gold-champagne mx-auto" />
               <h3 className="serif-heading text-xl text-ivory">No Equipment Matches</h3>
               <p className="text-xs text-muted-gray max-w-sm mx-auto">
-                We couldn&apos;t find any rental items in our active vault matching those filters. Try searching for &ldquo;Canon&rdquo; or &ldquo;Lens&rdquo;.
+                We couldn&apos;t find any rental items in our active vault matching those filters. Try toggling off &ldquo;Available Now&rdquo; or clearing filters.
               </p>
               <button
                 onClick={() => {
                   setSearchQuery("");
                   setSelectedCategory("");
                   setSelectedBrand("");
+                  setAvailableOnly(false);
+                  setSortBy("featured");
                 }}
                 className="px-4 py-2 border border-white/10 rounded text-xs text-gold-champagne hover:bg-white/5 transition cursor-pointer"
               >
-                Clear All Filters
+                Reset All Filters
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => {
+              {filteredAndSortedProducts.map((product) => {
                 const isWishlisted = wishlist.includes(product.id);
                 const isCompared = compareList.some((p) => p.id === product.id);
                 const isAvailable = product.inventoryQty > 0;

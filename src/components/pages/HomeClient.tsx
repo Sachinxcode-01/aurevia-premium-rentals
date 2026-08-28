@@ -3,10 +3,10 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navigation/Navbar";
 import CanonScrollSequence from "@/components/cinematic/CanonScrollSequence";
-import CameraShowroom from "@/components/three/CameraShowroom";
 import Timeline from "@/components/features/Timeline";
 import AnimatedAccordion from "@/components/ui/AnimatedAccordion";
 import ScrollProgressIndicator from "@/components/ui/ScrollProgressIndicator";
@@ -20,6 +20,22 @@ import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import ReferralModal from "@/components/referral/ReferralModal";
+import { getTomorrowDate, getDefaultReturnDate } from "@/lib/utils/dates";
+
+const CameraShowroom = dynamic(
+  () => import("@/components/three/CameraShowroom"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-150 w-full rounded-2xl bg-charcoal/40 border border-white/5 flex flex-col items-center justify-center space-y-4 shadow-2xl">
+        <div className="w-10 h-10 border-2 border-gold-champagne border-t-transparent rounded-full animate-spin" />
+        <span className="font-mono text-xs text-gold-champagne tracking-widest uppercase">
+          INITIALIZING 3D OPTICS SHOWROOM...
+        </span>
+      </div>
+    ),
+  }
+);
 import {
   ShieldCheck,
   TrendingUp,
@@ -130,6 +146,11 @@ export default function HomeClient() {
     return () => observer.disconnect();
   }, []);
 
+  const handleBookDirect = (product: Product) => {
+    addToCart(product, 1, getTomorrowDate(1), getDefaultReturnDate(3), []);
+    router.push("/booking");
+  };
+
   const finalProducts = productsList.length > 0 ? productsList : MOCK_PRODUCTS;
 
   const featuredSectionRef = useRef<HTMLDivElement>(null);
@@ -141,7 +162,7 @@ export default function HomeClient() {
         p.categoryId === "c1000000-0000-0000-0000-000000000002" || // Mirrorless Cameras
         p.categoryId === "c1000000-0000-0000-0000-000000000003"    // Cinema Cameras
     )
-    .slice(0, 2);
+    .slice(0, 4);
 
   useEffect(() => {
     const element = featuredSectionRef.current;
@@ -338,11 +359,6 @@ export default function HomeClient() {
     };
   }, []);
 
-  const handleBookDirect = (product: Product) => {
-    addToCart(product, 1, "2026-07-20", "2026-07-23", []);
-    router.push("/booking");
-  };
-
   return (
     <main className="relative min-h-screen bg-obsidian text-ivory overflow-x-hidden">
       {/* Scroll Progress & Back-to-Top Widget */}
@@ -395,7 +411,7 @@ export default function HomeClient() {
               Featured Professional <span className="text-gold">Gear</span>
             </h2>
             <p className="text-xs md:text-sm text-muted-gray font-light max-w-md leading-relaxed">
-              Choose premium cameras built for unforgettable stories.
+              Choose premium cameras and cinema bodies built for unforgettable stories.
             </p>
           </div>
           <Link
@@ -409,10 +425,10 @@ export default function HomeClient() {
 
         {/* Camera Cards Container */}
         <div
-          className="max-w-5xl mx-auto flex md:grid md:grid-cols-2 gap-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-none pb-8 md:pb-0"
+          className="max-w-7xl mx-auto flex md:grid md:grid-cols-2 gap-8 overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-none pb-8 md:pb-0"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {featuredCameras.map((camera) => {
+          {featuredCameras.map((camera, index) => {
             const isAvailable = camera.inventoryQty > 0;
             const brandName = MOCK_BRANDS.find((b) => b.id === camera.brandId)?.name || "Flagship";
             return (
@@ -422,13 +438,20 @@ export default function HomeClient() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                className="camera-card-anim premium-surface opacity-0 min-w-72.5 sm:min-w-87.5 md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-130 group shadow-2xl transition-all duration-300"
+                className="camera-card-anim premium-surface opacity-0 min-w-72.5 sm:min-w-87.5 md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-130 group shadow-2xl transition-all duration-300 relative"
                 style={{
                   transformStyle: "preserve-3d",
                   willChange: "transform",
                   transition: "transform 0.1s ease-out, border-color 0.3s ease, box-shadow 0.3s ease"
                 }}
               >
+                {/* Popular badge */}
+                {index === 0 && (
+                  <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 px-3 py-0.5 rounded-full bg-linear-to-r from-gold-champagne to-gold-warm text-obsidian text-[8px] font-mono font-bold tracking-widest uppercase shadow-lg shadow-gold-champagne/20">
+                    ★ Most Requested
+                  </div>
+                )}
+
                 {/* Real-time pointer sheen/reflection overlay */}
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-30"

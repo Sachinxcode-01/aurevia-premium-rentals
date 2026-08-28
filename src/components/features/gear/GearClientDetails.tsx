@@ -8,9 +8,10 @@ import { Product, ProductAddon } from "@/lib/db/mockData";
 import { db, Review } from "@/lib/db/store";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
-import { Star, CheckCircle, Cpu, Heart, ShoppingCart, MessageCircle } from "lucide-react";
+import { Star, CheckCircle, Cpu, Heart, ShoppingCart, MessageCircle, Share2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import AvailabilityCalendar from "@/components/booking/AvailabilityCalendar";
+import { getTomorrowDate, getDefaultReturnDate } from "@/lib/utils/dates";
 
 interface GearClientDetailsProps {
   product: Product;
@@ -23,6 +24,7 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
   const toast = useToast();
 
   const [activeImage, setActiveImage] = useState(product.imagePrimary);
+  const [relatedGear, setRelatedGear] = useState<Product[]>([]);
   const [isFavorite, setIsFavorite] = useState(() => {
     if (typeof window !== "undefined") {
       const favorites = JSON.parse(localStorage.getItem("favorites") || "[]") as string[];
@@ -31,9 +33,9 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
     return false;
   });
 
-  // Reservation Form State
-  const [startDate, setStartDate] = useState("2026-07-20");
-  const [endDate, setEndDate] = useState("2026-07-23");
+  // Reservation Form State with dynamic default dates
+  const [startDate, setStartDate] = useState(getTomorrowDate(1));
+  const [endDate, setEndDate] = useState(getDefaultReturnDate(3));
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   
@@ -78,7 +80,31 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
     }
 
     db.getReviews(product.id, true).then(setReviewsList);
+    db.getProducts().then((all) => {
+      const filtered = all
+        .filter((p) => p.id !== product.id && (p.categoryId === product.categoryId || p.brandId === product.brandId))
+        .slice(0, 3);
+      setRelatedGear(filtered.length > 0 ? filtered : all.filter((p) => p.id !== product.id).slice(0, 3));
+    });
   }, [product]);
+
+  const handleShare = async () => {
+    if (typeof window === "undefined") return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${product.name} | AUREVIA Camera Rentals`,
+          text: `Rent ${product.name} starting at ₹${product.dailyPrice}/day from AUREVIA.`,
+          url: window.location.href,
+        });
+      } catch {
+        // Ignored if cancelled
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Gear URL copied to clipboard!");
+    }
+  };
 
   useEffect(() => {
     if (rentalDays <= 0) return;
@@ -166,7 +192,7 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Gallery Section */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-charcoal border border-white/10 group">
+            <div className="relative aspect-4/3 rounded-xl overflow-hidden bg-charcoal border border-white/10 group">
               <Image
                 src={activeImage}
                 alt={product.name}
@@ -174,13 +200,23 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
                 priority
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <button
-                onClick={toggleFavorite}
-                aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                className="absolute top-4 right-4 p-3 rounded-full bg-obsidian/70 backdrop-blur-md border border-white/15 text-ivory hover:text-gold-champagne transition-colors"
-              >
-                <Heart className={`w-5 h-5 ${isFavorite ? "fill-gold-champagne text-gold-champagne" : ""}`} />
-              </button>
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <button
+                  onClick={handleShare}
+                  aria-label="Share Gear"
+                  className="p-3 rounded-full bg-obsidian/70 backdrop-blur-md border border-white/15 text-ivory hover:text-gold-champagne transition-colors cursor-pointer"
+                  title="Share gear link"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={toggleFavorite}
+                  aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  className="p-3 rounded-full bg-obsidian/70 backdrop-blur-md border border-white/15 text-ivory hover:text-gold-champagne transition-colors cursor-pointer"
+                >
+                  <Heart className={`w-4 h-4 ${isFavorite ? "fill-gold-champagne text-gold-champagne" : ""}`} />
+                </button>
+              </div>
             </div>
 
             {/* Thumbnail selector */}
@@ -386,6 +422,64 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
             </div>
           </div>
         </div>
+
+        {/* Complementary Gear Recommendations */}
+        {relatedGear.length > 0 && (
+          <div className="mt-20 pt-12 border-t border-white/10 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-gold-champagne font-mono block">
+                  Curated Recommendations
+                </span>
+                <h2 className="serif-heading text-2xl sm:text-3xl text-ivory font-light">
+                  Complementary <span className="text-gold">Cinema Gear</span>
+                </h2>
+              </div>
+              <Link
+                href="/explore"
+                className="text-xs font-semibold uppercase tracking-wider text-gold-champagne hover:text-gold-warm flex items-center gap-1 transition-colors group"
+              >
+                View Full Vault <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedGear.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl bg-charcoal/40 border border-white/10 hover:border-gold-champagne/40 overflow-hidden flex flex-col justify-between transition-all duration-300 group shadow-xl"
+                >
+                  <div className="relative h-44 bg-black/40 overflow-hidden">
+                    <Image
+                      src={item.imagePrimary}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 px-2 py-0.5 rounded bg-black/70 backdrop-blur text-[9px] font-mono text-gold-champagne border border-gold-border/20">
+                      ₹{item.dailyPrice}/day
+                    </div>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-1">
+                      <h3 className="serif-heading text-base text-ivory font-medium group-hover:text-gold transition-colors">
+                        {item.name}
+                      </h3>
+                      <p className="text-xs text-muted-gray line-clamp-2 font-light">{item.description}</p>
+                    </div>
+                    <Link
+                      href={`/gear/${item.slug}`}
+                      className="w-full py-2.5 rounded bg-white/5 hover:bg-gold-champagne hover:text-obsidian text-ivory text-xs font-semibold uppercase tracking-wider text-center transition-colors flex items-center justify-center gap-1.5 border border-white/10"
+                    >
+                      Inspect Model <ArrowRight size={12} />
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile Sticky Booking Bar */}
