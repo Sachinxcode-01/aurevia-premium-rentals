@@ -24,14 +24,14 @@ export function useCanvasSequence({
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: true });
       if (!ctx) return;
 
       const roundedIndex = Math.round(frameIndex);
       const img = getFrameImage(roundedIndex);
       if (!img) return;
 
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = canvas.width / dpr;
       const height = canvas.height / dpr;
 
@@ -60,6 +60,8 @@ export function useCanvasSequence({
 
       ctx.save();
       ctx.scale(dpr, dpr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, offsetX, offsetY, renderWidth, renderHeight);
       ctx.restore();
@@ -74,13 +76,13 @@ export function useCanvasSequence({
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = container.getBoundingClientRect();
     const width = rect.width || window.innerWidth;
     const height = rect.height || window.innerHeight;
 
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
 
@@ -89,17 +91,27 @@ export function useCanvasSequence({
 
   useEffect(() => {
     updateCanvasSize();
-    window.addEventListener("resize", updateCanvasSize, { passive: true });
+
+    let resizeTimer: number;
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(updateCanvasSize, 50);
+    };
+
+    window.addEventListener("resize", handleResize, { passive: true });
+    window.addEventListener("orientationchange", handleResize, { passive: true });
 
     return () => {
-      window.removeEventListener("resize", updateCanvasSize);
+      clearTimeout(resizeTimer);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
       if (animationFrameIdRef.current) {
         cancelAnimationFrame(animationFrameIdRef.current);
       }
     };
   }, [updateCanvasSize]);
 
-  // Smooth RAF lerp loop to reach target frame smoothly
+  // Smooth RAF lerp loop with adaptive damping
   const renderFrame = useCallback(
     (targetIndex: number) => {
       targetFrameRef.current = targetIndex;
@@ -108,14 +120,15 @@ export function useCanvasSequence({
 
       const loop = () => {
         const diff = targetFrameRef.current - currentFrameRef.current;
-        if (Math.abs(diff) < 0.05) {
+        if (Math.abs(diff) < 0.04) {
           drawFrame(targetFrameRef.current);
           animationFrameIdRef.current = 0;
           return;
         }
 
-        // Smooth damping factor 0.35
-        const nextFrame = currentFrameRef.current + diff * 0.35;
+        // Adaptive damping factor for ultra-smooth responsiveness
+        const damping = Math.abs(diff) > 10 ? 0.5 : 0.35;
+        const nextFrame = currentFrameRef.current + diff * damping;
         drawFrame(nextFrame);
         animationFrameIdRef.current = requestAnimationFrame(loop);
       };
@@ -130,4 +143,5 @@ export function useCanvasSequence({
     updateCanvasSize,
   };
 }
+
 

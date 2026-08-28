@@ -91,9 +91,9 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
       const trigger = ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: isMobile ? "+=220%" : "+=380%",
+        end: isMobile ? "+=260%" : "+=380%",
         pin: pinWrapperRef.current,
-        scrub: 0.15,
+        scrub: isMobile ? 0.3 : 0.2,
         onUpdate: (self) => {
           handleScrollProgress(self.progress);
         },
@@ -163,7 +163,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     <GridBackground className="w-full bg-obsidian">
       <div
         ref={containerRef}
-        className="relative w-full bg-obsidian h-[250vh] md:h-[420vh]"
+        className="relative w-full bg-obsidian h-[260vh] md:h-[420vh]"
       >
         {/* Pinned Viewport Section */}
         <div
@@ -187,7 +187,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             />
           </div>
 
-          {/* High-DPI Canvas Sequence (renders over the static image once scrolling starts) */}
+          {/* High-DPI Canvas Sequence */}
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full object-cover pointer-events-none z-14"
@@ -198,7 +198,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
           <CinematicText progress={scrollProgress} onExploreClick={onExploreClick} />
 
           {/* Real-Time Sequence Telemetry Badge (Bottom Left HUD) */}
-          <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-3 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-[10px] font-mono text-muted-gray">
+          <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-3 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-[10px] font-mono text-muted-gray shadow-2xl">
             <span className={`w-2 h-2 rounded-full ${isReady ? "bg-gold-champagne animate-ping" : "bg-emerald-400 animate-pulse"}`} />
             <span className="text-ivory font-medium">
               {isReady ? `FRAME ${String(currentFrameNum).padStart(3, "0")} / ${TOTAL_FRAMES}` : `PREPARING 8K SEQUENCE (${progressPct}%)`}
@@ -207,8 +207,8 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             <span className="text-gold-champagne font-semibold">8K RAW 30FPS</span>
           </div>
 
-          {/* Interactive Sequence Stage Navigation Dots (Right Side) */}
-          <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 flex flex-col items-end gap-4">
+          {/* Interactive Desktop Sequence Stage Navigation Dots (Right Side) */}
+          <div className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col items-end gap-4">
             <div className="relative h-44 w-[1.5px] bg-white/10 rounded-full overflow-hidden">
               <div
                 className="w-full bg-linear-to-b from-gold-champagne/40 to-gold-champagne origin-top transition-transform duration-75"
@@ -216,7 +216,7 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
               />
             </div>
 
-            <div className="hidden lg:flex flex-col gap-2.5 items-end pr-1">
+            <div className="flex flex-col gap-2.5 items-end pr-1">
               {stages.map((stg) => {
                 const isActive = Math.abs(scrollProgress - stg.progress) < 0.12;
                 return (
@@ -241,16 +241,37 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             </div>
           </div>
 
+          {/* Mobile Interactive Floating Stage Pills Bar */}
+          <div className="lg:hidden absolute bottom-4 left-4 right-4 z-35 flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto py-1.5 px-2.5 bg-black/80 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl scrollbar-none">
+            {stages.map((stg) => {
+              const isActive = Math.abs(scrollProgress - stg.progress) < 0.12;
+              const cleanName = stg.label.includes("•") ? stg.label.split("•")[1].trim() : stg.label;
+              return (
+                <button
+                  key={stg.label}
+                  onClick={() => jumpToStage(stg.progress)}
+                  className={`px-3 py-1 rounded-full text-[9px] font-mono whitespace-nowrap transition-all duration-300 cursor-pointer ${
+                    isActive
+                      ? "bg-gold-champagne text-obsidian font-bold shadow-md shadow-gold-champagne/20"
+                      : "bg-white/5 text-muted-gray hover:text-ivory"
+                  }`}
+                >
+                  {cleanName}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Scroll Hint */}
           <div
-            className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-300 pointer-events-none text-center ${
-              scrollProgress > 0.95 ? "opacity-0" : "opacity-100"
+            className={`absolute bottom-16 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-300 pointer-events-none text-center ${
+              scrollProgress > 0.15 ? "opacity-0" : "opacity-100"
             }`}
           >
             <span className="text-[9px] uppercase tracking-[0.3em] text-muted-gray/80 font-mono block mb-2">
               Scroll to Scrub Sequence
             </span>
-            <div className="w-px h-10 mx-auto bg-linear-to-b from-gold-champagne to-transparent animate-pulse" />
+            <div className="w-px h-8 sm:h-10 mx-auto bg-linear-to-b from-gold-champagne to-transparent animate-pulse" />
           </div>
         </div>
       </div>

@@ -51,82 +51,90 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
   const y6 = (1 - range(progress, 0.89, 0.94)) * 30;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center px-6 md:px-16 overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center px-4 sm:px-8 md:px-16 overflow-hidden">
       {/* Region 1: Intro Presentation */}
       <div
-        className="absolute top-1/4 text-center max-w-xl space-y-3 transition-opacity duration-75"
+        className="absolute top-[18%] sm:top-1/4 text-center max-w-xl space-y-3 transition-opacity duration-75 px-4"
         style={{
           opacity: op1,
           transform: `translate3d(0, ${y1}px, 0)`,
           visibility: op1 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.4em] text-gold-champagne bg-gold-champagne/10 px-3.5 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.4em] text-gold-champagne bg-gold-champagne/10 px-3.5 py-1 rounded-full border border-gold-champagne/20 shadow-lg">
           <Sparkles size={11} /> AUREVIA PRESENTS
         </span>
-        <h1 className="serif-heading text-4xl sm:text-6xl lg:text-7xl font-light text-ivory tracking-tight drop-shadow-2xl">
+        <h1 className="serif-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-ivory tracking-tight drop-shadow-2xl">
           CANON <span className="text-gold-champagne">EOS R5</span>
         </h1>
-        <p className="text-xs uppercase tracking-[0.3em] text-muted-gray font-mono">
+        <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-muted-gray font-mono">
           The Cinema Vault Series
         </p>
       </div>
 
-      {/* Region 2: Precision in Every Frame (Left aligned) */}
+      {/* Region 2: Precision in Every Frame (Left aligned / Mobile safe card) */}
       <div
-        className="absolute left-6 md:left-16 max-w-lg space-y-4 text-left transition-opacity duration-75"
+        className="absolute top-[22%] sm:top-auto sm:left-10 md:left-16 max-w-sm sm:max-w-md md:max-w-lg space-y-3 sm:space-y-4 text-left transition-opacity duration-75 p-4 sm:p-6 rounded-2xl bg-obsidian/70 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border border-white/10 sm:border-none shadow-2xl sm:shadow-none"
         style={{
           opacity: op2,
           transform: `translate3d(${x2}px, 0, 0)`,
           visibility: op2 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
           01 • Masterclass Optics
         </span>
-        <h2 className="serif-heading text-3xl sm:text-5xl font-light text-ivory leading-tight">
+        <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
           PRECISION <br />
           <span className="text-gold-champagne font-normal">IN EVERY FRAME.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray leading-relaxed font-light">
           Crafted with 45MP high-resolution full-frame sensors and advanced RF optical glass engineered for uncompromising visual clarity.
         </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-mono text-ivory/80">45MP Sensor</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-mono text-gold-champagne">RF Mount</span>
+        </div>
       </div>
 
-      {/* Region 3: Built for Storytellers (Right aligned) */}
+      {/* Region 3: Built for Storytellers (Right aligned / Mobile safe card) */}
       <div
-        className="absolute right-6 md:right-16 max-w-lg space-y-4 text-right transition-opacity duration-75"
+        className="absolute top-[22%] sm:top-auto sm:right-10 md:right-16 max-w-sm sm:max-w-md md:max-w-lg space-y-3 sm:space-y-4 text-right transition-opacity duration-75 p-4 sm:p-6 rounded-2xl bg-obsidian/70 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border border-white/10 sm:border-none shadow-2xl sm:shadow-none"
         style={{
           opacity: op3,
           transform: `translate3d(${x3}px, 0, 0)`,
           visibility: op3 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
-          02 • Ergonomics & Control
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+          02 • Ergonomics &amp; Control
         </span>
-        <h2 className="serif-heading text-3xl sm:text-5xl font-light text-ivory leading-tight">
+        <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
           BUILT FOR <br />
           <span className="text-gold-champagne font-normal">STORYTELLERS.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray leading-relaxed font-light ml-auto">
           From high-budget commercial film sets to intimate documentary captures, intuitive controls give you complete creative authority.
         </p>
+        <div className="flex flex-wrap justify-end gap-2 pt-1">
+          <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-mono text-ivory/80">Dual Card Slots</span>
+          <span className="px-2.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-mono text-gold-champagne">Weather Sealed</span>
+        </div>
       </div>
 
-      {/* Region 4: Cinematic Power & Control (Bottom Left) */}
+      {/* Region 4: Cinematic Power & Control (Bottom Left / Mobile safe) */}
       <div
-        className="absolute bottom-20 left-6 md:left-16 max-w-xl space-y-4 text-left transition-opacity duration-75"
+        className="absolute bottom-16 sm:bottom-20 left-4 sm:left-10 md:left-16 max-w-sm sm:max-w-md md:max-w-xl space-y-3 sm:space-y-4 text-left transition-opacity duration-75 p-4 sm:p-6 rounded-2xl bg-obsidian/75 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border border-white/10 sm:border-none shadow-2xl sm:shadow-none"
         style={{
           opacity: op4,
           transform: `translate3d(0, ${y4}px, 0)`,
           visibility: op4 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
           03 • 8K RAW Cinema Power
         </span>
-        <h2 className="serif-heading text-3xl sm:text-5xl font-light text-ivory leading-tight">
+        <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
           CINEMATIC POWER. <br />
           <span className="text-gold-champagne font-normal">PROFESSIONAL CONTROL.</span>
         </h2>
@@ -135,53 +143,53 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
         </p>
       </div>
 
-      {/* Region 5: Floating Spec Glass Card (Bottom Right) */}
+      {/* Region 5: Floating Spec Glass Card (Bottom Right / Responsive card) */}
       <div
-        className="absolute bottom-24 right-6 md:right-16 bg-charcoal/85 rounded-xl p-6 border border-gold-champagne/25 max-w-sm space-y-4 shadow-2xl backdrop-blur-md text-left pointer-events-auto transition-opacity duration-75"
+        className="absolute bottom-16 sm:bottom-20 right-4 sm:right-10 md:right-16 bg-charcoal/90 rounded-2xl p-5 sm:p-6 border border-gold-champagne/30 max-w-xs sm:max-w-sm space-y-3.5 shadow-2xl backdrop-blur-xl text-left pointer-events-auto transition-opacity duration-75"
         style={{
           opacity: op5,
           transform: `scale(${scale5})`,
           visibility: op5 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <div className="border-b border-white/10 pb-3 flex items-center justify-between">
+        <div className="border-b border-white/10 pb-2.5 flex items-center justify-between">
           <div>
-            <span className="text-[9px] uppercase text-gold-champagne tracking-widest block font-mono">
+            <span className="text-[8px] sm:text-[9px] uppercase text-gold-champagne tracking-widest block font-mono">
               04 • Vault Specifications
             </span>
-            <h3 className="serif-heading text-xl text-ivory font-light">Canon EOS R5</h3>
+            <h3 className="serif-heading text-lg sm:text-xl text-ivory font-light">Canon EOS R5</h3>
           </div>
           <span className="flex h-2.5 w-2.5 relative">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
         </div>
-        <div className="space-y-3 text-xs">
+        <div className="space-y-2.5 text-xs">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0 border border-gold-champagne/20">
               <Camera className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-[9px] text-muted-gray uppercase block font-mono">Sensor</span>
-              <span className="text-ivory font-medium">45MP Full-Frame CMOS</span>
+              <span className="text-[8px] text-muted-gray uppercase block font-mono">Sensor</span>
+              <span className="text-ivory font-medium text-xs">45MP Full-Frame CMOS</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0 border border-gold-champagne/20">
               <Cpu className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-[9px] text-muted-gray uppercase block font-mono">Resolution</span>
-              <span className="text-ivory font-medium">8K RAW @ 30fps Internal</span>
+              <span className="text-[8px] text-muted-gray uppercase block font-mono">Video Capture</span>
+              <span className="text-ivory font-medium text-xs">8K RAW @ 30fps Internal</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gold-champagne/10 flex items-center justify-center text-gold-champagne shrink-0 border border-gold-champagne/20">
               <Layers className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className="text-[9px] text-muted-gray uppercase block font-mono">Focus Engine</span>
-              <span className="text-ivory font-medium">Dual Pixel CMOS AF II</span>
+              <span className="text-[8px] text-muted-gray uppercase block font-mono">Autofocus</span>
+              <span className="text-ivory font-medium text-xs">Dual Pixel CMOS AF II</span>
             </div>
           </div>
         </div>
@@ -189,17 +197,17 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
 
       {/* Region 6: Grand Finale Call to Action (Center) */}
       <div
-        className="absolute z-30 text-center max-w-2xl space-y-6 pointer-events-auto transition-opacity duration-75"
+        className="absolute z-30 text-center max-w-xl sm:max-w-2xl space-y-4 sm:space-y-6 pointer-events-auto transition-opacity duration-75 px-4"
         style={{
           opacity: op6,
           transform: `translate3d(0, ${y6}px, 0)`,
           visibility: op6 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[10px] font-mono uppercase tracking-[0.4em] text-gold-champagne bg-gold-champagne/10 px-4 py-1.5 rounded-full border border-gold-champagne/30">
+        <span className="inline-block text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.4em] text-gold-champagne bg-gold-champagne/10 px-4 py-1.5 rounded-full border border-gold-champagne/30">
           RENT • CREATE • CAPTURE
         </span>
-        <h2 className="serif-heading text-4xl sm:text-6xl font-light text-ivory leading-tight tracking-tight">
+        <h2 className="serif-heading text-3xl sm:text-5xl md:text-6xl font-light text-ivory leading-tight tracking-tight">
           FRAME THE <br />
           <span className="text-gold-champagne font-normal">EXTRAORDINARY.</span>
         </h2>
@@ -209,7 +217,7 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
 
         <div className="pt-2 flex justify-center">
           <MagneticButton onClick={onExploreClick}>
-            <div className="px-8 py-4 bg-gold-champagne text-obsidian text-xs font-bold uppercase tracking-[0.2em] rounded shadow-xl hover:bg-gold-warm transition duration-300 flex items-center gap-3 group cursor-pointer">
+            <div className="px-7 sm:px-8 py-3.5 sm:py-4 bg-gold-champagne text-obsidian text-xs font-bold uppercase tracking-[0.2em] rounded-xl shadow-2xl hover:bg-gold-warm transition duration-300 flex items-center gap-3 group cursor-pointer">
               Explore The Collection
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300" />
             </div>
