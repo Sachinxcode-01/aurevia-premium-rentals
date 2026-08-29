@@ -378,12 +378,12 @@ export default function BookingPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowRigBuilder(true)}
+            <Link
+              href="/packages"
               className="px-4 py-2 rounded-xl bg-[#d8b36a]/15 border border-[#d8b36a]/40 text-[#d8b36a] text-xs font-mono font-bold hover:bg-[#d8b36a]/25 transition cursor-pointer flex items-center gap-2"
             >
-              <Sliders size={14} /> ⚡ Build Custom Rig (15% OFF)
-            </button>
+              <Sliders size={14} /> ⚡ Production Kits &amp; Tiered Rates (15-60% OFF)
+            </Link>
 
             {/* Stepper Timeline */}
             {step !== "confirmation" && (
