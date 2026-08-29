@@ -338,7 +338,7 @@ function ExplorePageContent() {
                 return (
                   <HoverCard
                     key={product.id}
-                    className="gear-card opacity-0 group flex flex-col h-117.5 relative shadow-2xl"
+                    className="gear-card group flex flex-col h-117.5 relative shadow-2xl"
                   >
                     {/* Reflection sweep overlay */}
                     <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/4 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none z-10" />

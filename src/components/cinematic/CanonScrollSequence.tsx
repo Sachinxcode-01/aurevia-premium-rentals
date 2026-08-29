@@ -91,9 +91,10 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
       const trigger = ScrollTrigger.create({
         trigger: containerRef.current,
         start: "top top",
-        end: isMobile ? "+=260%" : "+=380%",
+        end: isMobile ? "+=180%" : "+=240%",
         pin: pinWrapperRef.current,
-        scrub: isMobile ? 0.3 : 0.2,
+        pinSpacing: true,
+        scrub: isMobile ? 0.2 : 0.15,
         onUpdate: (self) => {
           handleScrollProgress(self.progress);
         },
@@ -163,12 +164,12 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     <GridBackground className="w-full bg-obsidian">
       <div
         ref={containerRef}
-        className="relative w-full bg-obsidian h-[260vh] md:h-[420vh]"
+        className="relative w-full bg-obsidian h-[200vh] md:h-[280vh]"
       >
         {/* Pinned Viewport Section */}
         <div
           ref={pinWrapperRef}
-          className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center select-none"
+          className="w-full h-screen overflow-hidden flex items-center justify-center select-none relative"
         >
           {/* Volumetric ambient background lighting */}
           <div className="absolute inset-0 bg-gold-champagne/10 blur-[130px] pointer-events-none z-10" />

@@ -153,21 +153,18 @@ textarea {
 }
 
 .reveal-section {
-  opacity: 0;
-  transform: translate3d(0, 44px, 0);
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
   transition:
-    opacity 900ms var(--motion-expo),
-    transform 1100ms var(--motion-expo);
-  will-change: opacity, transform;
+    opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (max-width: 768px) {
   .reveal-section {
-    transform: translate3d(0, 20px, 0);
     transition:
-      opacity 450ms var(--motion-expo),
-      transform 550ms var(--motion-expo);
-    will-change: auto;
+      opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
 
@@ -176,25 +173,10 @@ textarea {
   transform: translate3d(0, 0, 0);
 }
 
-.reveal-section.is-visible .premium-surface,
-.reveal-section.is-visible .camera-card-anim,
-.reveal-section.is-visible .category-card-anim {
+.reveal-section .premium-surface,
+.reveal-section .camera-card-anim,
+.reveal-section .category-card-anim {
   opacity: 1;
-}
-
-.reveal-section.is-visible .premium-surface {
-  animation: premium-surface-in 900ms var(--motion-expo) both;
-}
-
-@keyframes premium-surface-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
 }
 
 input,

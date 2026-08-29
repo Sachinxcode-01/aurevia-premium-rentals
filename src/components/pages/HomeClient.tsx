@@ -438,7 +438,7 @@ export default function HomeClient() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                className="camera-card-anim premium-surface opacity-0 min-w-72.5 sm:min-w-87.5 md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-130 group shadow-2xl transition-all duration-300 relative"
+                className="camera-card-anim premium-surface min-w-72.5 sm:min-w-87.5 md:min-w-0 snap-center bg-obsidian/45 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden flex flex-col justify-between h-130 group shadow-2xl transition-all duration-300 relative"
                 style={{
                   transformStyle: "preserve-3d",
                   willChange: "transform",
@@ -625,7 +625,7 @@ export default function HomeClient() {
                 onMouseLeave={handleMouseLeave}
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
-                className="category-card-anim premium-surface opacity-0 min-w-62.5 sm:min-w-72.5 md:min-w-0 snap-center relative h-96 rounded-xl overflow-hidden border border-white/5 group shadow-2xl flex flex-col justify-end transition-all duration-300"
+                className="category-card-anim premium-surface min-w-62.5 sm:min-w-72.5 md:min-w-0 snap-center relative h-96 rounded-xl overflow-hidden border border-white/5 group shadow-2xl flex flex-col justify-end transition-all duration-300"
                 style={{
                   transformStyle: "preserve-3d",
                   willChange: "transform",
