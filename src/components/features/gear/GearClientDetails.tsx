@@ -8,7 +8,7 @@ import { Product, ProductAddon } from "@/lib/db/mockData";
 import { db, Review } from "@/lib/db/store";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
-import { Star, CheckCircle, Cpu, Heart, ShoppingCart, MessageCircle, Share2, ArrowRight } from "lucide-react";
+import { Star, CheckCircle, Cpu, Heart, ShoppingCart, MessageCircle, Share2, ArrowRight, Eye } from "lucide-react";
 import Link from "next/link";
 import AvailabilityCalendar from "@/components/booking/AvailabilityCalendar";
 import { getTomorrowDate, getDefaultReturnDate } from "@/lib/utils/dates";
@@ -247,9 +247,18 @@ export default function GearClientDetails({ product }: GearClientDetailsProps) {
 
             {/* Specifications Grid */}
             <div className="bg-charcoal/50 backdrop-blur-md border border-white/10 rounded-xl p-6 space-y-4">
-              <h2 className="serif-heading text-lg text-ivory flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-gold-champagne" /> Technical Specifications
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="serif-heading text-lg text-ivory flex items-center gap-2">
+                  <Cpu className="w-5 h-5 text-gold-champagne" /> Technical Specifications
+                </h2>
+                <Link
+                  href={`/tools/sensor-simulator?cam=${product.slug}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold-champagne/10 border border-gold-champagne/30 text-gold-champagne hover:bg-gold-champagne/20 text-xs font-mono transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Simulate Optical FOV
+                </Link>
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
                 {product.specs &&
                   Object.entries(product.specs).map(([key, val]) => (

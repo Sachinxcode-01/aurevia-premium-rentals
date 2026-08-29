@@ -88,7 +88,7 @@ export default function Navbar({
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Explore Gear", href: "/explore" },
-    { name: "Categories", href: "/explore#categories" },
+    { name: "FOV Simulator", href: "/tools/sensor-simulator" },
     { name: "Rental Process", href: "/rental-process" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
