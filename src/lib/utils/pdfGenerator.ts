@@ -1,10 +1,19 @@
-/* Client-Side High-Definition Luxury Branded PDF Invoice Generator for Aurevia */
+/* Client-Side High-Definition Luxury Branded GST Tax Invoice & PDF Generator for AUREVIA */
+
+import {
+  AUREVIA_COMPANY_GST_DETAILS,
+  calculateGSTBreakdown,
+  convertNumberToIndianWords,
+  validateGSTIN,
+} from "./gst-calculator";
 
 export interface InvoiceItem {
   name: string;
   category?: string;
+  sacCode?: string;
   dailyRate: number;
   quantity: number;
+  days?: number;
 }
 
 export interface InvoiceData {
@@ -13,6 +22,10 @@ export interface InvoiceData {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  companyName?: string;
+  companyGstin?: string;
+  billingAddress?: string;
+  stateCode?: string;
   items?: InvoiceItem[];
   equipmentName?: string;
   startDate: string;
@@ -31,40 +44,54 @@ export interface InvoiceData {
 }
 
 export function generateBrandedInvoiceHTML(data: InvoiceData): string {
-  const invoiceNo = data.referenceCode || "INV-001";
+  const invoiceNo = data.referenceCode || `INV-${Date.now().toString().slice(-6)}`;
   const createdDate = new Date(data.createdAt || Date.now()).toLocaleDateString("en-IN", {
-    day: "numeric", month: "short", year: "numeric"
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 
-  const rentalDays = Math.max(1, Math.ceil(
-    (new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / 86400000
-  ));
+  const rentalDays = Math.max(
+    1,
+    Math.ceil((new Date(data.endDate).getTime() - new Date(data.startDate).getTime()) / 86400000)
+  );
 
   const rentalFee = data.rentalFee || 0;
   const discountFee = data.discountFee || 0;
-  const depositFee = data.depositFee || Math.round(rentalFee * 0.25);
-  const taxFee = data.taxFee || Math.round(rentalFee * 0.18);
-  const totalPaid = data.totalPayable ?? (rentalFee - discountFee + taxFee);
+  const taxableAmount = Math.max(0, rentalFee - discountFee);
 
-  const itemsList = data.items && data.items.length > 0 ? data.items : [
-    {
-      name: data.equipmentName || "Canon EOS R5 Mirrorless Camera Pack",
-      category: "Professional Cinema Gear",
-      dailyRate: Math.round(rentalFee / rentalDays),
-      quantity: 1
-    }
-  ];
+  // GST Breakdown
+  const buyerStateOrGSTIN = data.companyGstin || data.stateCode || "29";
+  const gst = calculateGSTBreakdown(taxableAmount, buyerStateOrGSTIN);
+  const totalPaid = data.totalPayable ?? gst.totalInvoiceAmount;
+  const amountInWords = convertNumberToIndianWords(totalPaid);
+
+  const itemsList: InvoiceItem[] =
+    data.items && data.items.length > 0
+      ? data.items
+      : [
+          {
+            name: data.equipmentName || "ARRI Alexa Mini LF Cinema Package",
+            category: "Professional Cinema Gear",
+            sacCode: "997311",
+            dailyRate: Math.round(rentalFee / rentalDays),
+            quantity: 1,
+            days: rentalDays,
+          },
+        ];
+
+  const hasB2BGST = Boolean(data.companyGstin && validateGSTIN(data.companyGstin));
 
   return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="utf-8" />
-      <title>AUREVIA Official Tax Invoice — ${invoiceNo}</title>
+      <title>AUREVIA Official GST Tax Invoice — ${invoiceNo}</title>
       <style>
         @media print {
           body { padding: 0; background: #fff; }
-          @page { margin: 10mm; size: A4 portrait; }
+          @page { margin: 12mm; size: A4 portrait; }
           .no-print { display: none !important; }
         }
         * { box-sizing: border-box; }
@@ -72,35 +99,27 @@ export function generateBrandedInvoiceHTML(data: InvoiceData): string {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           background: #ffffff;
           color: #111111;
-          padding: 40px;
-          max-width: 800px;
+          padding: 36px;
+          max-width: 820px;
           margin: 0 auto;
-          line-height: 1.5;
+          line-height: 1.45;
+          font-size: 13px;
         }
         .header-bar {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          border-bottom: 3px solid #D8B36A;
-          padding-bottom: 24px;
-          margin-bottom: 24px;
-        }
-        .logo-wrap {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-        .logo-svg {
-          width: 52px;
-          height: 52px;
+          border-bottom: 2.5px solid #D8B36A;
+          padding-bottom: 18px;
+          margin-bottom: 20px;
         }
         .brand-title {
           font-family: Georgia, serif;
-          font-size: 28px;
-          letter-spacing: 4px;
-          color: #0c0c0c;
+          font-size: 26px;
+          letter-spacing: 3px;
           font-weight: 700;
-          line-height: 1;
+          color: #0A0A0A;
+          margin: 0;
         }
         .brand-sub {
           font-size: 10px;
@@ -108,278 +127,300 @@ export function generateBrandedInvoiceHTML(data: InvoiceData): string {
           letter-spacing: 2px;
           color: #D8B36A;
           font-weight: 700;
-          margin-top: 4px;
+          margin-top: 2px;
         }
-        .invoice-meta {
-          text-align: right;
-        }
-        .badge-tax {
-          display: inline-block;
-          padding: 4px 14px;
-          background: #faf4e8;
-          border: 1px solid #D8B36A;
-          color: #8c671d;
+        .invoice-badge {
+          background: #0A0A0A;
+          color: #D8B36A;
           font-size: 11px;
-          font-weight: 800;
-          border-radius: 4px;
+          font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 1.5px;
-          margin-bottom: 8px;
-        }
-        .inv-number {
+          padding: 6px 14px;
+          border-radius: 6px;
+          display: inline-block;
           font-family: monospace;
-          font-size: 16px;
-          font-weight: 700;
-          color: #111;
         }
-        .grid-details {
+        .two-col-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          margin-bottom: 28px;
+          gap: 24px;
+          margin-bottom: 20px;
+        }
+        .info-card {
           background: #fafafa;
           border: 1px solid #eaeaea;
-          padding: 20px;
           border-radius: 8px;
+          padding: 14px;
         }
-        .detail-box label {
-          font-size: 9px;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-          color: #666;
-          font-weight: 800;
-          display: block;
-          margin-bottom: 4px;
-        }
-        .detail-box .val-main {
-          font-size: 14px;
-          font-weight: 700;
-          color: #111;
-        }
-        .detail-box .val-sub {
-          font-size: 11px;
-          color: #555;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 28px;
-        }
-        th {
-          text-align: left;
-          border-bottom: 2px solid #D8B36A;
-          padding: 12px 10px;
+        .info-title {
           font-size: 10px;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-          color: #333;
-          font-weight: 800;
-          background: #fdfbf7;
-        }
-        td {
-          padding: 14px 10px;
-          font-size: 13px;
-          border-bottom: 1px solid #eeeeee;
-        }
-        .amount-col { text-align: right; font-family: monospace; font-size: 13px; }
-        .row-summary td {
-          border-bottom: none;
-          padding: 8px 10px;
-          font-size: 12px;
-          color: #444;
-        }
-        .total-row td {
-          font-weight: 800;
-          font-size: 17px;
-          border-top: 2px solid #D8B36A;
-          border-bottom: 2px solid #D8B36A;
-          color: #9e792e;
-          background: #fdfbf7;
-        }
-        .deposit-box {
-          background: #f4f9f5;
-          border: 1px solid #c8e6c9;
-          padding: 12px 16px;
-          border-radius: 6px;
-          margin-bottom: 28px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .deposit-box label {
-          font-size: 11px;
           font-weight: 700;
-          color: #2e7d32;
           text-transform: uppercase;
           letter-spacing: 1px;
+          color: #888888;
+          margin-bottom: 6px;
+          border-bottom: 1px solid #eeeeee;
+          padding-bottom: 4px;
         }
-        .deposit-box span {
+        .info-content {
+          font-size: 12px;
+          color: #222222;
+        }
+        .info-content strong {
+          color: #000000;
+        }
+        .gst-highlight {
+          color: #059669;
           font-family: monospace;
           font-weight: 700;
-          color: #1b5e20;
-          font-size: 14px;
         }
-        .terms-section {
-          border-top: 1px border #eee;
-          padding-top: 16px;
+        table.invoice-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 18px;
+        }
+        table.invoice-table th {
+          background: #0A0A0A;
+          color: #ffffff;
           font-size: 10px;
-          color: #666;
-          line-height: 1.6;
-          margin-bottom: 28px;
-        }
-        .terms-title {
-          font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 1px;
-          color: #333;
-          margin-bottom: 4px;
+          padding: 8px 10px;
+          text-align: left;
         }
-        .footer-bar {
+        table.invoice-table td {
+          padding: 10px;
+          border-bottom: 1px solid #eaeaea;
+          font-size: 12px;
+        }
+        .tax-summary-box {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 20px;
+        }
+        .tax-summary-table {
+          width: 340px;
+          font-size: 12px;
+        }
+        .tax-summary-table tr td {
+          padding: 4px 8px;
+        }
+        .tax-summary-table tr.total-row {
+          border-top: 2px solid #D8B36A;
+          font-weight: 800;
+          font-size: 14px;
+          color: #0A0A0A;
+        }
+        .words-box {
+          background: #fdfbf7;
+          border-left: 3px solid #D8B36A;
+          padding: 10px 14px;
+          font-size: 11px;
+          margin-bottom: 20px;
+          font-style: italic;
+          color: #555555;
+        }
+        .footer-declaration {
+          font-size: 10px;
+          color: #777777;
+          border-top: 1px dashed #cccccc;
+          padding-top: 14px;
+          margin-top: 24px;
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
-          border-top: 1px solid #ddd;
-          padding-top: 20px;
         }
-        .contact-col {
-          font-size: 11px;
-          color: #444;
-        }
-        .sign-col {
+        .signature-block {
           text-align: right;
-          font-size: 11px;
+          min-width: 180px;
         }
-        .signature-line {
-          font-family: Georgia, serif;
-          font-size: 16px;
-          font-style: italic;
+        .stamp-circle {
+          border: 1.5px solid #D8B36A;
           color: #D8B36A;
-          margin-top: 8px;
+          font-size: 9px;
+          font-weight: bold;
+          text-transform: uppercase;
+          padding: 4px 8px;
+          border-radius: 4px;
+          display: inline-block;
+          margin-bottom: 6px;
+          letter-spacing: 1px;
+        }
+        .btn-print {
+          background: #D8B36A;
+          color: #000000;
+          border: none;
+          font-weight: bold;
+          padding: 10px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 13px;
         }
       </style>
     </head>
     <body>
-      <!-- Action Bar (hidden on print) -->
-      <div class="no-print" style="margin-bottom: 24px; text-align: right;">
-        <button onclick="window.print()" style="padding: 10px 20px; bg-color: #D8B36A; background: #D8B36A; color: #0c0c0c; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; uppercase tracking-wider;">
+      <!-- No-Print Action Bar -->
+      <div class="no-print" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; background: #0A0A0A; padding: 12px 18px; border-radius: 8px;">
+        <span style="color: #D8B36A; font-family: monospace; font-size: 12px; font-weight: bold;">
+          AUREVIA OFFICIAL TAX INVOICE — ${invoiceNo}
+        </span>
+        <button class="btn-print" onclick="window.print()">
           🖨️ Print / Save as PDF
         </button>
       </div>
 
-      <!-- Invoice Header -->
+      <!-- Header -->
       <div class="header-bar">
-        <div class="logo-wrap">
-          <svg class="logo-svg" viewBox="0 0 100 100" fill="none">
-            <circle cx="50" cy="50" r="46" stroke="#D8B36A" stroke-width="4"/>
-            <rect x="25" y="35" width="50" height="36" rx="4" fill="#0c0c0c" stroke="#D8B36A" stroke-width="3"/>
-            <circle cx="50" cy="53" r="12" fill="#D8B36A"/>
-            <circle cx="50" cy="53" r="6" fill="#0c0c0c"/>
-            <path d="M40 30L45 25H55L60 30H40Z" fill="#D8B36A"/>
-          </svg>
-          <div>
-            <div class="brand-title">AUREVIA</div>
-            <div class="brand-sub">Premium Camera Rentals &amp; Cinema Optics</div>
+        <div>
+          <h1 class="brand-title">AUREVIA</h1>
+          <div class="brand-sub">Luxury Cinema Equipment Rentals</div>
+          <div style="font-size: 10px; color: #666; margin-top: 4px; max-width: 320px;">
+            ${AUREVIA_COMPANY_GST_DETAILS.legalName}<br/>
+            ${AUREVIA_COMPANY_GST_DETAILS.address}<br/>
+            <strong>GSTIN:</strong> <span class="gst-highlight">${AUREVIA_COMPANY_GST_DETAILS.gstin}</span> | <strong>PAN:</strong> ${AUREVIA_COMPANY_GST_DETAILS.pan}
           </div>
         </div>
 
-        <div class="invoice-meta">
-          <div class="badge-tax">OFFICIAL RENTAL INVOICE</div>
-          <div class="inv-number">${invoiceNo}</div>
-          <div style="font-size: 11px; color: #666; margin-top: 4px;">Issued: ${createdDate}</div>
+        <div style="text-align: right;">
+          <div class="invoice-badge">TAX INVOICE</div>
+          <div style="font-family: monospace; font-size: 12px; margin-top: 6px;">
+            <strong>Invoice No:</strong> ${invoiceNo}<br/>
+            <strong>Date:</strong> ${createdDate}<br/>
+            <strong>State of Supply:</strong> ${gst.placeOfSupply}
+          </div>
         </div>
       </div>
 
-      <!-- Customer & Rental Meta Grid -->
-      <div class="grid-details">
-        <div class="detail-box">
-          <label>Billed To (Renter)</label>
-          <div class="val-main">${data.customerName}</div>
-          <div class="val-sub">${data.customerEmail}</div>
-          <div class="val-sub">${data.customerPhone}</div>
+      <!-- B2B Bill To & Shoot Logistics Grid -->
+      <div class="two-col-grid">
+        <div class="info-card">
+          <div class="info-title">BILLED TO (RECIPIENT / PRODUCTION HOUSE)</div>
+          <div class="info-content">
+            <strong>${data.companyName || data.customerName}</strong><br/>
+            ${data.companyName ? `Contact: ${data.customerName}<br/>` : ""}
+            ${data.customerEmail} | ${data.customerPhone}<br/>
+            ${data.billingAddress || data.shippingAddress || "Registered Studio Customer"}<br/>
+            ${
+              hasB2BGST
+                ? `<strong>GSTIN / UIN:</strong> <span class="gst-highlight">${data.companyGstin}</span><br/><span style="color: #059669; font-size: 10px; font-weight: bold;">✓ ITC (Input Tax Credit) Eligible</span>`
+                : `<span style="color: #666; font-size: 11px;">B2C Unregistered Consumer</span>`
+            }
+          </div>
         </div>
 
-        <div class="detail-box">
-          <label>Rental Schedule &amp; Delivery</label>
-          <div class="val-main">${data.startDate} → ${data.endDate} (${rentalDays} Days)</div>
-          <div class="val-sub">Fulfillment: ${(data.deliveryMethod || "Studio Pickup").toUpperCase()}</div>
-          <div class="val-sub">Payment Status: ${(data.paymentStatus || "PAID").toUpperCase()}</div>
+        <div class="info-card">
+          <div class="info-title">RENTAL DISPATCH &amp; SHOOT DATES</div>
+          <div class="info-content">
+            <strong>Shoot Period:</strong> ${new Date(data.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${new Date(data.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} (${rentalDays} Days)<br/>
+            <strong>Fulfillment:</strong> ${data.deliveryMethod === "delivery" ? "Armored Vault Courier Delivery" : "Self-Pickup at Bangalore Vault"}<br/>
+            <strong>Payment Mode:</strong> ${(data.paymentMethod || "Online (Razorpay / UPI)").toUpperCase()}<br/>
+            <strong>Payment Status:</strong> <strong style="color: #059669;">${data.paymentStatus.toUpperCase()}</strong>
+          </div>
         </div>
       </div>
 
-      <!-- Itemized Table -->
-      <table>
+      <!-- Line Items Table -->
+      <table class="invoice-table">
         <thead>
           <tr>
-            <th>Equipment Description</th>
-            <th style="text-align: center;">Qty</th>
-            <th style="text-align: center;">Daily Rate</th>
-            <th style="text-align: center;">Duration</th>
-            <th style="text-align: right;">Total Fee</th>
+            <th style="width: 5%;">#</th>
+            <th style="width: 45%;">Description of Cinema Gear / Services</th>
+            <th style="width: 15%;">HSN / SAC</th>
+            <th style="width: 10%; text-align: center;">Qty</th>
+            <th style="width: 10%; text-align: center;">Days</th>
+            <th style="width: 15%; text-align: right;">Taxable Value</th>
           </tr>
         </thead>
         <tbody>
-          ${itemsList.map(item => `
+          ${itemsList
+            .map(
+              (item, idx) => `
             <tr>
+              <td>${idx + 1}</td>
               <td>
                 <strong>${item.name}</strong><br/>
-                <span style="font-size: 11px; color: #666;">${item.category || "Professional Cinema Equipment"}</span>
+                <span style="font-size: 10px; color: #666;">${item.category || "Professional Cinema Equipment"}</span>
               </td>
-              <td style="text-align: center;">${item.quantity}</td>
-              <td style="text-align: center; font-family: monospace;">₹${item.dailyRate.toLocaleString("en-IN")}</td>
-              <td style="text-align: center;">${rentalDays} Days</td>
-              <td class="amount-col">₹${(item.dailyRate * item.quantity * rentalDays).toLocaleString("en-IN")}</td>
+              <td style="font-family: monospace; color: #555;">${item.sacCode || "997311"}</td>
+              <td style="text-align: center;">${item.quantity || 1}</td>
+              <td style="text-align: center;">${item.days || rentalDays}</td>
+              <td style="text-align: right; font-family: monospace; font-weight: bold;">₹${((item.dailyRate || 0) * (item.days || rentalDays) * (item.quantity || 1)).toLocaleString("en-IN")}</td>
             </tr>
-          `).join("")}
-
-          ${discountFee > 0 ? `
-            <tr class="row-summary">
-              <td colspan="4" style="text-align: right; color: #e74c3c;">Coupon Savings (${data.couponCode || "PROMO"}):</td>
-              <td class="amount-col" style="color: #e74c3c;">−₹${discountFee.toLocaleString("en-IN")}</td>
-            </tr>
-          ` : ""}
-
-          <tr class="row-summary">
-            <td colspan="4" style="text-align: right;">GST / Taxes (18%):</td>
-            <td class="amount-col">₹${taxFee.toLocaleString("en-IN")}</td>
-          </tr>
-
-          <tr class="total-row">
-            <td colspan="4" style="text-align: right;">Total Amount Payable:</td>
-            <td class="amount-col">₹${totalPaid.toLocaleString("en-IN")}</td>
-          </tr>
+          `
+            )
+            .join("")}
         </tbody>
       </table>
 
-      <!-- Security Deposit Card -->
-      <div class="deposit-box">
-        <div>
-          <label>Refundable Security Deposit Status</label>
-          <div style="font-size: 11px; color: #555;">Pre-authorized / Held during rental period. Released within 24h upon inspection return.</div>
-        </div>
-        <span>₹${depositFee.toLocaleString("en-IN")} (HELD)</span>
+      <!-- Tax Calculations & Summary -->
+      <div class="tax-summary-box">
+        <table class="tax-summary-table">
+          <tr>
+            <td style="color: #666;">Subtotal (Rental Fee):</td>
+            <td style="text-align: right; font-family: monospace;">₹${rentalFee.toLocaleString("en-IN")}</td>
+          </tr>
+          ${
+            discountFee > 0
+              ? `
+          <tr>
+            <td style="color: #059669;">Coupon / Referral Discount:</td>
+            <td style="text-align: right; font-family: monospace; color: #059669;">-₹${discountFee.toLocaleString("en-IN")}</td>
+          </tr>
+          `
+              : ""
+          }
+          <tr>
+            <td style="color: #333; font-weight: 600;">Taxable Amount:</td>
+            <td style="text-align: right; font-family: monospace; font-weight: 600;">₹${taxableAmount.toLocaleString("en-IN")}</td>
+          </tr>
+          ${
+            gst.isInterState
+              ? `
+          <tr>
+            <td style="color: #666;">Integrated GST (IGST @ 18%):</td>
+            <td style="text-align: right; font-family: monospace;">₹${gst.igstAmount.toLocaleString("en-IN")}</td>
+          </tr>
+          `
+              : `
+          <tr>
+            <td style="color: #666;">Central GST (CGST @ 9%):</td>
+            <td style="text-align: right; font-family: monospace;">₹${gst.cgstAmount.toLocaleString("en-IN")}</td>
+          </tr>
+          <tr>
+            <td style="color: #666;">State GST (SGST @ 9%):</td>
+            <td style="text-align: right; font-family: monospace;">₹${gst.sgstAmount.toLocaleString("en-IN")}</td>
+          </tr>
+          `
+          }
+          <tr class="total-row">
+            <td>Grand Total (Incl. GST):</td>
+            <td style="text-align: right; font-family: monospace; color: #D8B36A;">₹${totalPaid.toLocaleString("en-IN")}</td>
+          </tr>
+        </table>
       </div>
 
-      <!-- Rental Terms & Conditions Summary -->
-      <div class="terms-section">
-        <div class="terms-title">Rental Terms &amp; Conditions</div>
-        1. Renter is fully responsible for physical equipment protection during the rental window.<br/>
-        2. All camera bodies, lenses, and accessories undergo serial verification upon handover and return.<br/>
-        3. Returns past scheduled cutoff date (6:00 PM) incur standard 1-day extension fees.
+      <!-- Amount in Words -->
+      <div class="words-box">
+        <strong>Amount in Words:</strong> ${amountInWords}
       </div>
 
-      <!-- Footer Bar -->
-      <div class="footer-bar">
-        <div class="contact-col">
-          <strong>Aurevia Studio Vault &amp; Desk:</strong><br/>
-          Prem Mundargi (+91 96869 09048 | premmundargi135@gmail.com)<br/>
-          Sachin (+91 98807 62623 | sachiii8827@gmail.com)<br/>
-          Aurevia Studio Vault, Gadag Main Road, Karnataka 582101
+      <!-- Legal Declaration & Signature Block -->
+      <div class="footer-declaration">
+        <div style="max-width: 480px;">
+          <strong>Statutory Terms &amp; Conditions:</strong><br/>
+          1. <strong>Reverse Charge:</strong> Tax is NOT payable under reverse charge basis.<br/>
+          2. Certified under SAC 9973 for equipment leasing without operator.<br/>
+          3. Security deposit is refundable upon certified Pelican return inspection.<br/>
+          4. This is a computer-generated tax invoice verified under digital seal.
         </div>
 
-        <div class="sign-col">
-          <strong>Authorized Signatory</strong>
-          <div class="signature-line">Prem Mundargi</div>
-          <div style="font-size: 10px; color: #888;">Aurevia Operations Director</div>
+        <div class="signature-block">
+          <div class="stamp-circle">AUREVIA VERIFIED SEAL</div>
+          <div style="font-family: Georgia, serif; font-size: 16px; font-weight: bold; color: #333; margin-top: 4px;">
+            AUREVIA CINEMA RENTALS LLP
+          </div>
+          <div style="font-size: 10px; color: #666;">Authorized Signatory</div>
         </div>
       </div>
     </body>
@@ -387,12 +428,15 @@ export function generateBrandedInvoiceHTML(data: InvoiceData): string {
   `;
 }
 
-export function printOrDownloadInvoice(data: InvoiceData) {
-  const win = window.open("", "_blank");
-  if (!win) return;
-  win.document.write(generateBrandedInvoiceHTML(data));
-  win.document.close();
-  setTimeout(() => {
-    win.print();
-  }, 300);
+export function printOrDownloadInvoice(data: InvoiceData): void {
+  const invoiceHtml = generateBrandedInvoiceHTML(data);
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write(invoiceHtml);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  }
 }

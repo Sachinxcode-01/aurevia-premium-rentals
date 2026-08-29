@@ -18,7 +18,9 @@ import {
   QrCode,
   MapPin,
   Clock,
+  FileText,
 } from "lucide-react";
+import InvoiceViewerModal from "@/components/features/invoice/InvoiceViewerModal";
 
 function BookingConfirmationContent() {
   const searchParams = useSearchParams();
@@ -28,6 +30,7 @@ function BookingConfirmationContent() {
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   useEffect(() => {
     async function loadBooking() {
@@ -199,6 +202,14 @@ function BookingConfirmationContent() {
           <div className="pt-4 border-t border-white/10 flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowInvoiceModal(true)}
+                className="px-5 py-3 rounded-xl bg-gold-champagne/15 hover:bg-gold-champagne/25 border border-gold-champagne/40 text-gold-champagne text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition cursor-pointer"
+              >
+                <FileText size={14} />
+                GST Tax Invoice (PDF)
+              </button>
+
+              <button
                 onClick={handleDownloadCalendar}
                 className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-ivory text-xs font-semibold uppercase tracking-wider flex items-center gap-2 transition cursor-pointer"
               >
@@ -228,6 +239,32 @@ function BookingConfirmationContent() {
             </div>
           </div>
         </div>
+
+        {/* Invoice Viewer Modal */}
+        {showInvoiceModal && booking && (
+          <InvoiceViewerModal
+            isOpen={showInvoiceModal}
+            onClose={() => setShowInvoiceModal(false)}
+            invoiceData={{
+              referenceCode: booking.referenceCode,
+              createdAt: booking.createdAt,
+              customerName: booking.contactName,
+              customerEmail: booking.contactEmail,
+              customerPhone: booking.contactPhone,
+              companyName: booking.companyOrCollege,
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              rentalFee: booking.totalRentalFee,
+              discountFee: booking.discountAmount || 0,
+              taxFee: booking.taxFee,
+              totalPayable: booking.totalPayable,
+              status: booking.status,
+              paymentStatus: booking.paymentStatus,
+              paymentMethod: booking.paymentMethod,
+              deliveryMethod: booking.deliveryMethod,
+            }}
+          />
+        )}
 
         {/* Support Hotline banner */}
         <div className="text-center text-xs text-muted-gray font-light space-y-1">

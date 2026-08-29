@@ -13,6 +13,9 @@ export interface InvoiceData {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
+  companyName?: string;
+  companyGstin?: string;
+  billingAddress?: string;
   items?: InvoiceItem[];
   equipmentName?: string;
   startDate: string;

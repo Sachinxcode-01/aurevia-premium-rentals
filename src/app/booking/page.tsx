@@ -20,11 +20,13 @@ import {
   ArrowRight,
   ShieldCheck,
   Sliders,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import GearRigBuilderModal from "@/components/features/rig-builder/GearRigBuilderModal";
+import InvoiceViewerModal from "@/components/features/invoice/InvoiceViewerModal";
 import { getCurrentUserAction } from "@/lib/actions/auth";
 
 type CheckoutStep = "cart" | "details" | "logistics" | "terms" | "payment" | "confirmation";
@@ -69,6 +71,9 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online");
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [b2bGstin, setB2bGstin] = useState("");
+  const [b2bCompanyName, setB2bCompanyName] = useState("");
 
   useEffect(() => {
     // Auto-capture ?ref= parameter from referral link
@@ -907,13 +912,33 @@ export default function BookingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Company / College Name (Optional)</label>
+                  <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">Company / Production House (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. Aurevia Studio or IIT Bangalore"
+                    placeholder="e.g. Red Chillies VFX or Aurevia Studio"
                     value={companyOrCollege}
-                    onChange={(e) => setCompanyOrCollege(e.target.value)}
+                    onChange={(e) => {
+                      setCompanyOrCollege(e.target.value);
+                      setB2bCompanyName(e.target.value);
+                    }}
                     className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory placeholder:text-muted-gray/50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-gold-champagne uppercase font-mono tracking-wider block">
+                      GSTIN for B2B Tax Invoice (Optional)
+                    </label>
+                    <span className="text-[9px] text-emerald-400 font-mono">18% ITC Credit Eligible</span>
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={15}
+                    placeholder="e.g. 29AAHCA1234F1Z5 (15 Digits)"
+                    value={b2bGstin}
+                    onChange={(e) => setB2bGstin(e.target.value.toUpperCase())}
+                    className="w-full bg-white/5 border border-white/10 text-xs rounded p-2.5 focus:outline-none focus:border-gold-champagne/40 text-ivory font-mono placeholder:text-muted-gray/50 uppercase"
                   />
                 </div>
               </div>
@@ -1231,25 +1256,63 @@ export default function BookingPage() {
               </a>
             </div>
 
-            <div className="pt-4 flex gap-4 success-fade">
-              <Link
-                href="/dashboard"
-                className="w-1/2 py-3 bg-white/5 hover:bg-white/10 text-ivory text-xs font-semibold uppercase tracking-wider text-center rounded border border-white/10 transition"
+            <div className="pt-4 space-y-3 success-fade">
+              <button
+                type="button"
+                onClick={() => setShowInvoiceModal(true)}
+                className="w-full py-3 bg-gold-champagne/15 hover:bg-gold-champagne/25 text-gold-champagne border border-gold-champagne/40 text-xs font-bold uppercase tracking-wider text-center rounded-xl transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-gold-champagne/10"
               >
-                View Dashboard
-              </Link>
-              
-              <Link
-                href="/explore"
-                className="w-1/2 py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider text-center rounded transition"
-              >
-                Back to Showroom
-              </Link>
+                <FileText size={15} />
+                Download Official GST Tax Invoice (PDF)
+              </button>
+
+              <div className="flex gap-4">
+                <Link
+                  href="/dashboard"
+                  className="w-1/2 py-3 bg-white/5 hover:bg-white/10 text-ivory text-xs font-semibold uppercase tracking-wider text-center rounded border border-white/10 transition"
+                >
+                  View Dashboard
+                </Link>
+                
+                <Link
+                  href="/explore"
+                  className="w-1/2 py-3 bg-gold-champagne hover:bg-gold-warm text-obsidian text-xs font-bold uppercase tracking-wider text-center rounded transition"
+                >
+                  Back to Showroom
+                </Link>
+              </div>
             </div>
 
           </div>
         )}
       </div>
+
+      {/* Official GST Tax Invoice Viewer Modal */}
+      {showInvoiceModal && createdBooking && (
+        <InvoiceViewerModal
+          isOpen={showInvoiceModal}
+          onClose={() => setShowInvoiceModal(false)}
+          invoiceData={{
+            referenceCode: createdBooking.referenceCode,
+            createdAt: createdBooking.createdAt,
+            customerName: createdBooking.contactName,
+            customerEmail: createdBooking.contactEmail,
+            customerPhone: createdBooking.contactPhone,
+            companyName: b2bCompanyName || createdBooking.companyOrCollege,
+            companyGstin: b2bGstin,
+            startDate: createdBooking.startDate,
+            endDate: createdBooking.endDate,
+            rentalFee: createdBooking.totalRentalFee,
+            discountFee: createdBooking.discountAmount || 0,
+            taxFee: createdBooking.taxFee,
+            totalPayable: createdBooking.totalPayable,
+            status: createdBooking.status,
+            paymentStatus: createdBooking.paymentStatus,
+            paymentMethod: createdBooking.paymentMethod,
+            deliveryMethod: createdBooking.deliveryMethod,
+          }}
+        />
+      )}
 
       {showRigBuilder && (
         <GearRigBuilderModal onClose={() => setShowRigBuilder(false)} />
