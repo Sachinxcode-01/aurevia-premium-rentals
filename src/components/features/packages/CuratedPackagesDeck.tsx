@@ -183,7 +183,7 @@ Prepared by AUREVIA Vault Operations
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 1024px) 100vw, 600px"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
 
                 {/* Badges */}
                 <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
@@ -323,7 +323,7 @@ Prepared by AUREVIA Vault Operations
 
                 <button
                   onClick={() => handleBookPackage(pkg)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-3 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-amber-400 via-amber-300 to-amber-500 py-3 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   Book Complete Package

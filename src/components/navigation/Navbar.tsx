@@ -4,14 +4,31 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, User, Menu, X, ShoppingCart, LogOut, Gift } from "lucide-react";
+import {
+  Search,
+  User,
+  Menu,
+  X,
+  ShoppingCart,
+  LogOut,
+  Gift,
+  Volume2,
+  VolumeX,
+  ChevronDown,
+  Sliders,
+  Zap,
+  FileText,
+  Layers,
+} from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
 import MagneticButton from "@/components/motion/MagneticButton";
 import SearchModal from "@/components/ui/SearchModal";
+import CommandPalette from "@/components/navigation/CommandPalette";
 import ReferralModal from "@/components/referral/ReferralModal";
 import { createClient } from "@/lib/supabase/client";
 import { signOutAction } from "@/lib/actions/auth";
+import { useCineAudio } from "@/hooks/useCineAudio";
 
 interface NavbarProps {
   cartItemCount?: number;
@@ -28,7 +45,9 @@ export default function Navbar({
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [cineToolsDropdownOpen, setCineToolsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
@@ -37,6 +56,44 @@ export default function Navbar({
     avatar_url?: string;
     email?: string;
   } | null>(null);
+
+  const { isMuted, toggleSound, playClick } = useCineAudio();
+
+  const cineTools = [
+    {
+      name: "Lens & Sensor Lab",
+      href: "/tools/lens-match",
+      icon: Sliders,
+      desc: "Anamorphic desqueeze & crop simulator",
+    },
+    {
+      name: "Power & Media Runtime",
+      href: "/tools/power-media-calculator",
+      icon: Zap,
+      desc: "V-Mount battery & codec storage estimator",
+    },
+    {
+      name: "Equipment Manifest Hub",
+      href: "/tools/callsheet-manifest",
+      icon: FileText,
+      desc: "Printable camera call sheets & serial lists",
+    },
+    {
+      name: "FOV Sensor Simulator",
+      href: "/tools/sensor-simulator",
+      icon: Layers,
+      desc: "Field-of-view sensor comparisons",
+    },
+  ];
+
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "Explore Gear", href: "/explore" },
+    { name: "Production Kits", href: "/packages" },
+    { name: "Rental Process", href: "/rental-process" },
+    { name: "About", href: "/about" },
+    { name: "Contact", href: "/contact" },
+  ];
 
   useEffect(() => {
     let active = true;
@@ -85,21 +142,12 @@ export default function Navbar({
     }
   };
 
-  const navLinks = [
-    { name: "Home", href: "/" },
-    { name: "Explore Gear", href: "/explore" },
-    { name: "Production Kits", href: "/packages" },
-    { name: "FOV Simulator", href: "/tools/sensor-simulator" },
-    { name: "Rental Process", href: "/rental-process" },
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
-  ];
-
   const handleOpenSearch = () => {
+    playClick();
     if (onSearchClick) {
       onSearchClick();
     } else {
-      setSearchModalOpen(true);
+      setCommandPaletteOpen(true);
     }
   };
 
@@ -160,6 +208,7 @@ export default function Navbar({
   return (
     <>
       <SearchModal isOpen={searchModalOpen} onClose={() => setSearchModalOpen(false)} />
+      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
       <ReferralModal isOpen={referralModalOpen} onClose={() => setReferralModalOpen(false)} />
       {announcementActive && announcementText && (
         <div className="fixed top-0 left-0 w-full bg-gold-champagne text-obsidian text-[9px] md:text-[10px] font-bold h-8 flex items-center justify-center px-4 text-center select-none z-50 tracking-wider uppercase font-mono shadow-md">
@@ -182,7 +231,89 @@ export default function Navbar({
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-2.5 xl:gap-5 2xl:gap-7 h-full mx-auto">
-            {navLinks.map((link) => {
+            {navLinks.slice(0, 3).map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`group relative py-1 text-[11px] xl:text-[12px] 2xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                    isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
+                  }`}
+                >
+                  {link.name}
+                  {isActive ? (
+                    <motion.span
+                      layoutId="activeNavIndicator"
+                      className="absolute -bottom-1.5 left-0 w-full h-[1.5px] bg-gold-champagne"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  ) : (
+                    <span className="absolute -bottom-1.5 left-0 w-0 h-[1.5px] bg-gold-champagne transition-all duration-300 group-hover:w-full" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* Cine Tools Dropdown */}
+            <div
+              className="relative py-1"
+              onMouseEnter={() => setCineToolsDropdownOpen(true)}
+              onMouseLeave={() => setCineToolsDropdownOpen(false)}
+            >
+              <button
+                className={`group flex items-center gap-1 text-[11px] xl:text-[12px] 2xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                  pathname.startsWith("/tools") ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
+                }`}
+              >
+                <span>Cine Tools</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${cineToolsDropdownOpen ? "rotate-180 text-gold-champagne" : "text-muted-gray"}`} />
+              </button>
+
+              <AnimatePresence>
+                {cineToolsDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-72 rounded-2xl border border-white/15 bg-neutral-950/95 p-2 backdrop-blur-2xl shadow-2xl z-50"
+                  >
+                    <div className="space-y-1">
+                      {cineTools.map((tool) => {
+                        const ToolIcon = tool.icon;
+                        const isToolActive = pathname === tool.href;
+                        return (
+                          <Link
+                            key={tool.name}
+                            href={tool.href}
+                            onClick={() => {
+                              playClick();
+                              setCineToolsDropdownOpen(false);
+                            }}
+                            className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                              isToolActive
+                                ? "bg-amber-400/10 border border-amber-400/30 text-amber-300"
+                                : "hover:bg-white/5 text-neutral-300 hover:text-white"
+                            }`}
+                          >
+                            <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${isToolActive ? "bg-amber-400 text-black" : "bg-neutral-900 text-amber-400"}`}>
+                              <ToolIcon size={14} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold font-mono truncate">{tool.name}</p>
+                              <p className="text-[10px] text-neutral-400 font-sans">{tool.desc}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {navLinks.slice(3).map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
@@ -209,20 +340,33 @@ export default function Navbar({
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-2.5 xl:gap-4 2xl:gap-5 shrink-0 h-full">
-            {/* Global Search Modal Trigger - Icon on lg, full bar on xl */}
+            {/* Fast Search / Command Palette Trigger */}
             <button
               id="global-search-trigger"
               onClick={handleOpenSearch}
-              aria-label="Search gear"
+              aria-label="Search gear and tools"
               className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 xl:w-44 2xl:w-52 px-2.5 xl:px-3.5 flex items-center justify-center xl:justify-between transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center gap-2">
                 <Search size={15} className="stroke-2 text-gold-champagne shrink-0" />
-                <span className="hidden xl:inline text-[11px] 2xl:text-xs">Search gear...</span>
+                <span className="hidden xl:inline text-[11px] 2xl:text-xs">Fast Search...</span>
               </div>
               <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[8px] 2xl:text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
                 ⌘K
               </kbd>
+            </button>
+
+            {/* CineSound FX Audio Toggle */}
+            <button
+              onClick={toggleSound}
+              title={isMuted ? "Enable Cine Mechanical Audio" : "Disable Cine Audio"}
+              className={`p-2 rounded-full border transition-all cursor-pointer ${
+                !isMuted
+                  ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
+                  : "border-white/10 text-neutral-500 hover:text-neutral-300 hover:border-white/20"
+              }`}
+            >
+              {!isMuted ? <Volume2 size={15} /> : <VolumeX size={15} />}
             </button>
 
             {/* Cart Icon */}
@@ -299,6 +443,15 @@ export default function Navbar({
 
           {/* Mobile Header Actions (Visible on screens < lg) */}
           <div className="flex lg:hidden items-center gap-3">
+            {/* Sound toggle mobile */}
+            <button
+              onClick={toggleSound}
+              className={`p-1.5 rounded-full transition cursor-pointer ${
+                !isMuted ? "text-amber-400" : "text-neutral-500"
+              }`}
+            >
+              {!isMuted ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
             {/* Mobile Referral Trigger */}
             <button
               onClick={() => setReferralModalOpen(true)}
@@ -351,7 +504,7 @@ export default function Navbar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 overflow-hidden flex flex-col bg-obsidian/95 backdrop-blur-2xl"
+            className="fixed inset-0 z-50 overflow-y-auto flex flex-col bg-obsidian/95 backdrop-blur-2xl"
           >
             {/* Ambient light source inside mobile menu */}
             <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[150vw] h-[70vh] bg-gold-champagne/10 blur-[120px] pointer-events-none z-0" />
@@ -372,14 +525,14 @@ export default function Navbar({
             </div>
 
             {/* Search bar inside mobile overlay */}
-            <div className="relative z-10 px-6 pt-8 pb-4">
+            <div className="relative z-10 px-6 pt-6 pb-2">
               <form onSubmit={handleSearchSubmit} className="relative flex items-center w-full">
                 <input
                   type="text"
-                  placeholder="Search premium equipment..."
+                  placeholder="Search gear, lenses, tools..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 text-sm text-ivory rounded-full px-5 py-3 pr-10 focus:outline-none focus:border-gold-champagne/50"
+                  className="w-full bg-white/5 border border-white/10 text-sm text-ivory rounded-full px-5 py-3 pr-10 focus:outline-none focus:border-gold-champagne/50 font-mono"
                 />
                 <button type="submit" className="absolute right-4 text-muted-gray hover:text-gold-champagne cursor-pointer">
                   <Search size={16} className="stroke-2" />
@@ -388,49 +541,50 @@ export default function Navbar({
             </div>
 
             {/* Mobile Links */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: { opacity: 0 },
-                visible: {
-                  opacity: 1,
-                  transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-                },
-              }}
-              className="relative z-10 flex-1 flex flex-col justify-center px-8 py-10 space-y-6"
-            >
-              {navLinks.map((link) => (
-                <motion.div
-                  key={link.name}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
+            <div className="relative z-10 flex-1 flex flex-col px-6 py-6 space-y-4">
+              <div className="space-y-3">
+                {navLinks.map((link) => (
                   <Link
+                    key={link.name}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block serif-heading text-3xl font-light text-ivory hover:text-gold-champagne transition duration-300 self-start"
+                    className="block text-2xl font-light text-ivory hover:text-gold-champagne transition duration-300"
                   >
                     {link.name}
                   </Link>
-                </motion.div>
-              ))}
+                ))}
+              </div>
 
-              <hr className="border-white/5 my-4" />
+              {/* Mobile Cine Tools Section */}
+              <div className="pt-2 border-t border-white/10">
+                <p className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold mb-2">
+                  Cinematography Tools
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {cineTools.map((tool) => {
+                    const ToolIcon = tool.icon;
+                    return (
+                      <Link
+                        key={tool.name}
+                        href={tool.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2.5 rounded-xl border border-white/10 bg-neutral-900/60 flex items-center gap-2 text-xs text-neutral-300 hover:text-white"
+                      >
+                        <ToolIcon size={14} className="text-amber-400 shrink-0" />
+                        <span className="truncate">{tool.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
 
-              <motion.div
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                className="flex flex-col gap-4"
-              >
+              <hr className="border-white/5 my-2" />
+
+              <div className="flex flex-col gap-3">
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-sm text-ivory/70 hover:text-gold-champagne transition duration-300 self-start font-mono uppercase tracking-wider"
+                  className="flex items-center gap-2 text-sm text-ivory/70 hover:text-gold-champagne transition duration-300 font-mono uppercase tracking-wider"
                 >
                   <User size={16} className="stroke-2" />
                   My Account
@@ -441,15 +595,15 @@ export default function Navbar({
                     setMobileMenuOpen(false);
                     router.push("/booking");
                   }}
-                  className="w-full py-4 bg-gold-champagne hover:bg-gold-champagne/90 text-obsidian text-xs font-bold uppercase tracking-[0.2em] rounded transition-colors duration-300 shadow-lg shadow-gold-champagne/10 cursor-pointer"
+                  className="w-full py-3.5 bg-gold-champagne hover:bg-gold-champagne/90 text-obsidian text-xs font-bold uppercase tracking-[0.2em] rounded transition-colors duration-300 shadow-lg shadow-gold-champagne/10 cursor-pointer"
                 >
                   Book Now
                 </button>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
 
             {/* Mobile Footer Contact Details */}
-            <div className="relative z-10 p-6 bg-charcoal/50 border-t border-white/5 text-center font-mono text-[10px] text-muted-gray uppercase tracking-widest">
+            <div className="relative z-10 p-4 bg-charcoal/50 border-t border-white/5 text-center font-mono text-[10px] text-muted-gray uppercase tracking-widest">
               AUREVIA • Concierge Service • Premium Rental Experience
             </div>
           </motion.div>
