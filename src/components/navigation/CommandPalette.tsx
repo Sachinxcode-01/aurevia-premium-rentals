@@ -16,6 +16,7 @@ import {
   HelpCircle,
   Shield,
   Sliders,
+  Wrench,
 } from "lucide-react";
 
 interface SearchItem {
@@ -31,22 +32,31 @@ interface SearchItem {
 const SEARCH_ITEMS: SearchItem[] = [
   // CINE TOOLS
   {
+    id: "tool-rig-builder",
+    title: "Modular Cinema Rig Configurator",
+    category: "Cine Tools",
+    description: "Custom build cinema camera packages with live weight (kg/lbs), power draw, and mount compatibility checking.",
+    href: "/tools/rig-builder",
+    icon: Wrench,
+    badge: "Interactive",
+  },
+  {
     id: "tool-lens-match",
     title: "Lens & Sensor Coverage Lab",
     category: "Cine Tools",
-    description: "Interactive sensor crops (FF/S35/VV), 1.33x–2.0x anamorphic desqueeze, and DoF calculator.",
+    description: "Interactive sensor crop factor simulation, anamorphic desqueeze, and optical DoF preview.",
     href: "/tools/lens-match",
     icon: Sliders,
-    badge: "New Tool",
+    badge: "Anamorphic",
   },
   {
     id: "tool-power-media",
-    title: "Power & Media Runtime Calculator",
+    title: "Cine Power & Storage Runtime Calculator",
     category: "Cine Tools",
-    description: "Calculate V-Mount battery runtimes, ARRIRAW / REDCODE bitrates, and card counts.",
+    description: "Calculate V-Mount battery counts, wattage consumption, and storage card data rates.",
     href: "/tools/power-media-calculator",
     icon: Zap,
-    badge: "New Tool",
+    badge: "DIT Engine",
   },
   {
     id: "tool-callsheet",

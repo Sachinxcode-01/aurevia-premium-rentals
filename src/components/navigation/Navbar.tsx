@@ -19,6 +19,7 @@ import {
   Zap,
   FileText,
   Layers,
+  Wrench,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { motion, AnimatePresence } from "motion/react";
@@ -60,6 +61,12 @@ export default function Navbar({
   const { isMuted, toggleSound, playClick } = useCineAudio();
 
   const cineTools = [
+    {
+      name: "Modular Rig Configurator",
+      href: "/tools/rig-builder",
+      icon: Wrench,
+      desc: "Live weight, power & fit compatibility",
+    },
     {
       name: "Lens & Sensor Lab",
       href: "/tools/lens-match",
