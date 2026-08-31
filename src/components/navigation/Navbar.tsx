@@ -230,14 +230,16 @@ export default function Navbar({
         }`}
         style={{ top: announcementActive && announcementText ? "32px" : "0" }}
       >
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between h-full">
-          {/* Brand Logo & Premium Badge */}
-          <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0" aria-label="AUREVIA Premium Camera Rentals">
-            <Logo variant="wordmark" theme="light" width={130} height={35} />
-          </Link>
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between h-full">
+          {/* Left Group: Brand Logo & Desktop Navigation Links */}
+          <div className="flex items-center gap-6 xl:gap-8 2xl:gap-10 h-full">
+            {/* Brand Logo */}
+            <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0" aria-label="AUREVIA Premium Camera Rentals">
+              <Logo variant="wordmark" theme="light" width={125} height={34} />
+            </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-2.5 xl:gap-5 2xl:gap-7 h-full mx-auto">
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 2xl:gap-7 h-full">
             {navLinks.slice(0, 3).map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -343,7 +345,8 @@ export default function Navbar({
                 </Link>
               );
             })}
-          </nav>
+            </nav>
+          </div>
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-2.5 xl:gap-4 2xl:gap-5 shrink-0 h-full">
