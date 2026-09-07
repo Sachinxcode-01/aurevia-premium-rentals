@@ -383,28 +383,28 @@ export default function CustomRigConfigurator() {
           <div className="space-y-2 rounded-xl border border-white/5 bg-black/50 p-4 text-xs font-mono">
             <div className="flex justify-between items-center text-neutral-300">
               <span className="text-neutral-500 uppercase text-[10px]">Body:</span>
-              <span className="text-right truncate max-w-[160px]">{selectedBody.name}</span>
+              <span className="text-right truncate max-w-40">{selectedBody.name}</span>
             </div>
             <div className="flex justify-between items-center text-neutral-300">
               <span className="text-neutral-500 uppercase text-[10px]">Optics:</span>
-              <span className="text-right truncate max-w-[160px]">{selectedOptics.name}</span>
+              <span className="text-right truncate max-w-40">{selectedOptics.name}</span>
             </div>
             {selectedMonitoring && (
               <div className="flex justify-between items-center text-neutral-300">
                 <span className="text-neutral-500 uppercase text-[10px]">Video:</span>
-                <span className="text-right truncate max-w-[160px]">{selectedMonitoring.name}</span>
+                <span className="text-right truncate max-w-40">{selectedMonitoring.name}</span>
               </div>
             )}
             {selectedSupport && (
               <div className="flex justify-between items-center text-neutral-300">
                 <span className="text-neutral-500 uppercase text-[10px]">Support:</span>
-                <span className="text-right truncate max-w-[160px]">{selectedSupport.name}</span>
+                <span className="text-right truncate max-w-40">{selectedSupport.name}</span>
               </div>
             )}
             {selectedPower && (
               <div className="flex justify-between items-center text-neutral-300">
                 <span className="text-neutral-500 uppercase text-[10px]">Power:</span>
-                <span className="text-right truncate max-w-[160px]">{selectedPower.name}</span>
+                <span className="text-right truncate max-w-40">{selectedPower.name}</span>
               </div>
             )}
           </div>
@@ -475,7 +475,7 @@ export default function CustomRigConfigurator() {
           {/* Add to Cart CTA */}
           <button
             onClick={handleAddCustomRigToCart}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 py-3.5 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-amber-400 via-amber-300 to-amber-500 py-3.5 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
           >
             <ShoppingBag className="h-4 w-4" />
             Book Custom Cinema Package
