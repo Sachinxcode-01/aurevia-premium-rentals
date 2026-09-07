@@ -13,16 +13,9 @@ import {
 import BookingQRCode from "@/components/booking/BookingQRCode";
 import {
   ShoppingBag,
-  Calendar,
   Search,
-  CheckCircle2,
-  XCircle,
   QrCode,
-  FileText,
-  AlertTriangle,
   RefreshCw,
-  Clock,
-  Key,
 } from "lucide-react";
 
 interface BookingsTabProps {

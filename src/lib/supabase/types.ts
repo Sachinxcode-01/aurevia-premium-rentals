@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // ─────────────────────────────────────────────────────────────
 // Supabase Database Type Definitions — AUREVIA
 // Mirrors supabase/migrations/20260715000000_schema.sql

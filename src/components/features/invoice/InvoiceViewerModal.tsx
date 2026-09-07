@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { InvoiceData, generateBrandedInvoiceHTML } from "@/lib/utils/pdfGenerator";
-import { X, Printer, Download, FileText, CheckCircle2, Shield } from "lucide-react";
+import { X, Printer, FileText, Shield } from "lucide-react";
 
 interface InvoiceViewerModalProps {
   invoiceData: InvoiceData;
@@ -73,7 +72,7 @@ export default function InvoiceViewerModal({
             <iframe
               srcDoc={invoiceHtml}
               title="GST Tax Invoice Preview"
-              className="h-[620px] w-full border-0"
+              className="h-155 w-full border-0"
             />
           </div>
         </div>

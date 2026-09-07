@@ -7,7 +7,7 @@ import { useCart } from "@/hooks/useCart";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { db, Booking } from "@/lib/db/store";
 import { 
-  Camera, ShieldCheck, AlertCircle, DollarSign, 
+  AlertCircle, 
   CreditCard, Loader2, ArrowRight, CheckCircle2 
 } from "lucide-react";
 import Link from "next/link";

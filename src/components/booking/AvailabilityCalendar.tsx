@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle, AlertTriangle } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 
 interface AvailabilityCalendarProps {
   productName?: string;

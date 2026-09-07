@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, X, ArrowRight, Camera, Tag, Clock } from "lucide-react";
+import { Search, X, ArrowRight, Camera, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { MOCK_PRODUCTS, MOCK_BRANDS, MOCK_CATEGORIES, Product } from "@/lib/db/mockData";
 
@@ -191,7 +191,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             onClose();
                             router.push(`/explore?category=${cat.id}`);
                           }}
-                          className="p-3 bg-white/[0.02] border border-white/5 hover:border-gold-champagne/30 rounded-xl text-left transition group"
+                          className="p-3 bg-white/2 border border-white/5 hover:border-gold-champagne/30 rounded-xl text-left transition group"
                         >
                           <span className="text-xs font-medium text-ivory group-hover:text-gold-champagne block">
                             {cat.name}
@@ -217,7 +217,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                         key={product.id}
                         onClick={() => handleSelectProduct(product)}
                         className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition ${
-                          isSelected ? "bg-gold-champagne/15 border border-gold-champagne/40" : "bg-white/[0.02] border border-white/5 hover:bg-white/5"
+                          isSelected ? "bg-gold-champagne/15 border border-gold-champagne/40" : "bg-white/2 border border-white/5 hover:bg-white/5"
                         }`}
                       >
                         <div className="flex items-center gap-3">

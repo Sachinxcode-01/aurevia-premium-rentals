@@ -15,7 +15,6 @@ import {
   RigComponent,
 } from "@/lib/data/rig-builder-data";
 import {
-  Zap,
   AlertTriangle,
   ShoppingBag,
   ArrowRight,

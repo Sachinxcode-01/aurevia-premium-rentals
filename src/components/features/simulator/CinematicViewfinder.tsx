@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Maximize2, Minimize2, Eye, Sparkles, Grid3X3, Crosshair, AlertTriangle } from "lucide-react";
+import { Maximize2, Minimize2, Sparkles, Grid3X3, Crosshair, AlertTriangle } from "lucide-react";
 import { CameraSensorSpec, FrameLineSpec, SimulationScene } from "@/lib/data/cinematography-data";
 import { OpticalCalculationResult } from "@/lib/utils/optical-calculator";
 
@@ -36,7 +36,7 @@ export default function CinematicViewfinder({
   const [showGrid, setShowGrid] = useState(false);
   const [showCrosshair, setShowCrosshair] = useState(true);
   const [showAnamorphicFlare, setShowAnamorphicFlare] = useState(true);
-  const [frameLineOpacity, setFrameLineOpacity] = useState(0.85);
+  const frameLineOpacity = 0.85;
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -78,7 +78,7 @@ export default function CinematicViewfinder({
     <div
       ref={containerRef}
       className={`relative w-full overflow-hidden rounded-2xl border border-white/10 bg-black font-mono shadow-2xl transition-all duration-300 ${
-        isFullscreen ? "h-screen w-screen rounded-none" : "aspect-[16/9] min-h-[380px] lg:min-h-[520px]"
+        isFullscreen ? "h-screen w-screen rounded-none" : "aspect-video min-h-95 lg:min-h-130"
       }`}
     >
       {/* ─── LIVE SCENE IMAGE SIMULATOR ─── */}
@@ -115,9 +115,9 @@ export default function CinematicViewfinder({
         {isAnamorphic && showAnamorphicFlare && activeScene.hasLights && (
           <div className="pointer-events-none absolute inset-0 mix-blend-screen opacity-70 transition-opacity duration-300">
             {/* Horizontal Blue/Gold Anamorphic streak */}
-            <div className="absolute top-1/2 left-0 h-[2px] w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-cyan-400/80 to-transparent blur-[1px]" />
-            <div className="absolute top-1/2 left-0 h-[8px] w-full -translate-y-1/2 bg-gradient-to-r from-transparent via-amber-300/40 to-transparent blur-[4px]" />
-            <div className="absolute top-[38%] left-1/4 h-[1px] w-1/2 bg-gradient-to-r from-transparent via-cyan-300/60 to-transparent blur-[1px]" />
+            <div className="absolute top-1/2 left-0 h-0.5 w-full -translate-y-1/2 bg-linear-to-r from-transparent via-cyan-400/80 to-transparent blur-[1px]" />
+            <div className="absolute top-1/2 left-0 h-2 w-full -translate-y-1/2 bg-linear-to-r from-transparent via-amber-300/40 to-transparent blur-xs" />
+            <div className="absolute top-[38%] left-1/4 h-px w-1/2 bg-linear-to-r from-transparent via-cyan-300/60 to-transparent blur-[1px]" />
             {/* Oval bokeh reflections */}
             <div className="absolute top-1/3 right-1/4 h-16 w-8 rounded-full border border-cyan-400/30 bg-cyan-500/10 blur-[2px]" />
             <div className="absolute bottom-1/3 left-1/3 h-20 w-10 rounded-full border border-amber-400/30 bg-amber-500/10 blur-[3px]" />
@@ -128,7 +128,7 @@ export default function CinematicViewfinder({
         {opticalResult.hasVignetting && (
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
-              className="absolute inset-0 rounded-full border-[60px] border-black/90 shadow-[inset_0_0_100px_rgba(0,0,0,0.95)]"
+              className="absolute inset-0 rounded-full border-60 border-black/90 shadow-[inset_0_0_100px_rgba(0,0,0,0.95)]"
               style={{ transform: "scale(1.05)" }}
             />
           </div>
@@ -240,7 +240,7 @@ export default function CinematicViewfinder({
       )}
 
       {/* ─── HUD TELEMETRY OVERLAY (TOP BAR) ─── */}
-      <div className="absolute top-0 right-0 left-0 z-30 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-3 text-[11px] text-neutral-300 backdrop-blur-sm">
+      <div className="absolute top-0 right-0 left-0 z-30 flex items-center justify-between border-b border-white/10 bg-linear-to-b from-black/80 via-black/40 to-transparent p-3 text-[11px] text-neutral-300 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 rounded-md bg-amber-500/20 px-2 py-0.5 font-bold text-amber-400 border border-amber-500/30">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -273,7 +273,7 @@ export default function CinematicViewfinder({
       </div>
 
       {/* ─── HUD TELEMETRY OVERLAY (BOTTOM BAR) ─── */}
-      <div className="absolute right-0 bottom-0 left-0 z-30 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 text-[11px] text-neutral-300 backdrop-blur-sm">
+      <div className="absolute right-0 bottom-0 left-0 z-30 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 text-[11px] text-neutral-300 backdrop-blur-sm">
         <div className="flex flex-wrap items-center gap-3">
           <div>
             <span className="text-neutral-500">LENS:</span>{" "}

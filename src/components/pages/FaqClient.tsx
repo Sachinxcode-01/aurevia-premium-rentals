@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { MOCK_FAQS } from "@/lib/db/mockData";
-import { HelpCircle, ChevronDown, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 export default function FaqClient() {
   const { cart } = useCart();

@@ -15,7 +15,6 @@ import {
   Check,
   Film,
   Sliders,
-  CreditCard,
 } from "lucide-react";
 
 interface OverviewTabProps {
@@ -116,7 +115,7 @@ export default function OverviewTab({
       </div>
 
       {/* ─── 2. VIRAL REFERRAL & REWARDS TERMINAL ─── */}
-      <div className="dash-card rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-950/40 via-neutral-900/90 to-black p-6 shadow-2xl backdrop-blur-xl">
+      <div className="dash-card rounded-3xl border border-amber-500/30 bg-linear-to-br from-amber-950/40 via-neutral-900/90 to-black p-6 shadow-2xl backdrop-blur-xl">
         <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-5 md:flex-row md:items-center">
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-amber-400">

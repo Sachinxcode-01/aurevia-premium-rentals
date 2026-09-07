@@ -5,12 +5,7 @@ import { SupportTicket } from "./DashboardTypes";
 import {
   MessageCircle,
   PlusCircle,
-  Clock,
   Send,
-  CheckCircle2,
-  AlertCircle,
-  User,
-  Shield,
   X,
 } from "lucide-react";
 
@@ -89,7 +84,11 @@ export default function SupportTab({
             Active Tickets ({tickets.length})
           </h4>
 
-          {tickets.length === 0 ? (
+          {ticketsLoading ? (
+            <div className="rounded-2xl border border-white/5 bg-neutral-900/40 p-8 text-center text-xs text-neutral-500 font-mono">
+              Loading support inquiries...
+            </div>
+          ) : tickets.length === 0 ? (
             <div className="rounded-2xl border border-white/5 bg-neutral-900/40 p-8 text-center text-xs text-neutral-500">
               No active support inquiries.
             </div>
@@ -136,7 +135,7 @@ export default function SupportTab({
         </div>
 
         {/* Right Column: Active Thread Discussion */}
-        <div className="rounded-3xl border border-white/10 bg-neutral-900/80 p-6 shadow-2xl backdrop-blur-xl lg:col-span-2 flex flex-col justify-between min-h-[460px]">
+        <div className="rounded-3xl border border-white/10 bg-neutral-900/80 p-6 shadow-2xl backdrop-blur-xl lg:col-span-2 flex flex-col justify-between min-h-115">
           {selectedTicket ? (
             <div className="flex flex-col h-full justify-between space-y-4">
               {/* Thread Header */}
@@ -159,7 +158,7 @@ export default function SupportTab({
               </div>
 
               {/* Messages Container */}
-              <div className="flex-1 space-y-3 overflow-y-auto max-h-[320px] pr-2">
+              <div className="flex-1 space-y-3 overflow-y-auto max-h-80 pr-2">
                 {selectedTicket.messages?.map((msg) => {
                   const isCust = msg.sender === "customer";
                   return (

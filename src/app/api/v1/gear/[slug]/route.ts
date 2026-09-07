@@ -11,7 +11,7 @@ export async function GET(
     const { slug } = await params;
     const supabase = await createServiceSupabaseClient();
 
-    const { data: product, error } = await supabase
+    const { data: product } = await supabase
       .from("products")
       .select("*, brand:brands(name, slug), category:categories(name, slug), product_images(image_url, is_primary)")
       .eq("slug", slug)

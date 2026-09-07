@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CINE_CAMERAS,
@@ -16,7 +16,6 @@ import OpticalControlsPanel from "@/components/features/simulator/OpticalControl
 import SensorComparisonOverlay from "@/components/features/simulator/SensorComparisonOverlay";
 import DoFVisualizer from "@/components/features/simulator/DoFVisualizer";
 import MatchedGearDeck from "@/components/features/simulator/MatchedGearDeck";
-import { Sliders, Camera, Sparkles, Film, Info } from "lucide-react";
 
 export default function SimulatorClient() {
   const searchParams = useSearchParams();

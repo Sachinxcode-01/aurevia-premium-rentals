@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { QrCode, ShieldCheck, Key } from "lucide-react";
+import { QrCode, Key } from "lucide-react";
 
 interface BookingQRCodeProps {
   referenceCode: string;
@@ -9,7 +9,7 @@ interface BookingQRCodeProps {
   pickupOTP?: string;
 }
 
-export default function BookingQRCode({ referenceCode, customerPhone = "+91 96869 09048", pickupOTP = "1358" }: BookingQRCodeProps) {
+export default function BookingQRCode({ referenceCode, pickupOTP = "1358" }: BookingQRCodeProps) {
   // Simple high-contrast SVG QR-code representation generator
   return (
     <div className="bg-[#121212] border border-gold-champagne/30 p-5 rounded-2xl shadow-2xl text-center space-y-4 max-w-sm mx-auto">

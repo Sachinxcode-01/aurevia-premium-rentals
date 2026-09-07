@@ -1,14 +1,13 @@
-import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createServiceSupabaseClient();
     const startTime = Date.now();
     
     // Test database ping
-    const { data, error } = await supabase.from("products").select("id").limit(1);
+    const { error } = await supabase.from("products").select("id").limit(1);
     const dbLatency = Date.now() - startTime;
 
     if (error) {

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useChatbot, type ChatMessage } from "./ChatbotProvider";
+import { useChatbot } from "./ChatbotProvider";
 import { 
-  X, Minus, Square, Send, RefreshCw, Trash2, ShieldCheck, 
-  Sparkles, Camera, Phone, User, MessageCircle, AlertTriangle, ArrowRight
+  X, Minus, Send, Trash2, 
+  Sparkles, User, ArrowRight
 } from "lucide-react";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
@@ -22,7 +22,7 @@ const SUGGESTED_PROMPTS = [
 export default function ChatWindow() {
   const {
     messages, isOpen, isMinimized, isTyping,
-    sendMessage, closeChat, minimizeChat, maximizeChat, clearChat, handleSuggestedAction
+    sendMessage, closeChat, minimizeChat, clearChat, handleSuggestedAction
   } = useChatbot();
 
   const [input, setInput] = useState("");
@@ -111,7 +111,7 @@ export default function ChatWindow() {
   return (
     <div
       ref={chatWindowRef}
-      className={`fixed z-[9998] flex flex-col glass-panel-gold border border-gold-border/30 shadow-2xl transition-all duration-300 ${
+      className={`fixed z-9998 flex flex-col glass-panel-gold border border-gold-border/30 shadow-2xl transition-all duration-300 ${
         isMinimized 
           ? "pointer-events-none opacity-0 translate-y-10 scale-95" 
           : "pointer-events-auto"
@@ -189,7 +189,7 @@ export default function ChatWindow() {
 
               {/* Text content card */}
               <div className="space-y-1.5 min-w-0">
-                <div className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed break-words border ${
+                <div className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed wrap-break-word border ${
                   isBot 
                     ? "bg-white/3 border-white/5 text-ivory" 
                     : "bg-gold-champagne text-obsidian border-gold-border font-medium"
@@ -260,7 +260,7 @@ export default function ChatWindow() {
       {messages.length === 1 && !isTyping && (
         <div className="px-4 py-2 border-t border-gold-border/10 shrink-0 bg-obsidian/25">
           <p className="text-[9px] uppercase font-mono tracking-widest text-muted-gray mb-1.5">Suggested Questions</p>
-          <div className="flex flex-wrap gap-1.5 max-h-[85px] overflow-y-auto custom-scrollbar pr-1">
+          <div className="flex flex-wrap gap-1.5 max-h-21.25 overflow-y-auto custom-scrollbar pr-1">
             {SUGGESTED_PROMPTS.map((prompt) => (
               <button
                 key={prompt}

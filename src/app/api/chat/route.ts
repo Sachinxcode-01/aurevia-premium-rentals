@@ -206,7 +206,7 @@ function generateResponse(message: string, intent: string): BotResponse {
     case "booking_process":
       return {
         intent,
-        message: `📋 **How to Rent from AUREVIA**\n\n${booking.steps.map((s, i) => `${s}`).join("\n")}\n\n⏱️ **Approval time:** Usually within a few hours during business hours.\n\n📱 **After approval:** You'll receive a Pickup OTP in your dashboard.`,
+        message: `📋 **How to Rent from AUREVIA**\n\n${booking.steps.join("\n")}\n\n⏱️ **Approval time:** Usually within a few hours during business hours.\n\n📱 **After approval:** You'll receive a Pickup OTP in your dashboard.`,
         actions: [
           { label: "Start Booking", href: "/booking" },
           { label: "My Dashboard", href: "/dashboard" },

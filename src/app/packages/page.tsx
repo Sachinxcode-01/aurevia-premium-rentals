@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import PackagesClient from "./PackagesClient";
-import { Package, Sparkles, Shield, Clock, Film } from "lucide-react";
+import { Sparkles, Shield, Clock, Film } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Production Kits & Cinema Packages | Tiered Multi-Day Rates | AUREVIA",
@@ -43,7 +43,7 @@ export default function ProductionPackagesPage() {
           </div>
 
           <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Pre-Packaged <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Cinema Rigs</span> &amp; Tiered Rates
+            Pre-Packaged <span className="bg-linear-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Cinema Rigs</span> &amp; Tiered Rates
           </h1>
 
           <p className="mt-4 text-sm text-neutral-400 sm:text-base leading-relaxed">

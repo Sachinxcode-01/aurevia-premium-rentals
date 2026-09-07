@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const supabase = await createServiceSupabaseClient();
 
     // Fetch existing booking
-    const { data: booking, error: fetchErr } = await supabase
+    const { data: booking } = await supabase
       .from("bookings")
       .select("*")
       .eq("id", bookingId)

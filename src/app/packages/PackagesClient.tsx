@@ -4,7 +4,7 @@ import { useState } from "react";
 import CuratedPackagesDeck from "@/components/features/packages/CuratedPackagesDeck";
 import CustomRigConfigurator from "@/components/features/packages/CustomRigConfigurator";
 import TieredPricingSchedule from "@/components/features/packages/TieredPricingSchedule";
-import { Package, Sliders, Calendar, Sparkles } from "lucide-react";
+import { Package, Sliders, Calendar } from "lucide-react";
 
 export default function PackagesClient() {
   const [activeTab, setActiveTab] = useState<"curated" | "custom" | "schedule">("curated");
@@ -18,7 +18,7 @@ export default function PackagesClient() {
             onClick={() => setActiveTab("curated")}
             className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
               activeTab === "curated"
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
                 : "text-neutral-400 hover:text-white"
             }`}
           >
@@ -30,7 +30,7 @@ export default function PackagesClient() {
             onClick={() => setActiveTab("custom")}
             className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
               activeTab === "custom"
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
                 : "text-neutral-400 hover:text-white"
             }`}
           >
@@ -42,7 +42,7 @@ export default function PackagesClient() {
             onClick={() => setActiveTab("schedule")}
             className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
               activeTab === "schedule"
-                ? "bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
+                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
                 : "text-neutral-400 hover:text-white"
             }`}
           >

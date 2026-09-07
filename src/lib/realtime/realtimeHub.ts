@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Aurevia Real-Time Cross-App Synchronization Engine
  * Connects Admin Website (port 3002) and Public Website (port 3000) live in real-time!

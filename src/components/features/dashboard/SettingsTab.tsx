@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Lock, Phone, Mail, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { User, Lock, ShieldCheck } from "lucide-react";
 
 interface SettingsTabProps {
   profile: any;

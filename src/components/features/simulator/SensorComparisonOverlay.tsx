@@ -1,13 +1,13 @@
 "use client";
 
-import { CameraSensorSpec, CINE_CAMERAS } from "@/lib/data/cinematography-data";
+import { CameraSensorSpec } from "@/lib/data/cinematography-data";
 import { OpticalCalculationResult } from "@/lib/utils/optical-calculator";
 
 interface SensorComparisonOverlayProps {
   primarySensor: CameraSensorSpec;
   primaryResult: OpticalCalculationResult;
   comparisonSensor: CameraSensorSpec | null;
-  comparisonResult: OpticalCalculationResult | null;
+  comparisonResult?: OpticalCalculationResult | null;
   showComparison: boolean;
 }
 
@@ -15,7 +15,6 @@ export default function SensorComparisonOverlay({
   primarySensor,
   primaryResult,
   comparisonSensor,
-  comparisonResult,
   showComparison,
 }: SensorComparisonOverlayProps) {
   // Max bounds for diagram: 46mm width, 26mm height (VistaVision / Large Format)
@@ -48,7 +47,7 @@ export default function SensorComparisonOverlay({
       </div>
 
       {/* 2D Graphical Sensor Diagram */}
-      <div className="relative mx-auto flex aspect-[2/1] w-full max-w-lg items-center justify-center rounded-xl border border-white/5 bg-black/60 p-4">
+      <div className="relative mx-auto flex aspect-2/1 w-full max-w-lg items-center justify-center rounded-xl border border-white/5 bg-black/60 p-4">
         {/* Full-Frame 36x24 Reference Box */}
         <div
           className="absolute flex items-center justify-center border border-dashed border-neutral-600/60"

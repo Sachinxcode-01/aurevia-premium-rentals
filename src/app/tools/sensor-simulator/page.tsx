@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import SimulatorClient from "./SimulatorClient";
-import { Film, Eye, Sparkles, Sliders, Layers, Camera } from "lucide-react";
+import { Film, Layers } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Optical Sensor & Anamorphic FOV Simulator | AUREVIA Pro Tools",
@@ -47,7 +47,7 @@ export default function SensorSimulatorPage() {
               </span>
             </div>
             <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Optical Sensor &amp; <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Anamorphic FOV</span> Simulator
+              Optical Sensor &amp; <span className="bg-linear-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Anamorphic FOV</span> Simulator
             </h1>
             <p className="mt-2 max-w-3xl text-sm text-neutral-400 sm:text-base">
               Calculate horizontal &amp; vertical angles of view, sensor crop multipliers, anamorphic de-squeeze ratios, and hyperfocal depth-of-field across AUREVIA&apos;s flagship cinema fleet.

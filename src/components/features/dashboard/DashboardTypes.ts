@@ -1,6 +1,3 @@
-import React from "react";
-import { Product } from "@/lib/db/mockData";
-
 export type DashTab = "overview" | "bookings" | "invoices" | "support" | "settings";
 export type BookingFilter = "all" | "upcoming" | "active" | "completed" | "cancelled";
 

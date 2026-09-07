@@ -47,12 +47,6 @@ export function NotificationBell({
     }
   }, [open]);
 
-  const typeColor: Record<AdminRealtimeAlert["type"], string> = {
-    new_booking: "text-gold-champagne",
-    status_change: "text-blue-400",
-    overdue: "text-red-400",
-  };
-
   const typeIcon: Record<AdminRealtimeAlert["type"], string> = {
     new_booking: "📋",
     status_change: "🔄",
@@ -115,7 +109,7 @@ export function NotificationBell({
                   <div
                     key={alert.id}
                     className={`flex items-start gap-3 px-4 py-3 border-b border-white/5 hover:bg-white/3 transition ${
-                      !alert.read ? "bg-white/[0.02]" : ""
+                      !alert.read ? "bg-white/2" : ""
                     }`}
                   >
                     <span className="text-sm mt-0.5">{typeIcon[alert.type]}</span>
