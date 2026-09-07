@@ -17,12 +17,9 @@ import {
   Check,
   ShoppingBag,
   Sparkles,
-  Shield,
   FileText,
-  Calendar,
   Layers,
   CheckCircle2,
-  Share2,
 } from "lucide-react";
 
 export default function CuratedPackagesDeck() {
@@ -75,9 +72,9 @@ export default function CuratedPackagesDeck() {
     } as any;
 
     addToCart(productObj, 1, startDateStr, endDateStr, []);
-    toast?.success
-      ? toast.success(`Added ${pkg.name} (${selectedDurationDays} Days) to Cart!`)
-      : null;
+    if (toast?.success) {
+      toast.success(`Added ${pkg.name} (${selectedDurationDays} Days) to Cart!`);
+    }
 
     router.push("/booking");
   };

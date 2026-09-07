@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const PROTECTED_CUSTOMER = ["/dashboard", "/profile", "/checkout", "/kyc", "/notifications", "/booking"];
 const AUTH_PAGES         = ["/login", "/register", "/forgot-password", "/reset-password"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

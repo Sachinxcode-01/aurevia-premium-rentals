@@ -3,9 +3,8 @@
 import { useState } from "react";
 import {
   getTierMultiplier,
-  POPULAR_DURATION_TIERS,
 } from "@/lib/utils/tiered-pricing-calculator";
-import { Calendar, Percent, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Calendar, Sparkles, CheckCircle2, ShieldCheck } from "lucide-react";
 
 export default function TieredPricingSchedule() {
   const [sampleDailyRate, setSampleDailyRate] = useState<number>(10000);

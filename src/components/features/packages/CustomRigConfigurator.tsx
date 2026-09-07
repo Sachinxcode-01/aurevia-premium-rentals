@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   MODULAR_COMPONENTS,
@@ -9,23 +8,18 @@ import {
 } from "@/lib/data/production-packages-data";
 import {
   calculatePackagePricing,
-  POPULAR_DURATION_TIERS,
 } from "@/lib/utils/tiered-pricing-calculator";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
 import {
   Camera,
   Sliders,
-  Sparkles,
   ShoppingBag,
   Zap,
   Weight,
-  Layers,
-  CheckCircle2,
   Tv,
   Film,
   BatteryCharging,
-  Disc,
 } from "lucide-react";
 
 export default function CustomRigConfigurator() {
@@ -134,9 +128,9 @@ export default function CustomRigConfigurator() {
     } as any;
 
     addToCart(productObj, 1, startDateStr, endDateStr, []);
-    toast?.success
-      ? toast.success(`Added ${packageName} to Cart!`)
-      : null;
+    if (toast?.success) {
+      toast.success(`Added ${packageName} to Cart!`);
+    }
 
     router.push("/booking");
   };
