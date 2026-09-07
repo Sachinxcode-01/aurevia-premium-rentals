@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { db } from "@/lib/db/store";
-import { Product, ProductAddon, Coupon } from "@/lib/db/mockData";
+import { Product, Coupon } from "@/lib/db/mockData";
 
 export interface CartItem {
   product: Product;
@@ -58,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const c: Coupon = JSON.parse(savedCoupon);
         setCoupon(c);
         setDiscountPercent(c.discountPercent);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -152,9 +152,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Compute pricing totals securely based on current state
   const calculateTotals = () => {
     let rentalFee = 0;
-    let depositFee = 0;
-    let taxFee = 0;
-    let deliveryFee = 0;
+    const depositFee = 0;
+    const taxFee = 0;
+    const deliveryFee = 0;
     let totalDays = 0;
 
     cart.forEach((item) => {

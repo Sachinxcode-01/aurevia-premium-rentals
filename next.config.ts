@@ -17,7 +17,6 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     return [
       // ── Security Headers (all routes) ──────────────────────────────
       {
@@ -31,19 +30,6 @@ const nextConfig: NextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
-          },
-        ],
-      },
-      // ── CORS Headers (API routes only) ────────────────────────────
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin",      value: siteUrl },
-          { key: "Access-Control-Allow-Methods",     value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-          {
-            key: "Access-Control-Allow-Headers",
-            value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization",
           },
         ],
       },

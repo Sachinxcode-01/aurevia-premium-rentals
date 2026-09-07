@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/useToast";
@@ -24,6 +24,32 @@ import InvoicesTab from "@/components/features/dashboard/InvoicesTab";
 import SupportTab from "@/components/features/dashboard/SupportTab";
 import SettingsTab from "@/components/features/dashboard/SettingsTab";
 
+const DEFAULT_SUPPORT_TICKETS: SupportTicket[] = [
+  {
+    id: "TCK-8821",
+    subject: "Arri PL Mount Adapter calibration check",
+    category: "Technical & Lens Inquiry",
+    status: "in_progress",
+    priority: "high",
+    created_at: "2026-09-06T10:00:00.000Z",
+    updated_at: "2026-09-07T09:30:00.000Z",
+    messages: [
+      {
+        id: "m1",
+        sender: "customer",
+        text: "Hi team, ensuring the PL-to-RF adapter is shimmable for Cooke miniS4/i set?",
+        timestamp: "2026-09-06T10:00:00.000Z",
+      },
+      {
+        id: "m2",
+        sender: "support",
+        text: "Yes, calibrated to 52.00mm flange depth. Pelican case includes ARRI 0.05mm shims.",
+        timestamp: "2026-09-07T09:30:00.000Z",
+      },
+    ],
+  },
+];
+
 export default function CustomerDashboard() {
   const { cart } = useCart();
   const toast = useToast();
@@ -43,31 +69,7 @@ export default function CustomerDashboard() {
   const [claimedCoupons, setClaimedCoupons] = useState<Record<string, string>>({});
 
   // Support Tickets State
-  const [tickets, setTickets] = useState<SupportTicket[]>([
-    {
-      id: "TCK-8821",
-      subject: "Arri PL Mount Adapter calibration check",
-      category: "Technical & Lens Inquiry",
-      status: "in_progress",
-      priority: "high",
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      updated_at: new Date(Date.now() - 3600000).toISOString(),
-      messages: [
-        {
-          id: "m1",
-          sender: "customer",
-          text: "Hi team, ensuring the PL-to-RF adapter is shimmable for Cooke miniS4/i set?",
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: "m2",
-          sender: "support",
-          text: "Yes, calibrated to 52.00mm flange depth. Pelican case includes ARRI 0.05mm shims.",
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ],
-    },
-  ]);
+  const [tickets, setTickets] = useState<SupportTicket[]>(DEFAULT_SUPPORT_TICKETS);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [creatingTicket, setCreatingTicket] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);

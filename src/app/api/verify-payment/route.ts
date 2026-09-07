@@ -16,11 +16,34 @@ export async function POST(request: Request) {
     }
 
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret || razorpay_order_id.startsWith("order_demo_") || razorpay_order_id.startsWith("order_mock_")) {
+    const isDemoOrder =
+      razorpay_order_id.startsWith("order_demo_") ||
+      razorpay_order_id.startsWith("order_mock_");
+    const allowDemo =
+      process.env.NODE_ENV !== "production" ||
+      process.env.ALLOW_DEMO_PAYMENTS === "true" ||
+      !keySecret;
+
+    if (isDemoOrder) {
+      if (!allowDemo) {
+        return apiError(
+          "Demo order verification is prohibited in production environment.",
+          "DEMO_NOT_ALLOWED",
+          403
+        );
+      }
       // In demo mode or when secret is unconfigured, verify test payments cleanly
       await db.assignAvailableUnit(bookingId);
       await db.updateBookingStatus(bookingId, "paid");
       return apiSuccess({ verified: true, bookingId });
+    }
+
+    if (!keySecret) {
+      return apiError(
+        "Payment gateway secret is not configured on the server.",
+        "GATEWAY_UNCONFIGURED",
+        500
+      );
     }
 
     // HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)

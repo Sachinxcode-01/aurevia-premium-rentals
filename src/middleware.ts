@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
 const PROTECTED_CUSTOMER = ["/dashboard", "/profile", "/checkout", "/kyc", "/notifications", "/booking"];
 const AUTH_PAGES         = ["/login", "/register", "/forgot-password", "/reset-password"];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -13,7 +13,39 @@ export async function proxy(request: NextRequest) {
   const isSupabaseConfigured =
     supabaseUrl.length > 0 && !supabaseUrl.includes("your-project-id");
 
-  // If Supabase is not configured, skip auth middleware completely
+  // Handle API routes and CORS for admin and cross-origin access
+  if (pathname.startsWith("/api")) {
+    const origin = request.headers.get("origin");
+    const isAllowedOrigin =
+      !origin ||
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      origin.endsWith(".vercel.app") ||
+      origin === process.env.NEXT_PUBLIC_SITE_URL ||
+      origin === process.env.NEXT_PUBLIC_ADMIN_URL;
+
+    const allowedOrigin = isAllowedOrigin && origin ? origin : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+
+    if (request.method === "OPTIONS") {
+      const preflightHeaders = new Headers({
+        "Access-Control-Allow-Origin": allowedOrigin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version",
+        "Access-Control-Max-Age": "86400",
+      });
+      return new NextResponse(null, { status: 200, headers: preflightHeaders });
+    }
+
+    const res = NextResponse.next();
+    res.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+    res.headers.set("Access-Control-Allow-Credentials", "true");
+    res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version");
+    return res;
+  }
+
+  // If Supabase is not configured, skip auth middleware
   if (!isSupabaseConfigured) {
     return NextResponse.next();
   }
@@ -36,20 +68,6 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-
-  // Skip middleware for API routes — add CORS headers for admin subproject access
-  if (pathname.startsWith("/api")) {
-    const origin = request.headers.get("origin") || "*";
-    const res = NextResponse.next();
-    res.headers.set("Access-Control-Allow-Origin", origin);
-    res.headers.set("Access-Control-Allow-Credentials", "true");
-    res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    if (request.method === "OPTIONS") {
-      return new NextResponse(null, { status: 200, headers: res.headers });
-    }
-    return res;
-  }
 
   // Refresh session with a 2-second timeout to prevent hanging middleware
   const user = await Promise.race([

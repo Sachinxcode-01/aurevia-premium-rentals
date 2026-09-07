@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { InvoiceData } from "@/lib/utils/pdfGenerator";
 import InvoiceViewerModal from "@/components/features/invoice/InvoiceViewerModal";
-import { FileText, Download, Printer, ShieldCheck, Search } from "lucide-react";
+import { FileText, Search } from "lucide-react";
 
 interface InvoicesTabProps {
   bookings: any[];
@@ -114,11 +114,14 @@ export default function InvoicesTab({
               <tbody className="divide-y divide-white/5">
                 {filteredInvoices.map((b) => {
                   const ref = b.referenceCode || b.reference_code || b.id;
-                  const dateStr = new Date(b.createdAt || b.created_at || Date.now()).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
+                  const rawDate = b.createdAt || b.created_at || b.startDate || b.start_date;
+                  const dateStr = rawDate
+                    ? new Date(rawDate).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—";
                   const total = b.totalPayable || b.total_payable || 0;
 
                   return (
