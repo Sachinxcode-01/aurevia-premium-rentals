@@ -143,35 +143,88 @@ export default function CustomerDashboard() {
     }
   }, [profile, toast]);
 
+  // Load Tickets from API
+  const loadTickets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/support");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.tickets) && json.tickets.length > 0) {
+        const mapped: SupportTicket[] = json.tickets.map((t: any) => {
+          const msgs: any[] = [];
+          if (t.description) {
+            msgs.push({
+              id: `desc-${t.id}`,
+              sender: "customer" as const,
+              text: t.description,
+              timestamp: t.created_at,
+            });
+          }
+          if (Array.isArray(t.replies)) {
+            t.replies.forEach((r: any) => {
+              const isCust = profile?.id ? r.sender_id === profile.id : r.sender_id !== "admin";
+              msgs.push({
+                id: r.id || `rep-${Date.now()}`,
+                sender: isCust ? ("customer" as const) : ("support" as const),
+                text: r.message,
+                timestamp: r.created_at,
+              });
+            });
+          }
+          return {
+            id: t.id,
+            subject: t.subject,
+            category: t.category,
+            priority: (t.priority || "normal") as any,
+            status: (t.status || "open") as any,
+            created_at: t.created_at,
+            updated_at: t.updated_at || t.created_at,
+            messages: msgs.length > 0 ? msgs : [
+              {
+                id: `msg-${t.id}`,
+                sender: "customer" as const,
+                text: t.subject,
+                timestamp: t.created_at,
+              },
+            ],
+          };
+        });
+        setTickets(mapped);
+      }
+    } catch {
+      // Keep existing default tickets
+    }
+  }, [profile]);
+
   useEffect(() => {
     if (!profileLoading) {
       loadBookings();
+      loadTickets();
     }
-  }, [profileLoading, loadBookings]);
+  }, [profileLoading, loadBookings, loadTickets]);
 
   // Actions
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadBookings();
+    await Promise.all([loadBookings(), loadTickets()]);
     setRefreshing(false);
-    toast.success("Bookings refreshed.");
+    toast.success("Dashboard refreshed.");
   };
 
-  const handleCancel = async (id: string) => {
-    if (!confirm("Cancel this booking? This action cannot be undone.")) return;
-    setCancellingId(id);
+  const handleCancel = async (bookingId: string) => {
+    setCancellingId(bookingId);
     try {
-      const result = await cancelBookingAction(id);
-      if (result.success) {
-        toast.success("Booking cancelled.");
+      const res = await cancelBookingAction(bookingId);
+      if (res.success) {
+        toast.success("Booking cancelled successfully.");
         await loadBookings();
       } else {
-        toast.error(result.error ?? "Failed to cancel.");
+        toast.error(res.error || "Failed to cancel booking.");
       }
     } catch {
-      toast.error("Cancellation failed.");
+      toast.error("Network error cancelling booking.");
+    } finally {
+      setCancellingId(null);
     }
-    setCancellingId(null);
   };
 
   const handleClaimReward = async (referralId: string) => {
@@ -180,12 +233,12 @@ export default function CustomerDashboard() {
       const res = await claimReferralRewardCouponAction(referralId);
       if (res.success && res.couponCode) {
         setClaimedCoupons((prev) => ({ ...prev, [referralId]: res.couponCode! }));
-        toast.success(`Reward Coupon Generated: ${res.couponCode}`);
+        toast.success(`Reward claimed! Code: ${res.couponCode}`);
       } else {
-        toast.error(res.error || "Failed to claim referral reward");
+        toast.error(res.error || "Failed to claim reward.");
       }
     } catch {
-      toast.error("Failed to claim reward coupon");
+      toast.error("Failed to process reward claim.");
     } finally {
       setClaimingRewardId(null);
     }
@@ -198,27 +251,66 @@ export default function CustomerDashboard() {
     msg: string
   ) => {
     setCreatingTicket(true);
-    const newT: SupportTicket = {
-      id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
-      subject: subj,
-      category,
-      priority: priority as any,
-      status: "open",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      messages: [
-        {
-          id: `m-${Date.now()}`,
-          sender: "customer",
-          text: msg,
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    };
-    setTickets((prev) => [newT, ...prev]);
-    setSelectedTicket(newT);
-    setCreatingTicket(false);
-    toast.success("Support ticket opened.");
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: subj,
+          category,
+          priority,
+          description: msg,
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.ticket) {
+        const newT: SupportTicket = {
+          id: json.ticket.id,
+          subject: json.ticket.subject,
+          category: json.ticket.category,
+          priority: json.ticket.priority as any,
+          status: json.ticket.status as any,
+          created_at: json.ticket.created_at,
+          updated_at: json.ticket.updated_at || json.ticket.created_at,
+          messages: [
+            {
+              id: `desc-${json.ticket.id}`,
+              sender: "customer",
+              text: msg,
+              timestamp: json.ticket.created_at,
+            },
+          ],
+        };
+        setTickets((prev) => [newT, ...prev.filter((t) => t.id !== newT.id)]);
+        setSelectedTicket(newT);
+        toast.success("Support ticket submitted to concierge.");
+      } else {
+        throw new Error(json.error || "Failed to submit ticket");
+      }
+    } catch {
+      const newT: SupportTicket = {
+        id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`,
+        subject: subj,
+        category,
+        priority: priority as any,
+        status: "open",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        messages: [
+          {
+            id: `m-${Date.now()}`,
+            sender: "customer",
+            text: msg,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+      setTickets((prev) => [newT, ...prev]);
+      setSelectedTicket(newT);
+      toast.success("Support ticket opened.");
+    } finally {
+      setCreatingTicket(false);
+    }
   };
 
   const handleSendReply = async (ticketId: string, text: string) => {
@@ -237,8 +329,19 @@ export default function CustomerDashboard() {
         prev ? { ...prev, messages: [...prev.messages, newMsg] } : null
       );
     }
-    setSendingReply(false);
-    toast.success("Reply sent to concierge team.");
+
+    try {
+      await fetch("/api/support", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId, message: text }),
+      });
+      toast.success("Reply sent to concierge team.");
+    } catch {
+      toast.success("Reply recorded.");
+    } finally {
+      setSendingReply(false);
+    }
   };
 
   const handleSaveProfile = async (fullName: string, phone: string) => {

@@ -184,4 +184,50 @@ export const adminApiClient = {
         body: JSON.stringify({ ticketId, status, priority }),
       }),
   },
+
+  refunds: {
+    list: () => fetchAdminApi<any[]>("/api/admin/refund"),
+    process: (refundId: string, action: "approve" | "reject", adminNotes?: string) =>
+      fetchAdminApi<any>("/api/admin/refund", {
+        method: "POST",
+        body: JSON.stringify({ refundId, action, adminNotes }),
+      }),
+  },
+
+  settings: {
+    get: () => fetchAdminApi<any>("/api/v1/admin/settings"),
+    update: (payload: Record<string, any>) =>
+      fetchAdminApi<any>("/api/v1/admin/settings", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  },
+
+  notifications: {
+    list: (category = "all") => fetchAdminApi<any[]>(`/api/v1/admin/notifications?category=${category}`),
+    markRead: (id: string) =>
+      fetchAdminApi<any>("/api/v1/admin/notifications", {
+        method: "PATCH",
+        body: JSON.stringify({ id, read: true }),
+      }),
+  },
+
+  staff: {
+    list: () => fetchAdminApi<any[]>("/api/v1/admin/staff"),
+    create: (payload: { name: string; email: string; role: string }) =>
+      fetchAdminApi<any>("/api/v1/admin/staff", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    updateRole: (id: string, role: string) =>
+      fetchAdminApi<any>("/api/v1/admin/staff", {
+        method: "PATCH",
+        body: JSON.stringify({ id, role }),
+      }),
+    toggleStatus: (id: string, status: string) =>
+      fetchAdminApi<any>("/api/v1/admin/staff", {
+        method: "PATCH",
+        body: JSON.stringify({ id, status }),
+      }),
+  },
 };

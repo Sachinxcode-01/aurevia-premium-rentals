@@ -156,3 +156,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: err.message || "Failed to process refund." }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const { isSupabaseConfigured } = await import("@/lib/db/store");
+
+    // Authorize Admin/Staff
+    if (isSupabaseConfigured()) {
+      const supabase = await createServerSupabaseClient();
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) {
+        return NextResponse.json({ error: "Unauthorized. Must be logged in." }, { status: 401 });
+      }
+
+      const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+      const profileRaw = data as any;
+      if (!profileRaw || !["admin", "staff"].includes(profileRaw.role)) {
+        return NextResponse.json({ error: "Forbidden. Insufficient permissions." }, { status: 403 });
+      }
+    } else {
+      const profile = await db.getProfile();
+      if (!["admin", "staff"].includes(profile.role)) {
+        return NextResponse.json({ error: "Forbidden. Insufficient permissions." }, { status: 403 });
+      }
+    }
+
+    const refunds = await db.getRefunds();
+    return NextResponse.json({ success: true, data: refunds });
+  } catch (err: any) {
+    console.error("Refunds list error:", err);
+    return NextResponse.json({ error: err.message || "Failed to list refunds." }, { status: 500 });
+  }
+}
+
