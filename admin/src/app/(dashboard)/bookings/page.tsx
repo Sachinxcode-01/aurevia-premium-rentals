@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Search, Filter, X,
   FileSpreadsheet, Sparkles, RefreshCw,
-  Trash2, CheckCircle, QrCode, Camera, MessageSquare, Download, FileText
+  Trash2, CheckCircle, QrCode, Camera, MessageSquare, Download, FileText, RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { adminApiClient } from "@/lib/api-client";
@@ -522,6 +522,15 @@ export default function AdminBookingsPage() {
                         >
                           <MessageSquare size={13} />
                         </button>
+                        <a
+                          href={`http://localhost:3000/return/booking?ref=${encodeURIComponent(b.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Studio Return & Inspection Desk"
+                          className="p-2 rounded-lg bg-white/5 hover:bg-[#D8B36A]/20 text-[#D8B36A] border border-[#D8B36A]/30 transition inline-flex items-center justify-center"
+                        >
+                          <RotateCcw size={13} />
+                        </a>
                         <button
                           onClick={() => printOrDownloadInvoice({
                             referenceCode: b.id,
@@ -672,6 +681,16 @@ export default function AdminBookingsPage() {
                     <Trash2 size={13} />
                     <span>Delete</span>
                   </button>
+
+                  <a
+                    href={`http://localhost:3000/return/booking?ref=${encodeURIComponent(selectedBooking.id)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2.5 rounded-lg border border-gold-champagne/40 bg-gold-champagne/10 text-[#d8b36a] hover:bg-gold-champagne/20 text-center font-mono cursor-pointer flex items-center justify-center gap-1 col-span-2 sm:col-span-3"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Open Studio Return &amp; Diagnostic Desk</span>
+                  </a>
                 </div>
               </div>
 

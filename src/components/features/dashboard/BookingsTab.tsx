@@ -16,6 +16,7 @@ import {
   Search,
   QrCode,
   RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 
 interface BookingsTabProps {
@@ -157,6 +158,19 @@ export default function BookingsTab({
                       <QrCode className="h-4 w-4 text-amber-400" />
                       <span className="hidden sm:inline">Pass QR</span>
                     </button>
+
+                    {/* Return Desk Shortcut for Active Rentals */}
+                    {(b.status === "rented" || b.status === "overdue") && (
+                      <Link
+                        href={`/return/booking?ref=${encodeURIComponent(ref)}`}
+                        target="_blank"
+                        className="flex items-center gap-1 rounded-xl border border-gold-champagne/40 bg-gold-champagne/10 px-3 py-2 text-xs font-semibold text-gold-champagne hover:bg-gold-champagne/20 transition"
+                        title="Studio Return & Inspection Desk"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Return Desk</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
 
