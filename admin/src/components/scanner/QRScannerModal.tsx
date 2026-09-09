@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, QrCode, Search, CheckCircle2, ShieldAlert } from "lucide-react";
+import { X, QrCode, RefreshCw } from "lucide-react";
 
 interface QRScannerModalProps {
   onClose: () => void;
@@ -13,9 +13,16 @@ export default function QRScannerModal({ onClose, onScanSuccess }: QRScannerModa
   const [scanning, setScanning] = useState(false);
 
   const handleSimulateScan = (code: string) => {
+    let cleanCode = code.trim();
+    if (cleanCode.includes("ref=")) {
+      try {
+        const url = new URL(cleanCode, "http://localhost");
+        cleanCode = url.searchParams.get("ref") || cleanCode;
+      } catch {}
+    }
     setScanning(true);
     setTimeout(() => {
-      onScanSuccess(code);
+      onScanSuccess(cleanCode);
       onClose();
     }, 800);
   };
@@ -62,9 +69,11 @@ export default function QRScannerModal({ onClose, onScanSuccess }: QRScannerModa
             />
             <button
               onClick={() => handleSimulateScan(inputCode || "AUR-1042")}
-              className="px-4 bg-[#D8B36A] hover:bg-[#c3a05b] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition"
+              disabled={scanning}
+              className="px-4 bg-[#D8B36A] hover:bg-[#c3a05b] text-black font-mono font-bold text-xs uppercase tracking-wider rounded-lg transition flex items-center gap-1.5 disabled:opacity-50"
             >
-              Verify
+              {scanning && <RefreshCw size={12} className="animate-spin" />}
+              <span>{scanning ? "Scanning..." : "Verify"}</span>
             </button>
           </div>
         </div>

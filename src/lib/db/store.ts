@@ -1023,6 +1023,46 @@ export const db = {
     return booking || null;
   },
 
+  async getBookingByReference(referenceCode: string): Promise<Booking | null> {
+    const cleanRef = referenceCode.trim();
+    if (!cleanRef) return null;
+
+    if (isSupabaseConfigured()) {
+      const supabase = await getSupabase();
+      // Try reference_code first
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          booking_items (id, booking_id, product_id, inventory_unit_id, quantity, unit_price),
+          booking_addons (id, booking_id, addon_id, price)
+        `)
+        .ilike("reference_code", cleanRef)
+        .single();
+      if (!error && data) return mapDbBookingToApp(data);
+
+      // Fallback by ID in Supabase
+      const { data: byId, error: errId } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          booking_items (id, booking_id, product_id, inventory_unit_id, quantity, unit_price),
+          booking_addons (id, booking_id, addon_id, price)
+        `)
+        .eq("id", cleanRef)
+        .single();
+      if (!errId && byId) return mapDbBookingToApp(byId);
+    }
+
+    const lower = cleanRef.toLowerCase();
+    const booking = getLocalBookings().find(
+      (b) =>
+        (b.referenceCode && b.referenceCode.toLowerCase() === lower) ||
+        b.id.toLowerCase() === lower
+    );
+    return booking || null;
+  },
+
   async updateBookingStatus(
     bookingId: string,
     status: Booking["status"],
