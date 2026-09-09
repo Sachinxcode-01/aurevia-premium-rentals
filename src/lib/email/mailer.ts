@@ -8,6 +8,7 @@ interface EmailPayload {
   idempotencyKey?: string;
   bookingId?: string;
   notificationType?: string;
+  attachments?: nodemailer.SendMailOptions["attachments"];
 }
 
 export async function sendEmail({
@@ -17,7 +18,8 @@ export async function sendEmail({
   text,
   idempotencyKey,
   bookingId,
-  notificationType
+  notificationType,
+  attachments,
 }: EmailPayload): Promise<boolean> {
   const eventKey = idempotencyKey || `email:${notificationType || "unknown"}:${bookingId || Date.now()}`;
 
@@ -56,13 +58,14 @@ export async function sendEmail({
   const from = process.env.EMAIL_FROM || `"AUREVIA Camera Rentals" <${user}>`;
   const replyTo = process.env.EMAIL_REPLY_TO || user;
 
-  const mailOptions = {
+  const mailOptions: nodemailer.SendMailOptions = {
     from,
     to,
     replyTo,
     subject,
     text,
     html,
+    attachments,
   };
 
   // 3. Retry Loop with Bounded Exponential Backoff
@@ -485,5 +488,185 @@ export async function sendBookingCompletion(booking: any) {
     idempotencyKey: `compl-${refCode}`,
     bookingId,
     notificationType: "booking_completed"
+  });
+}
+
+export interface HandoverReceiptPayload {
+  staffName?: string;
+  items?: {
+    productName: string;
+    serialNumber?: string;
+    condition?: string;
+  }[];
+  remarks?: string;
+}
+
+export async function sendHandoverDispatchReceipt(
+  booking: any,
+  details: HandoverReceiptPayload = {}
+) {
+  const refCode = booking.referenceCode || booking.reference_code || booking.id;
+  const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://aurevia-premium-rentals.vercel.app";
+
+  const itemsListHtml = (details.items || [])
+    .map(
+      (item) => `
+      <tr style="border-bottom: 1px solid #f4f4f5;">
+        <td style="padding: 10px 0; font-size: 13px; color: #18181b; font-weight: 500;">${item.productName}</td>
+        <td style="padding: 10px 0; font-size: 12px; font-family: monospace; color: #b45309; text-align: right;">${item.serialNumber || "AV-SN-AUTO"}</td>
+      </tr>
+    `
+    )
+    .join("");
+
+  const html = getBrandedTemplate(
+    "Equipment Handover & Dispatch Clearance",
+    `
+    <p>Dear ${booking.contactName || "Customer"},</p>
+    <p>Your reserved equipment has been physically verified, inspected, and released to your custody at the AUREVIA studio counter.</p>
+    
+    <div style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; padding: 18px; margin: 20px 0;">
+      <p style="margin: 0 0 12px; font-size: 11px; font-family: monospace; letter-spacing: 0.1em; color: #71717a; text-transform: uppercase;">
+        DISPATCHED HARDWARE MANIFEST &bull; REF: ${refCode}
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 1px solid #e4e4e7;">
+            <th style="padding: 6px 0; text-align: left; font-size: 11px; font-family: monospace; color: #71717a; text-transform: uppercase;">Item</th>
+            <th style="padding: 6px 0; text-align: right; font-size: 11px; font-family: monospace; color: #71717a; text-transform: uppercase;">Serial No.</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsListHtml || '<tr><td colspan="2" style="padding:8px 0;color:#71717a;font-size:12px;">Cinema Camera Package (Serial Verified)</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0; font-size: 13px; color: #3f3f46;">
+      <tr>
+        <td style="padding: 6px 0;"><strong>Rental Return Cutoff:</strong></td>
+        <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #0a0a0a; font-weight: 600;">${booking.endDate} &bull; 10:00 PM</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0;"><strong>Dispatched By:</strong></td>
+        <td style="padding: 6px 0; text-align: right; color: #71717a;">${details.staffName || "Studio Counter Specialist"}</td>
+      </tr>
+      ${details.remarks ? `<tr><td style="padding:6px 0;"><strong>Notes:</strong></td><td style="padding:6px 0;text-align:right;color:#71717a;">${details.remarks}</td></tr>` : ""}
+    </table>
+
+    <div style="margin: 24px 0 12px; text-align: center;">
+      <a href="${appUrl}/verify/booking?ref=${encodeURIComponent(refCode)}" style="display: inline-block; background-color: #0a0a0a; color: #d8b36a; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; font-family: monospace; letter-spacing: 0.05em;">
+        VIEW DIGITAL VERIFICATION PASS &rarr;
+      </a>
+    </div>
+
+    <p style="font-size: 12px; color: #71717a; margin-top: 20px;">
+      For assistance during your production, contact our 24/7 technical concierge at +91 96869 09048.
+    </p>
+  `
+  );
+
+  const text = `Dear ${booking.contactName || "Customer"},\n\nYour equipment for booking #${refCode} has been handed over at the studio counter.\n\nScheduled Return Cutoff: ${booking.endDate}\nDispatched by: ${details.staffName || "Studio Counter"}\n\nNeed support? Contact 24/7 concierge at +91 96869 09048.`;
+
+  await sendEmail({
+    to: customerEmail,
+    subject: `Equipment Handover & Dispatch Receipt - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `handover-receipt-${refCode}`,
+    bookingId,
+    notificationType: "handover_receipt",
+  });
+}
+
+export interface ReturnSettlementPayload {
+  condition: "good" | "damaged";
+  damageCost?: number;
+  damageDescription?: string;
+  lateFee?: number;
+  depositHeld?: number;
+  netRefundable?: number;
+  staffName?: string;
+  remarks?: string;
+}
+
+export async function sendReturnSettlementReceipt(
+  booking: any,
+  details: ReturnSettlementPayload
+) {
+  const refCode = booking.referenceCode || booking.reference_code || booking.id;
+  const customerEmail = booking.contactEmail || booking.contact_email;
+  const bookingId = booking.id;
+  const deposit = details.depositHeld || 5000;
+  const lateFee = details.lateFee || 0;
+  const damageCost = details.damageCost || 0;
+  const netRefund = details.netRefundable !== undefined ? details.netRefundable : Math.max(0, deposit - lateFee - damageCost);
+  const additionalDue = (lateFee + damageCost) > deposit ? (lateFee + damageCost - deposit) : 0;
+
+  const html = getBrandedTemplate(
+    "Equipment Return & Security Deposit Settlement",
+    `
+    <p>Dear ${booking.contactName || "Customer"},</p>
+    <p>We have concluded the diagnostic inspection for the equipment returned under booking <strong>#${refCode}</strong>.</p>
+
+    <div style="background-color: ${details.condition === "good" ? "#ecfdf5" : "#fff1f2"}; border: 1px solid ${details.condition === "good" ? "#a7f3d0" : "#fecdd3"}; border-radius: 8px; padding: 14px 18px; margin: 18px 0;">
+      <p style="margin: 0; font-size: 13px; font-weight: 600; color: ${details.condition === "good" ? "#065f46" : "#9f1239"}; font-family: monospace;">
+        RETURN STATUS: ${details.condition === "good" ? "PRISTINE & RETURNED IN FULL" : "DAMAGE / WEAR ASSESSED"}
+      </p>
+      ${details.damageDescription ? `<p style="margin:6px 0 0;font-size:12px;color:#be123c;">Notes: ${details.damageDescription}</p>` : ""}
+    </div>
+
+    <div style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; padding: 18px; margin: 20px 0;">
+      <p style="margin: 0 0 12px; font-size: 11px; font-family: monospace; letter-spacing: 0.1em; color: #71717a; text-transform: uppercase;">
+        FINAL SETTLEMENT STATEMENT
+      </p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 13px; color: #3f3f46;">
+        <tr>
+          <td style="padding: 6px 0;">Initial Security Deposit Held:</td>
+          <td style="padding: 6px 0; text-align: right; font-family: monospace;">₹${deposit.toLocaleString("en-IN")}</td>
+        </tr>
+        ${lateFee > 0 ? `
+        <tr>
+          <td style="padding: 6px 0; color: #b91c1c;">Late Return Fee Deduction:</td>
+          <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #b91c1c;">-₹${lateFee.toLocaleString("en-IN")}</td>
+        </tr>` : ""}
+        ${damageCost > 0 ? `
+        <tr>
+          <td style="padding: 6px 0; color: #b91c1c;">Damage & Repair Deduction:</td>
+          <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #b91c1c;">-₹${damageCost.toLocaleString("en-IN")}</td>
+        </tr>` : ""}
+        <tr style="border-top: 1px solid #e4e4e7;">
+          <td style="padding: 10px 0; font-weight: 700; color: #0a0a0a;">Net Refundable Amount:</td>
+          <td style="padding: 10px 0; text-align: right; font-family: monospace; font-size: 15px; font-weight: 700; color: #059669;">₹${netRefund.toLocaleString("en-IN")}</td>
+        </tr>
+      </table>
+    </div>
+
+    ${additionalDue > 0 ? `
+    <div style="background-color: #fef2f2; border: 1px solid #f87171; border-radius: 6px; padding: 12px; margin: 12px 0; font-size: 12px; color: #991b1b;">
+      Total deductions exceed the initial security deposit. Additional balance due of <strong>₹${additionalDue.toLocaleString("en-IN")}</strong> has been invoiced to your account.
+    </div>` : `
+    <p style="font-size: 12px; color: #52525b;">
+      The refundable deposit balance of <strong>₹${netRefund.toLocaleString("en-IN")}</strong> will be credited to your original payment method within 3–5 business days.
+    </p>`}
+
+    <p style="font-size: 12px; color: #71717a; margin-top: 20px;">
+      Inspected by: ${details.staffName || "Studio Diagnostics Specialist"} &bull; Thank you for creating with AUREVIA!
+    </p>
+  `
+  );
+
+  const text = `Dear ${booking.contactName || "Customer"},\n\nReturn inspection for booking #${refCode} has been finalized.\nCondition: ${details.condition.toUpperCase()}\nNet Refundable Deposit: ₹${netRefund.toLocaleString("en-IN")}\n\nThank you for choosing AUREVIA Premium Rentals!`;
+
+  await sendEmail({
+    to: customerEmail,
+    subject: `Equipment Return & Settlement Receipt - ${refCode}`,
+    html,
+    text,
+    idempotencyKey: `return-settlement-${refCode}`,
+    bookingId,
+    notificationType: "return_settlement",
   });
 }

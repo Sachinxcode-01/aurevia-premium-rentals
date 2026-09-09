@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { db } from "@/lib/db/store";
+import { sendReturnSettlementReceipt } from "@/lib/email/mailer";
 
 export async function GET(req: NextRequest) {
   try {
@@ -185,6 +186,23 @@ export async function POST(req: NextRequest) {
       staffRemark,
       lateFeeOverride !== undefined ? Number(lateFeeOverride) : undefined
     );
+
+    // Asynchronously dispatch return clearance & deposit settlement receipt email
+    const deposit = 5000;
+    const assessedDamage = Number(damageCost) || 0;
+    const appliedLateFee = lateFeeOverride !== undefined ? Number(lateFeeOverride) : 0;
+    const netRefund = Math.max(0, deposit - assessedDamage - appliedLateFee);
+
+    sendReturnSettlementReceipt(updated || booking, {
+      condition: condition === "damaged" ? "damaged" : "good",
+      damageCost: assessedDamage,
+      damageDescription,
+      lateFee: appliedLateFee,
+      depositHeld: deposit,
+      netRefundable: netRefund,
+      staffName,
+      remarks: staffRemark,
+    }).catch((err) => console.error("[Return Email Error]:", err));
 
     return successResponse(
       updated,

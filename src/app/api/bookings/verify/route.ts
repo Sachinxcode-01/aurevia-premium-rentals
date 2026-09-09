@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { db } from "@/lib/db/store";
+import { sendHandoverDispatchReceipt } from "@/lib/email/mailer";
 
 export async function GET(req: NextRequest) {
   try {
@@ -169,6 +170,16 @@ export async function POST(req: NextRequest) {
       staffRemark,
       true
     );
+
+    // Asynchronously dispatch handover clearance receipt email
+    sendHandoverDispatchReceipt(updated || booking, {
+      staffName,
+      remarks,
+      items: (booking.items || []).map((it: any, idx: number) => ({
+        productName: `Cinema Hardware Unit #${idx + 1}`,
+        serialNumber: it.inventoryUnitId || `AV-SN-0${idx + 1}`,
+      })),
+    }).catch((err) => console.error("[Handover Email Error]:", err));
 
     return successResponse(
       updated,
