@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Lock, ShieldCheck } from "lucide-react";
+import { User, Lock } from "lucide-react";
+import CustomerKycSection from "./CustomerKycSection";
 
 interface SettingsTabProps {
   profile: any;
@@ -163,22 +164,8 @@ export default function SettingsTab({
         </form>
       </div>
 
-      {/* ─── 3. VERIFIED KYC BADGE ─── */}
-      <div className="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-8 w-8 text-emerald-400" />
-          <div>
-            <h4 className="text-sm font-bold text-white">Tier 1 Verified Cinema Partner</h4>
-            <p className="text-xs text-neutral-400">
-              Zero Security Deposit Scheme active. Optical equipment dispatched without cash collateral.
-            </p>
-          </div>
-        </div>
-
-        <span className="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-xs font-mono font-bold text-emerald-300">
-          KYC APPROVED
-        </span>
-      </div>
+      {/* ─── 3. INTERACTIVE KYC DOCUMENT VERIFICATION ─── */}
+      <CustomerKycSection profile={profile} />
     </div>
   );
 }
