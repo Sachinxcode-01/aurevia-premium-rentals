@@ -52,12 +52,14 @@ export async function GET(request: Request) {
         .lt("created_at", oneHourAgo);
       bookingsToCancel = data || [];
     } else {
-      // Mock local bookings auto-cancellation
-      const localBookings = JSON.parse(localStorage.getItem("aurevia_bookings") || "[]");
+      // Mock local bookings auto-cancellation (guarded for server runtime)
+      const localBookings = typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("aurevia_bookings") || "[]")
+        : await db.getBookings();
       bookingsToCancel = localBookings.filter((b: any) => 
         b.status === "pending" && 
-        b.paymentStatus === "unpaid" && 
-        new Date(b.createdAt) < new Date(Date.now() - 60 * 60 * 1000)
+        (b.paymentStatus === "unpaid" || b.payment_status === "unpaid") && 
+        new Date(b.createdAt || b.created_at) < new Date(Date.now() - 60 * 60 * 1000)
       );
     }
 
@@ -81,8 +83,10 @@ export async function GET(request: Request) {
         .lt("end_date", todayStr);
       rentalsToOverdue = data || [];
     } else {
-      const localBookings = JSON.parse(localStorage.getItem("aurevia_bookings") || "[]");
-      rentalsToOverdue = localBookings.filter((b: any) => b.status === "rented" && b.endDate < todayStr);
+      const localBookings = typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("aurevia_bookings") || "[]")
+        : await db.getBookings();
+      rentalsToOverdue = localBookings.filter((b: any) => b.status === "rented" && (b.endDate || b.end_date) < todayStr);
     }
 
     for (const b of rentalsToOverdue) {

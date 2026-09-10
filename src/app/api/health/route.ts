@@ -53,7 +53,9 @@ export async function GET() {
   // 3. Check SMTP Mailer
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_APP_PASSWORD;
+  const smtpPass = process.env.SMTP_APP_PASSWORD || process.env.SMTP_PASS;
+  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 
   if (smtpHost && smtpUser && smtpPass) {
     if (smtpPass.includes("PLACEHOLDER")) {
@@ -62,8 +64,8 @@ export async function GET() {
       try {
         const transporter = nodemailer.createTransport({
           host: smtpHost,
-          port: Number(process.env.SMTP_PORT || 465),
-          secure: process.env.SMTP_SECURE === "true",
+          port: smtpPort,
+          secure: smtpSecure,
           auth: { user: smtpUser, pass: smtpPass },
           connectionTimeout: 5000 // 5 seconds verify timeout
         });

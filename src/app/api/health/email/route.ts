@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const host    = process.env.SMTP_HOST;
   const user    = process.env.SMTP_USER;
-  const pass    = process.env.SMTP_APP_PASSWORD;
+  const pass    = process.env.SMTP_APP_PASSWORD || process.env.SMTP_PASS;
   const port    = process.env.SMTP_PORT;
   const provider = process.env.EMAIL_PROVIDER ?? "unknown";
 

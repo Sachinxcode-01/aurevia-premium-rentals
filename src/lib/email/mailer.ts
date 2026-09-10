@@ -33,10 +33,10 @@ export async function sendEmail({
 
   // 2. Setup SMTP transporter
   const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 465);
-  const secure = process.env.SMTP_SECURE === "true";
+  const port = Number(process.env.SMTP_PORT || 587);
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_APP_PASSWORD;
+  const pass = process.env.SMTP_APP_PASSWORD || process.env.SMTP_PASS;
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
   if (!host || !user || !pass || pass.includes("PLACEHOLDER")) {
     console.warn("[Email Warning] SMTP credentials are not configured or are placeholders. Logging email to console:");
@@ -55,8 +55,8 @@ export async function sendEmail({
     connectionTimeout: 10000, // 10s connection timeout
   });
 
-  const from = process.env.EMAIL_FROM || `"AUREVIA Camera Rentals" <${user}>`;
-  const replyTo = process.env.EMAIL_REPLY_TO || user;
+  const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || `"AUREVIA Concierge" <${user}>`;
+  const replyTo = process.env.EMAIL_REPLY_TO || process.env.SMTP_REPLY_TO || user;
 
   const mailOptions: nodemailer.SendMailOptions = {
     from,

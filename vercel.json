@@ -1,4 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet src/ public/ package.json next.config.ts"
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet src/ public/ package.json next.config.ts",
+  "crons": [
+    {
+      "path": "/api/cron/booking-ops",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/reminders",
+      "schedule": "0 8 * * *"
+    }
+  ]
 }
