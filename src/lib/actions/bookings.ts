@@ -15,6 +15,13 @@ export interface CreateBookingPayload {
   couponApplied?: string;
   items: { productId: string; quantity: number }[];
   addonIds: { addonId: string }[];
+  emergencyContact?: string;
+  companyOrCollege?: string;
+  paymentMethod?: "online" | "cod";
+  b2bGstin?: string;
+  b2bCompanyName?: string;
+  notes?: string;
+  agreementAccepted?: boolean;
 }
 
 export interface BookingActionResult {
@@ -35,6 +42,9 @@ function countDays(start: string, end: string): number {
 // ─── 1. Create Booking ────────────────────────────────────────
 export async function createBookingAction(payload: CreateBookingPayload): Promise<BookingActionResult> {
   const { isSupabaseConfigured, db } = await import("@/lib/db/store");
+  const storeStatus = payload.paymentMethod === "cod" ? "approval_pending" : "pending_payment";
+  const supabaseStatus = payload.paymentMethod === "cod" ? "approval_pending" : "pending";
+
   if (!isSupabaseConfigured()) {
     const booking = await db.createBooking({
       profileId: "mock-profile-id",
@@ -46,6 +56,7 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
       deliveryFee: 0,
       discountAmount: 0,
       totalPayable: 0,
+      paymentMethod: payload.paymentMethod || "online",
       deliveryMethod: payload.deliveryMethod,
       contactName: payload.contactName,
       contactPhone: payload.contactPhone,
@@ -53,9 +64,12 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
       couponApplied: payload.couponApplied,
       items: payload.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: 799 })),
       addons: payload.addonIds.map((a) => ({ addonId: a.addonId, price: 0 })),
-      emergencyContact: "",
-      agreementAccepted: false,
+      emergencyContact: payload.emergencyContact || "",
+      agreementAccepted: payload.agreementAccepted ?? true,
     });
+    if (storeStatus !== "pending_payment") {
+      await db.updateBookingStatus(booking.id, storeStatus);
+    }
     revalidatePath("/dashboard");
     revalidatePath("/admin");
     return { success: true, referenceCode: booking.referenceCode, bookingId: booking.id };
@@ -120,7 +134,7 @@ export async function createBookingAction(payload: CreateBookingPayload): Promis
       delivery_fee: 0,
       discount_amount: +discountAmount.toFixed(2),
       total_payable: +totalPayable.toFixed(2),
-      status: "pending",
+      status: supabaseStatus,
       payment_status: "unpaid",
       delivery_method: payload.deliveryMethod,
       contact_name: payload.contactName,
@@ -259,7 +273,7 @@ export async function getUserBookingsAction() {
 
   const { data } = await (supabase as any)
     .from("bookings")
-    .select("*, booking_items(*, product:products(name, image_urls)), booking_addons(*)")
+    .select("*, booking_items(*, product:products(id, name, slug, daily_price, product_images(image_url, is_primary))), booking_addons(*)")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -279,7 +293,7 @@ export async function getAllBookingsAction() {
 
   const { data } = await (service as any)
     .from("bookings")
-    .select("*, booking_items(*, product:products(name, image_urls)), profile:profiles(full_name, email, phone)")
+    .select("*, booking_items(*, product:products(id, name, slug, daily_price, product_images(image_url, is_primary))), profile:profiles(full_name, email, phone)")
     .order("created_at", { ascending: false });
 
   return data ?? [];

@@ -31,7 +31,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { items, startDate, endDate, deliveryMethod, contactName, contactPhone, couponCode, profileId: bodyProfileId } = body;
+    const {
+      items,
+      startDate,
+      endDate,
+      deliveryMethod,
+      contactName,
+      contactPhone,
+      contactEmail,
+      paymentMethod,
+      couponCode,
+      profileId: bodyProfileId,
+    } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0 || !startDate || !endDate) {
       return errorResponse("INVALID_BOOKING_DATA", "items array, startDate, and endDate are required", 400);
@@ -99,24 +110,15 @@ export async function POST(req: NextRequest) {
         .lte("start_date", endDate)
         .gte("end_date", startDate);
 
-      let bookedCount = 0;
-      if (overlappingBookings) {
-        for (const ob of overlappingBookings as any[]) {
-          if (ob.booking_items) {
-            for (const bi of ob.booking_items) {
-              if (bi.product_id === resolvedProdId) {
-                bookedCount += bi.quantity || 1;
-              }
-            }
-          }
-        }
-      }
+      const alreadyBookedQty = (overlappingBookings || []).reduce((sum: number, b: any) => {
+        const matchingItems = (b.booking_items || []).filter((bi: any) => bi.product_id === resolvedProdId);
+        return sum + matchingItems.reduce((s: number, mi: any) => s + (mi.quantity || 1), 0);
+      }, 0);
 
-      const availableCount = Math.max(0, usableUnits - bookedCount);
-      if (availableCount < quantity) {
+      if (usableUnits > 0 && alreadyBookedQty + quantity > usableUnits) {
         return errorResponse(
-          "DOUBLE_BOOKING_PREVENTED",
-          `Product '${prod?.name || productId}' is unavailable for the selected dates (${availableCount} available, ${quantity} requested).`,
+          "EQUIPMENT_UNAVAILABLE",
+          `Equipment '${prod?.name || productId}' is fully booked for the selected dates.`,
           409
         );
       }
@@ -173,11 +175,12 @@ export async function POST(req: NextRequest) {
         delivery_fee: deliveryFee,
         discount_amount: discountAmount,
         total_payable: totalPayable,
-        status: "pending",
+        status: paymentMethod === "cod" ? "approval_pending" : "pending",
         payment_status: "unpaid",
         delivery_method: deliveryMethod || "pickup",
         contact_name: contactName || "Customer",
         contact_phone: contactPhone || "",
+        contact_email: contactEmail || userEmail || "",
         coupon_applied: couponCode || null,
       })
       .select()

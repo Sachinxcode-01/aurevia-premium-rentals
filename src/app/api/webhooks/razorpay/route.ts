@@ -105,6 +105,12 @@ export async function POST(request: Request) {
         const assigned = await db.assignAvailableUnit(bookingId);
 
         if (assigned) {
+          // Update booking status in database
+          await supabase.from("bookings").update({
+            status: "paid",
+            payment_status: "paid",
+          }).eq("id", bookingId);
+
           // Record successful payment entry
           await supabase.from("payments").insert({
             booking_id: bookingId,
