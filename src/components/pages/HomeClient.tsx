@@ -135,12 +135,15 @@ export default function HomeClient() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          } else {
+            // Remove is-visible when scrolled out of view so it animates again next time
+            entry.target.classList.remove("is-visible");
+          }
         });
       },
-      { rootMargin: "60px 0px 0px 0px", threshold: 0.02 }
+      { rootMargin: "0px 0px -40px 0px", threshold: 0.05 }
     );
 
     sections.forEach((section) => observer.observe(section));
@@ -182,7 +185,13 @@ export default function HomeClient() {
               delay: stagger(120),
               easing: "easeOutQuint",
             });
-            observer.unobserve(entry.target);
+          } else {
+            // Reset state when scrolled out so it animates cleanly on next scroll
+            const cards = document.querySelectorAll<HTMLElement>(".camera-card-anim");
+            cards.forEach((c) => {
+              c.style.opacity = "0";
+              c.style.transform = "translate3d(0, 40px, 0) scale(0.92)";
+            });
           }
         });
       },
@@ -347,7 +356,12 @@ export default function HomeClient() {
               delay: stagger(100),
               easing: "easeOutQuint",
             });
-            observer.unobserve(entry.target);
+          } else {
+            const cards = document.querySelectorAll<HTMLElement>(".category-card-anim");
+            cards.forEach((c) => {
+              c.style.opacity = "0";
+              c.style.transform = "translate3d(0, 40px, 0) scale(0.92)";
+            });
           }
         });
       },

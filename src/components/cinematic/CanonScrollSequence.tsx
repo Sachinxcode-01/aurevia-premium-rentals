@@ -40,11 +40,17 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
   }, []);
 
   // Progressive image preloader hook
-  const { progressPct, isReady, getFrameImage } = useImageSequence({
+  const { progressPct, isReady, getFrameImage, loadedCount } = useImageSequence({
     totalFrames: TOTAL_FRAMES,
     getFrameUrl,
     keyframeInterval: 5,
   });
+
+  // Current frame index for HUD telemetry & render
+  const currentFrameNum = Math.max(
+    1,
+    Math.min(TOTAL_FRAMES, Math.floor(scrollProgress * (TOTAL_FRAMES - 1)) + 1)
+  );
 
   // Canvas drawing hook
   const { renderFrame } = useCanvasSequence({
@@ -54,18 +60,10 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     objectFit: "cover",
   });
 
-  // Immediately render frame 1 as soon as image sequence is ready
+  // Immediately render whenever new keyframes arrive or ready state changes
   useEffect(() => {
-    if (isReady) {
-      renderFrame(1);
-    }
-  }, [isReady, renderFrame]);
-
-  // Current frame index for HUD telemetry
-  const currentFrameNum = Math.max(
-    1,
-    Math.min(TOTAL_FRAMES, Math.floor(scrollProgress * (TOTAL_FRAMES - 1)) + 1)
-  );
+    renderFrame(currentFrameNum);
+  }, [isReady, loadedCount, currentFrameNum, renderFrame]);
 
   // Frame scrubbing callback
   const handleScrollProgress = useCallback(
@@ -79,6 +77,11 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
     },
     [renderFrame]
   );
+
+  const handleScrollProgressRef = useRef(handleScrollProgress);
+  useEffect(() => {
+    handleScrollProgressRef.current = handleScrollProgress;
+  }, [handleScrollProgress]);
 
   // GSAP ScrollTrigger pinning and scrubbing setup
   useGSAP(
@@ -96,15 +99,28 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
         pinSpacing: true,
         scrub: isMobile ? 0.2 : 0.15,
         onUpdate: (self) => {
-          handleScrollProgress(self.progress);
+          handleScrollProgressRef.current(self.progress);
         },
       });
 
+      // Synchronize ScrollTrigger geometry after hydration and images load
+      ScrollTrigger.refresh();
+      const t1 = setTimeout(() => ScrollTrigger.refresh(), 100);
+      const t2 = setTimeout(() => ScrollTrigger.refresh(), 500);
+
+      const handleResize = () => {
+        ScrollTrigger.refresh();
+      };
+      window.addEventListener("resize", handleResize);
+
       return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        window.removeEventListener("resize", handleResize);
         trigger.kill();
       };
     },
-    { scope: containerRef, dependencies: [isReady, handleScrollProgress] }
+    { scope: containerRef }
   );
 
   // Handler to jump scroll position directly to a sequence stage
