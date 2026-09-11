@@ -9,6 +9,8 @@ export interface AdminAuthResult {
   success: boolean;
   error?: string;
   url?: string;
+  needsMFA?: boolean;
+  factorId?: string;
 }
 
 export async function adminSignInWithPasswordAction(
@@ -79,7 +81,25 @@ export async function adminSignInWithPasswordAction(
       };
     }
 
-    // 4. Success -> Reset Rate Limit & Log Audit Event
+    // 4. Check if Admin Account Requires TOTP MFA Verification (AAL2)
+    try {
+      const aalRes = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalRes.data?.nextLevel === "aal2" && aalRes.data?.currentLevel !== "aal2") {
+        const factorsRes = await supabase.auth.mfa.listFactors();
+        const verifiedTotp = factorsRes.data?.totp?.find((f: any) => f.status === "verified");
+        if (verifiedTotp) {
+          return {
+            success: true,
+            needsMFA: true,
+            factorId: verifiedTotp.id,
+          };
+        }
+      }
+    } catch (mfaErr) {
+      console.warn("[Admin Auth] MFA check warning:", mfaErr);
+    }
+
+    // 5. Success -> Reset Rate Limit & Log Audit Event
     resetRateLimit(rateLimitKey);
     await logSecurityEvent({
       eventType: "ADMIN_LOGIN_SUCCESS",
@@ -92,6 +112,34 @@ export async function adminSignInWithPasswordAction(
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Authentication error";
+    return { success: false, error: msg };
+  }
+}
+
+export async function adminVerifyMFAAction(
+  factorId: string,
+  code: string
+): Promise<AdminAuthResult> {
+  try {
+    if (!factorId || !code || code.trim().length !== 6) {
+      return { success: false, error: "A valid 6-digit code is required." };
+    }
+
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+
+    const { error } = await supabase.auth.mfa.challengeAndVerify({
+      factorId,
+      code: code.trim(),
+    });
+
+    if (error) {
+      return { success: false, error: error.message || "Invalid authentication code." };
+    }
+
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Error verifying authentication code.";
     return { success: false, error: msg };
   }
 }

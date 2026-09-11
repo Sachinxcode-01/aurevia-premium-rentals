@@ -14,6 +14,7 @@ import { signInAction, resendVerificationAction } from "@/lib/actions/auth";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import { GoogleSignInButton } from "@/components/ui/GoogleSignInButton";
+import MFAChallengeModal from "@/components/auth/MFAChallengeModal";
 
 function LoginPageContent() {
   const { cart } = useCart();
@@ -29,6 +30,8 @@ function LoginPageContent() {
   const [needsVerif, setNeedsVerif] = useState(false);
   const [resending, setResending]   = useState(false);
   const [resent, setResent]         = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState("");
+  const [showMFA, setShowMFA] = useState(false);
 
   const redirectPath = searchParams.get("redirect") ?? "";
   const verificationError = searchParams.get("error") === "verification_failed";
@@ -50,6 +53,13 @@ function LoginPageContent() {
     const result = await signInAction(email, password);
 
     if (result.success) {
+      if (result.needsMFA && result.factorId) {
+        setMfaFactorId(result.factorId);
+        setShowMFA(true);
+        setLoading(false);
+        return;
+      }
+
       setSuccess(true);
       toast.success("Welcome back to AUREVIA.");
       setTimeout(() => {
@@ -221,6 +231,24 @@ function LoginPageContent() {
           </div>
         </div>
       </div>
+
+      <MFAChallengeModal
+        isOpen={showMFA}
+        factorId={mfaFactorId}
+        onSuccess={() => {
+          setShowMFA(false);
+          setSuccess(true);
+          toast.success("MFA authentication verified. Access granted.");
+          setTimeout(() => {
+            const dest = redirectPath || "/dashboard";
+            router.push(dest);
+          }, 600);
+        }}
+        onCancel={() => {
+          setShowMFA(false);
+          setLoading(false);
+        }}
+      />
     </div>
   );
 }

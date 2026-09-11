@@ -8,6 +8,8 @@ export interface AuthResult {
   error?: string;
   role?: string;
   needsVerification?: boolean;
+  needsMFA?: boolean;
+  factorId?: string;
 }
 
 // ─── Sign In ─────────────────────────────────────────────────
@@ -38,6 +40,26 @@ export async function signInAction(email: string, password: string): Promise<Aut
     .single();
 
   const profile = profileData as { role: string } | null;
+
+  // Check if account has TOTP Two-Factor Authentication enabled (AAL2 required)
+  try {
+    const aalRes = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalRes.data?.nextLevel === "aal2" && aalRes.data?.currentLevel !== "aal2") {
+      const factorsRes = await supabase.auth.mfa.listFactors();
+      const verifiedTotp = factorsRes.data?.totp?.find((f: any) => f.status === "verified");
+      if (verifiedTotp) {
+        return {
+          success: true,
+          needsMFA: true,
+          factorId: verifiedTotp.id,
+          role: profile?.role ?? "customer",
+        };
+      }
+    }
+  } catch (mfaErr) {
+    console.warn("[Auth] MFA check warning:", mfaErr);
+  }
+
   revalidatePath("/");
   return { success: true, role: profile?.role ?? "customer" };
 }

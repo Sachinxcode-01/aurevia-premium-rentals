@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { User, Lock } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { User, Lock, Shield } from "lucide-react";
 import CustomerKycSection from "./CustomerKycSection";
+import MFASetupModal from "@/components/auth/MFASetupModal";
+import { getMFAStatusAction, unenrollMFAAction } from "@/lib/actions/mfa";
+import { useToast } from "@/hooks/useToast";
 
 interface SettingsTabProps {
   profile: any;
@@ -19,10 +22,47 @@ export default function SettingsTab({
   onChangePassword,
   savingPassword,
 }: SettingsTabProps) {
+  const toast = useToast();
   const [name, setName] = useState(String(profile?.full_name || profile?.fullName || ""));
   const [phone, setPhone] = useState(String(profile?.phone || ""));
   const [newPw, setNewPw] = useState("");
   const [cfmPw, setCfmPw] = useState("");
+
+  // MFA State
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(true);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaModalOpen, setMfaModalOpen] = useState(false);
+  const [disablingMfa, setDisablingMfa] = useState(false);
+
+  const loadMFAStatus = useCallback(async () => {
+    setMfaLoading(true);
+    const res = await getMFAStatusAction();
+    setMfaLoading(false);
+    if (res.success) {
+      setMfaEnabled(res.isEnabled);
+      const verified = res.factors.find((f) => f.status === "verified");
+      setMfaFactorId(verified?.id || null);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMFAStatus();
+  }, [loadMFAStatus]);
+
+  const handleDisableMFA = async () => {
+    if (!mfaFactorId) return;
+    if (!confirm("Are you sure you want to disable Two-Factor Authentication on your account?")) return;
+    setDisablingMfa(true);
+    const res = await unenrollMFAAction(mfaFactorId);
+    setDisablingMfa(false);
+    if (res.success) {
+      toast.success("Two-Factor Authentication has been disabled.");
+      loadMFAStatus();
+    } else {
+      toast.error(res.error || "Failed to disable 2FA.");
+    }
+  };
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,6 +202,69 @@ export default function SettingsTab({
             </button>
           </div>
         </form>
+      </div>
+
+      {/* ─── 3. TWO-FACTOR AUTHENTICATION (TOTP) ─── */}
+      <div className="dash-card rounded-3xl border border-white/10 bg-neutral-900/80 p-6 shadow-2xl backdrop-blur-xl">
+        <div className="flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-champagne/10 text-gold-champagne border border-gold-champagne/20">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">Two-Factor Authentication (MFA)</h3>
+              {mfaLoading ? (
+                <span className="text-[10px] font-mono text-neutral-500">Checking...</span>
+              ) : mfaEnabled ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono uppercase bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Active (TOTP)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono uppercase bg-neutral-800 border border-white/10 text-neutral-400">
+                  Disabled
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-neutral-400 mt-1">
+              Enhance vault reservation security by requiring a 6-digit TOTP code on every login.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+          <p className="text-neutral-400 text-xs">
+            {mfaEnabled
+              ? "Your account is protected by an authenticator application (Google Authenticator, Apple Passwords, 1Password)."
+              : "Protect your filmmaker credentials from unauthorized access. Supports all standard TOTP authenticators."}
+          </p>
+          {mfaEnabled ? (
+            <button
+              type="button"
+              onClick={handleDisableMFA}
+              disabled={disablingMfa}
+              className="shrink-0 px-4 py-2 border border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-mono font-medium transition cursor-pointer disabled:opacity-50"
+            >
+              {disablingMfa ? "Disabling..." : "Disable 2FA"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMfaModalOpen(true)}
+              className="shrink-0 px-5 py-2 bg-gold-champagne text-obsidian font-mono font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gold-light transition cursor-pointer"
+            >
+              Configure 2FA
+            </button>
+          )}
+        </div>
+
+        <MFASetupModal
+          isOpen={mfaModalOpen}
+          onClose={() => setMfaModalOpen(false)}
+          onSuccess={() => {
+            loadMFAStatus();
+          }}
+        />
       </div>
 
       {/* ─── 3. INTERACTIVE KYC DOCUMENT VERIFICATION ─── */}

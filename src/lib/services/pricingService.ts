@@ -42,11 +42,12 @@ export interface PricingBreakdown {
 }
 
 export function calculateRentalDays(start: string, end: string): number {
+  if (!start || !end) return 1;
   const s = new Date(start);
   const e = new Date(end);
-  const diffTime = e.getTime() - s.getTime();
-  if (isNaN(diffTime) || diffTime <= 0) return 1;
-  return Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  if (isNaN(s.getTime()) || isNaN(e.getTime()) || s > e) return 1;
+  const diff = Math.abs(e.getTime() - s.getTime());
+  return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)) + 1);
 }
 
 export function calculateBookingPrice(input: PricingCalculationInput): PricingBreakdown {
@@ -85,7 +86,7 @@ export function calculateBookingPrice(input: PricingCalculationInput): PricingBr
   // Ensure discount doesn't exceed subtotal
   discountAmount = Math.min(discountAmount, grossTotal);
 
-  const deliveryFee = input.deliveryMethod === "delivery" ? (input.deliveryFeeOverride ?? 0) : 0;
+  const deliveryFee = input.deliveryMethod === "delivery" ? (input.deliveryFeeOverride ?? 500) : 0;
   const securityDeposit = input.securityDeposit || 0;
   const taxFee = 0; // AUREVIA transparent pricing: inclusive pricing
 

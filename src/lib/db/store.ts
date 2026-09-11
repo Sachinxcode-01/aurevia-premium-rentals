@@ -656,14 +656,30 @@ export const db = {
     let products: Product[] = [];
 
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      const { data: dbProds, error } = await supabase
-        .from("products")
-        .select("*, product_images(*)")
-        .eq("is_archived", false);
+      try {
+        if (typeof window !== "undefined") {
+          const res = await fetch("/api/v1/gear");
+          if (res.ok) {
+            const json = await res.json();
+            if (json.data && json.data.length > 0) {
+              products = (json.data as any[]).map(mapDbProductToApp);
+            }
+          }
+        }
 
-      if (!error && dbProds && dbProds.length > 0) {
-        products = (dbProds as any[]).map(mapDbProductToApp);
+        if (products.length === 0) {
+          const supabase = await getSupabase();
+          const { data: dbProds, error } = await supabase
+            .from("products")
+            .select("*, product_images(*)")
+            .eq("is_archived", false);
+
+          if (!error && dbProds && dbProds.length > 0) {
+            products = (dbProds as any[]).map(mapDbProductToApp);
+          }
+        }
+      } catch (err) {
+        console.warn("[DB Store] Product fetch warning:", err);
       }
     }
 

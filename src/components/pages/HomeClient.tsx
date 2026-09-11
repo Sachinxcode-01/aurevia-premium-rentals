@@ -20,6 +20,7 @@ import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { animate, stagger } from "animejs";
 import { Logo } from "@/components/ui/Logo";
 import ReferralModal from "@/components/referral/ReferralModal";
+import PromotionalDeadlineTimer from "@/components/home/PromotionalDeadlineTimer";
 import { getTomorrowDate, getDefaultReturnDate } from "@/lib/utils/dates";
 
 const CameraShowroom = dynamic(
@@ -369,6 +370,9 @@ export default function HomeClient() {
 
       {/* 2. Flagship Canon Cinematic Scroll Sequence */}
       <CanonScrollSequence onExploreClick={() => router.push("/explore")} />
+
+      {/* 2.5 Real-Time Production Promotional Deadline Component */}
+      <PromotionalDeadlineTimer />
 
       {/* Brand Highlights Ribbon */}
       <section data-reveal className="reveal-section relative border-t border-b border-gold-border/20 bg-linear-to-r from-obsidian via-rich-black-lux to-obsidian z-20 overflow-hidden">

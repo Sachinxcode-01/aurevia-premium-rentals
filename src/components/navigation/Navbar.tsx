@@ -381,8 +381,9 @@ export default function Navbar({
 
             {/* Cart Icon */}
             <Link
-              href="/booking"
+              href="/cart"
               className="relative text-ivory/80 hover:text-gold-champagne transition duration-300 flex items-center p-1.5"
+              aria-label={`Shopping Cart (${cartItemCount} items)`}
             >
               <ShoppingCart className="w-4.5 h-4.5 xl:w-4.75 xl:h-4.75 stroke-2" />
               {cartItemCount > 0 && (
@@ -481,8 +482,9 @@ export default function Navbar({
             </button>
             {/* Mobile Cart */}
             <Link
-              href="/booking"
+              href="/cart"
               className="relative text-ivory/80 hover:text-gold-champagne transition flex items-center p-1.5"
+              aria-label={`Shopping Cart (${cartItemCount} items)`}
             >
               <ShoppingCart size={20} className="stroke-2" />
               {cartItemCount > 0 && (

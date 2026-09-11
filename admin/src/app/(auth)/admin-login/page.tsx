@@ -4,8 +4,9 @@ import React, { useState, useEffect, Suspense } from "react";
 import { Lock, Mail, ArrowRight, Loader2, AlertTriangle } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { adminSignInWithPasswordAction, adminSignInWithGoogleAction } from "@/lib/actions/adminAuth";
+import { adminSignInWithPasswordAction, adminSignInWithGoogleAction, adminVerifyMFAAction } from "@/lib/actions/adminAuth";
 import { AdminLogo } from "@/components/ui/AdminLogo";
+import { KeyRound, ShieldCheck } from "lucide-react";
 
 function AdminLoginForm() {
   const router = useRouter();
@@ -15,6 +16,12 @@ function AdminLoginForm() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // MFA State
+  const [showMFA, setShowMFA] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaLoading, setMfaLoading] = useState(false);
 
   useEffect(() => {
     const errParam = searchParams.get("error");
@@ -46,12 +53,38 @@ function AdminLoginForm() {
         throw new Error(res.error || "Invalid administrative credentials.");
       }
 
+      if (res.needsMFA && res.factorId) {
+        setMfaFactorId(res.factorId);
+        setShowMFA(true);
+        return;
+      }
+
       router.push("/");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid administrative credentials.";
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMFASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mfaCode.length !== 6) {
+      setError("Please enter the complete 6-digit code.");
+      return;
+    }
+
+    setMfaLoading(true);
+    setError(null);
+
+    const res = await adminVerifyMFAAction(mfaFactorId, mfaCode);
+    setMfaLoading(false);
+
+    if (res.success) {
+      router.push("/");
+    } else {
+      setError(res.error || "Invalid 2FA authentication code.");
     }
   };
 
@@ -104,98 +137,161 @@ function AdminLoginForm() {
         </motion.div>
       )}
 
-      {/* Google Login Button */}
-      <button
-        type="button"
-        onClick={handleGoogleSignIn}
-        disabled={googleLoading || loading}
-        className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-xs font-mono text-white font-semibold flex items-center justify-center gap-3 transition cursor-pointer disabled:opacity-50"
-      >
-        {googleLoading ? (
-          <Loader2 size={16} className="animate-spin text-[#d8b36a]" />
-        ) : (
-          <svg className="w-4 h-4" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
-          </svg>
-        )}
-        <span>SIGN IN WITH GOOGLE ADMIN</span>
-      </button>
+      {showMFA ? (
+        <form onSubmit={handleMFASubmit} className="space-y-5">
+          <div className="text-center space-y-2 py-2">
+            <div className="w-12 h-12 rounded-full bg-[#d8b36a]/10 border border-[#d8b36a]/30 flex items-center justify-center mx-auto text-[#d8b36a]">
+              <KeyRound size={22} />
+            </div>
+            <h2 className="text-sm font-serif text-white">Administrator 2FA Required</h2>
+            <p className="text-[11px] text-[#9a9995]">
+              Enter the 6-digit verification code from your authenticator app.
+            </p>
+          </div>
 
-      <div className="flex items-center gap-3">
-        <div className="h-px bg-white/10 flex-1" />
-        <span className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">or sign in with password</span>
-        <div className="h-px bg-white/10 flex-1" />
-      </div>
-
-      {/* Email + Password Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-[#9a9995] uppercase tracking-wider">
-            Administrative Email
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9a9995]" size={16} />
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-mono text-[#9a9995] uppercase tracking-wider block text-center">
+              Authenticator Security Code
+            </label>
             <input
-              type="email"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@aurevia.com"
-              className="w-full bg-[#070707] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] placeholder-[#9a9995]/50 focus:outline-none focus:border-[#d8b36a]/60 transition"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              className="w-full text-center text-2xl tracking-[0.3em] font-mono py-3 bg-[#070707] border border-[#d8b36a]/40 rounded-xl focus:outline-none focus:border-[#d8b36a] text-[#d8b36a]"
+              autoFocus
             />
           </div>
-        </div>
 
-        <div className="space-y-1.5">
-          <label className="text-[11px] font-mono text-[#9a9995] uppercase tracking-wider">
-            Security Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9a9995]" size={16} />
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
-              className="w-full bg-[#070707] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] placeholder-[#9a9995]/50 focus:outline-none focus:border-[#d8b36a]/60 transition"
-            />
+          <button
+            type="submit"
+            disabled={mfaLoading || mfaCode.length !== 6}
+            className="w-full bg-[#d8b36a] hover:bg-[#b98a43] text-[#070707] font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-lg shadow-[#d8b36a]/10 disabled:opacity-50 cursor-pointer"
+          >
+            {mfaLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>VERIFYING CODE...</span>
+              </>
+            ) : (
+              <>
+                <span>CONFIRM 2FA & ACCESS DASHBOARD</span>
+                <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowMFA(false);
+              setMfaCode("");
+            }}
+            className="w-full text-center text-[11px] font-mono text-gray-500 hover:text-white transition cursor-pointer pt-2 block"
+          >
+            ← Back to standard login
+          </button>
+        </form>
+      ) : (
+        <>
+          {/* Google Login Button */}
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={googleLoading || loading}
+            className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-xs font-mono text-white font-semibold flex items-center justify-center gap-3 transition cursor-pointer disabled:opacity-50"
+          >
+            {googleLoading ? (
+              <Loader2 size={16} className="animate-spin text-[#d8b36a]" />
+            ) : (
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+            )}
+            <span>SIGN IN WITH GOOGLE ADMIN</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px bg-white/10 flex-1" />
+            <span className="text-[10px] font-mono uppercase text-gray-500 tracking-wider">or sign in with password</span>
+            <div className="h-px bg-white/10 flex-1" />
           </div>
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading || googleLoading}
-          className="w-full mt-2 bg-[#d8b36a] hover:bg-[#b98a43] text-[#070707] font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-lg shadow-[#d8b36a]/10 disabled:opacity-50 cursor-pointer"
-        >
-          {loading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              <span>AUTHENTICATING SERVER SESSION...</span>
-            </>
-          ) : (
-            <>
-              <span>SIGN IN SECURELY</span>
-              <ArrowRight size={14} />
-            </>
-          )}
-        </button>
-      </form>
+          {/* Email + Password Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono text-[#9a9995] uppercase tracking-wider">
+                Administrative Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9a9995]" size={16} />
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@aurevia.com"
+                  className="w-full bg-[#070707] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] placeholder-[#9a9995]/50 focus:outline-none focus:border-[#d8b36a]/60 transition"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono text-[#9a9995] uppercase tracking-wider">
+                Security Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9a9995]" size={16} />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-[#070707] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] placeholder-[#9a9995]/50 focus:outline-none focus:border-[#d8b36a]/60 transition"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || googleLoading}
+              className="w-full mt-2 bg-[#d8b36a] hover:bg-[#b98a43] text-[#070707] font-semibold text-xs py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition duration-200 shadow-lg shadow-[#d8b36a]/10 disabled:opacity-50 cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>AUTHENTICATING SERVER SESSION...</span>
+                </>
+              ) : (
+                <>
+                  <span>SIGN IN SECURELY</span>
+                  <ArrowRight size={14} />
+                </>
+              )}
+            </button>
+          </form>
+        </>
+      )}
 
       {/* Footer Security Badges & Quick Demo Fill */}
       <div className="space-y-2 pt-4 border-t border-white/5">
