@@ -131,26 +131,40 @@ export default function AdminReviewsPage() {
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const handleStatusChange = (id: string, status: "approved" | "rejected", note?: string) => {
+  const handleStatusChange = async (id: string, status: "approved" | "rejected", note?: string) => {
     setActionLoading(id);
-    setTimeout(() => {
-      engagementStore.updateReviewStatus(id, status, note || adminNoteInput);
+    const finalNote = note || adminNoteInput;
+    try {
+      await adminApiClient.reviews.updateStatus(id, status, finalNote).catch(() => null);
+      engagementStore.updateReviewStatus(id, status, finalNote);
+      try {
+        const supabase = createClient();
+        await supabase.from("reviews").update({ status, admin_note: finalNote }).eq("id", id);
+      } catch {}
       realtimeHub.broadcast("REVIEW_MODERATED", { id, status }, "admin");
-      loadReviews();
-      setActionLoading(null);
+      await loadReviews();
       if (selectedReview?.id === id) {
-        setSelectedReview((prev) => (prev ? { ...prev, status, adminNote: note || adminNoteInput } : null));
+        setSelectedReview((prev) => (prev ? { ...prev, status, adminNote: finalNote } : null));
       }
       showToast(`Review ${status === "approved" ? "APPROVED and published to website" : "REJECTED"}.`);
-    }, 400);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this review?")) return;
-    engagementStore.deleteReview(id);
-    loadReviews();
-    if (selectedReview?.id === id) setSelectedReview(null);
-    showToast("Review deleted successfully.");
+    try {
+      await adminApiClient.reviews.delete(id).catch(() => null);
+      engagementStore.deleteReview(id);
+      try {
+        const supabase = createClient();
+        await supabase.from("reviews").delete().eq("id", id);
+      } catch {}
+      await loadReviews();
+      if (selectedReview?.id === id) setSelectedReview(null);
+      showToast("Review deleted successfully.");
+    } catch {}
   };
 
   // Filtered reviews calculation
@@ -281,7 +295,7 @@ export default function AdminReviewsPage() {
           <select
             value={ratingFilter}
             onChange={(e) => setRatingFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
-            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
           >
             <option value="all">All Ratings (1-5★)</option>
             <option value="5">5 Stars Only</option>
@@ -296,7 +310,7 @@ export default function AdminReviewsPage() {
               placeholder="Search reviewer or product..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
             />
           </div>
         </div>

@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from "react";
 import {
   LifeBuoy, MessageSquare, Send, CheckCircle2, Clock, AlertCircle,
-  Search, Filter, Mail, Phone, Calendar, Sparkles, RefreshCw, User,
-  Check, X, Eye, ArrowRight, ShieldCheck, Headphones, Wrench, CreditCard, Truck
+  Search, Sparkles, RefreshCw, X, Headphones, Wrench, CreditCard, Truck
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, SupportTicket } from "@/lib/db/engagementStore";
@@ -182,13 +181,17 @@ export default function AdminSupportTicketsPage() {
     }
   };
 
-  const handleUpdateStatus = (ticketId: string, status: SupportTicket["status"], priority?: SupportTicket["priority"]) => {
-    engagementStore.updateTicketStatus(ticketId, status, priority);
-    loadTickets();
-    if (selectedTicket?.id === ticketId) {
-      setSelectedTicket((prev) => (prev ? { ...prev, status, ...(priority ? { priority } : {}) } : null));
-    }
-    showToast(`Ticket status changed to ${status.replace("_", " ")}.`);
+  const handleUpdateStatus = async (ticketId: string, status: SupportTicket["status"], priority?: SupportTicket["priority"]) => {
+    try {
+      await adminApiClient.tickets.updateStatus(ticketId, status, priority).catch(() => null);
+      engagementStore.updateTicketStatus(ticketId, status, priority);
+      realtimeHub.broadcast("TICKET_UPDATED", { ticketId, status, priority }, "admin");
+      loadTickets();
+      if (selectedTicket?.id === ticketId) {
+        setSelectedTicket((prev) => (prev ? { ...prev, status, ...(priority ? { priority } : {}) } : null));
+      }
+      showToast(`Ticket status changed to ${status.replace("_", " ")}.`);
+    } catch {}
   };
 
   const filtered = tickets.filter((t) => {
@@ -322,7 +325,7 @@ export default function AdminSupportTicketsPage() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
           >
             <option value="all">All Priorities</option>
             <option value="urgent">Urgent Priority</option>
@@ -337,7 +340,7 @@ export default function AdminSupportTicketsPage() {
               placeholder="Search ticket #, name, subject..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
             />
           </div>
         </div>
@@ -507,7 +510,7 @@ export default function AdminSupportTicketsPage() {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Type your response to the customer. They will receive an instant email notification..."
-                  className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-3 text-white focus:outline-none focus:border-[#d8b36a] placeholder-white/20"
+                  className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-3 text-white focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
                 />
 
                 <div className="flex items-center justify-between gap-3 pt-1">

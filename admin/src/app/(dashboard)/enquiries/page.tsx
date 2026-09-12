@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  HelpCircle, MessageSquare, Send, CheckCircle2, Clock, AlertTriangle,
-  Search, Filter, Mail, Phone, Calendar, Sparkles, RefreshCw, User,
-  Check, X, Eye, ArrowRight, ShieldCheck, ChevronRight
+  HelpCircle, MessageSquare, CheckCircle2, Clock, AlertTriangle,
+  Search, Sparkles, RefreshCw, X, ChevronRight, Mail, Phone, Calendar, Send
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
@@ -185,13 +184,17 @@ export default function AdminEnquiriesPage() {
     }
   };
 
-  const handleUpdateStatus = (id: string, status: OnlineEnquiry["status"]) => {
-    engagementStore.updateEnquiryStatus(id, status);
-    loadEnquiries();
-    if (selectedEnquiry?.id === id) {
-      setSelectedEnquiry((prev) => (prev ? { ...prev, status } : null));
-    }
-    showToast(`Enquiry status updated to ${status.replace("_", " ")}.`);
+  const handleUpdateStatus = async (id: string, status: OnlineEnquiry["status"]) => {
+    try {
+      await adminApiClient.enquiries.updateStatus(id, status).catch(() => null);
+      engagementStore.updateEnquiryStatus(id, status);
+      realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: id, status }, "admin");
+      loadEnquiries();
+      if (selectedEnquiry?.id === id) {
+        setSelectedEnquiry((prev) => (prev ? { ...prev, status } : null));
+      }
+      showToast(`Enquiry status updated to ${status.replace("_", " ")}.`);
+    } catch {}
   };
 
   const filtered = enquiries.filter((e) => {
@@ -316,7 +319,7 @@ export default function AdminEnquiriesPage() {
           <select
             value={filterPriority}
             onChange={(e) => setFilterPriority(e.target.value)}
-            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+            className="bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl px-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
           >
             <option value="all">All Priorities</option>
             <option value="high">High Priority</option>
@@ -331,7 +334,7 @@ export default function AdminEnquiriesPage() {
               placeholder="Search reference, name, gear..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:outline-none focus:border-[#d8b36a]"
+              className="w-full bg-[#070707] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-9 pr-3 py-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
             />
           </div>
         </div>
@@ -529,7 +532,7 @@ export default function AdminEnquiriesPage() {
                     value={responseText}
                     onChange={(e) => setResponseText(e.target.value)}
                     placeholder="Type your response to the customer. This message will be emailed directly to their email address..."
-                    className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-3 text-white focus:outline-none focus:border-[#d8b36a] placeholder-white/20"
+                    className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-3 text-white focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
                   />
 
                   <div className="flex items-center justify-between gap-3 pt-2">

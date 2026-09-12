@@ -140,11 +140,19 @@ export default function AdminReportsPage() {
         fileBlob = new Blob([jsonString], { type: "application/json;charset=utf-8;" });
         filename += ".json";
       } else {
+        const sanitizeCsvCell = (val: any) => {
+          let str = String(val ?? "");
+          if (/^[=+\-@\t\r]/.test(str)) {
+            str = "'" + str;
+          }
+          return `"${str.replace(/"/g, '""')}"`;
+        };
+
         const headers = Object.keys(dataToExport[0]).join(",");
         const rows = dataToExport
           .map((row) =>
             Object.values(row)
-              .map((val) => `"${String(val).replace(/"/g, '""')}"`)
+              .map((val) => sanitizeCsvCell(val))
               .join(",")
           )
           .join("\n");
