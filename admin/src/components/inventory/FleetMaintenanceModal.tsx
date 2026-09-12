@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, Wrench, CheckCircle2 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 interface FleetMaintenanceModalProps {
   equipmentName: string;
@@ -29,8 +30,13 @@ export default function FleetMaintenanceModal({
       if (serialNumber) {
         await adminApiClient.inventory.update(serialNumber, {
           status: lockDowntime ? "maintenance" : "available",
-          notes: `${downtimeReason} (Shutter: ${shutterCount})`,
+          notes: `${downtimeReason} | Shutter: ${shutterCount} | FW: ${firmwareVersion} | Sensor: ${sensorStatus}`,
         });
+        realtimeHub.broadcast(
+          "INVENTORY_UPDATED",
+          { serialNumber, status: lockDowntime ? "maintenance" : "available" },
+          "admin"
+        );
       }
     } catch {
       // Continue gracefully

@@ -111,12 +111,21 @@ export async function PATCH(req: NextRequest) {
     if (condition) updatePayload.condition = condition;
     if (notes !== undefined) updatePayload.notes = notes;
 
+    // Query unit first by ID or Serial Number
+    const { data: existingUnit } = await supabase
+      .from("inventory_units")
+      .select("id, serial_number, name")
+      .or(`id.eq.${id},serial_number.eq.${id}`)
+      .maybeSingle();
+
+    const targetId = existingUnit?.id || id;
+
     const { data: updatedUnit, error } = await supabase
       .from("inventory_units")
       .update(updatePayload)
-      .eq("id", id)
+      .eq("id", targetId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       return errorResponse("UPDATE_UNIT_FAILED", error.message, 500);
@@ -125,13 +134,13 @@ export async function PATCH(req: NextRequest) {
     await recordAuditLog({
       actorId: user.id,
       actorEmail: user.email,
-      action: "inventory.updated",
+      action: status === "maintenance" ? "inventory.maintenance_scheduled" : "inventory.updated",
       resource: "inventory_units",
-      resourceId: id,
-      metadata: { status, condition, notes },
+      resourceId: targetId,
+      metadata: { serialNumber: existingUnit?.serial_number || id, status, condition, notes },
     });
 
-    return successResponse(updatedUnit, "Inventory unit status updated successfully");
+    return successResponse(updatedUnit || { id: targetId, ...updatePayload }, "Inventory unit updated successfully");
   } catch (err: any) {
     return errorResponse("ADMIN_INVENTORY_UPDATE_FAILED", err.message || "Failed to update inventory unit", 500);
   }
