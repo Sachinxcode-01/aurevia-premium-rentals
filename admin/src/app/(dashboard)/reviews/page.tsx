@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Star, CheckCircle2, XCircle, AlertCircle, Search, Filter,
-  Trash2, ShieldCheck, MessageSquare, ThumbsUp, RefreshCw,
-  ExternalLink, Eye, ArrowUpRight, Sparkles, Check, X
+  Star, CheckCircle2, AlertCircle, Search,
+  Trash2, ShieldCheck, MessageSquare, RefreshCw,
+  Eye, Sparkles, Check, X
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { engagementStore, CustomerReview } from "@/lib/db/engagementStore";
@@ -185,7 +185,6 @@ export default function AdminReviewsPage() {
   const totalCount = reviews.length;
   const pendingCount = reviews.filter((r) => r.status === "pending").length;
   const approvedCount = reviews.filter((r) => r.status === "approved").length;
-  const rejectedCount = reviews.filter((r) => r.status === "rejected").length;
   const avgRating = totalCount > 0
     ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalCount).toFixed(1)
     : "5.0";
