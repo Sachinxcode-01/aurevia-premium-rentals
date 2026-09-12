@@ -6,6 +6,7 @@ import {
   Download, RefreshCw, Loader2, ArrowUpRight, Filter, Sparkles
 } from "lucide-react";
 import { getAdminReferralsAction, updateReferralStatusAction, ReferralRecord } from "@/lib/actions/referrals";
+import { adminApiClient } from "@/lib/api-client";
 
 export default function AdminReferralsPage() {
   const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
@@ -21,6 +22,19 @@ export default function AdminReferralsPage() {
   const [friendDiscount, setFriendDiscount] = useState("200");
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // Load persisted settings
+  useEffect(() => {
+    adminApiClient.settings
+      .get()
+      .then((res: any) => {
+        const reward = res?.referral_reward ?? res?.data?.referral_reward;
+        const discount = res?.friend_discount ?? res?.data?.friend_discount;
+        if (reward !== undefined) setReferrerReward(String(reward));
+        if (discount !== undefined) setFriendDiscount(String(discount));
+      })
+      .catch(() => {});
+  }, []);
+
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3000);
@@ -32,7 +46,7 @@ export default function AdminReferralsPage() {
       if (res.success && res.referrals) {
         setReferrals(res.referrals);
       } else {
-        // Mock data if Supabase table is fresh
+        // Fallback data if table is fresh
         setReferrals([
           {
             id: "ref-101",
@@ -104,13 +118,20 @@ export default function AdminReferralsPage() {
     }
   };
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingSettings(true);
-    setTimeout(() => {
+    try {
+      await adminApiClient.settings.update({
+        referral_reward: Number(referrerReward) || 500,
+        friend_discount: Number(friendDiscount) || 200,
+      });
+      showToast("Referral program settings saved to database!");
+    } catch {
+      showToast("Failed to save settings");
+    } finally {
       setSavingSettings(false);
-      showToast("Referral program settings saved!");
-    }, 600);
+    }
   };
 
   // Export CSV

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Search, Wrench, RefreshCw, Plus } from "lucide-react";
+import { Search, Wrench, RefreshCw, Plus, QrCode } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
 
 import FleetMaintenanceModal from "../../../components/inventory/FleetMaintenanceModal";
 import AddEditCameraModal from "../../../components/inventory/AddEditCameraModal";
+import AssetTagPrintModal from "../../../components/inventory/AssetTagPrintModal";
 
 interface InventoryItem {
   id: string;
@@ -71,6 +72,7 @@ export default function AdminInventoryPage() {
   const [loading, setLoading] = useState(false);
   const [maintenanceTarget, setMaintenanceTarget] = useState<InventoryItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [tagModalItem, setTagModalItem] = useState<InventoryItem | null>(null);
 
   const loadInventory = useCallback(async () => {
     setLoading(true);
@@ -214,21 +216,38 @@ export default function AdminInventoryPage() {
                 <span className="text-[#9a9995] text-[10px] uppercase block">Daily Rate</span>
                 <span className="text-[#f5f1e8] font-semibold">₹{item.dailyPrice.toLocaleString("en-IN")}</span>
               </div>
-              <button
-                onClick={() => handleToggleMaintenance(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-sans transition cursor-pointer ${
-                  item.status === "MAINTENANCE"
-                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                    : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
-                }`}
-              >
-                <Wrench size={12} />
-                <span>Log Maintenance</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTagModalItem(item)}
+                  title="Print Asset QR Tag"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/5 text-[#f5f1e8] hover:border-[#d8b36a]/40 hover:text-[#d8b36a] text-xs font-sans transition cursor-pointer"
+                >
+                  <QrCode size={12} />
+                  <span>QR Tag</span>
+                </button>
+                <button
+                  onClick={() => handleToggleMaintenance(item.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-sans transition cursor-pointer ${
+                    item.status === "MAINTENANCE"
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                  }`}
+                >
+                  <Wrench size={12} />
+                  <span>Log</span>
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      {tagModalItem && (
+        <AssetTagPrintModal
+          item={tagModalItem}
+          onClose={() => setTagModalItem(null)}
+        />
+      )}
 
       {maintenanceTarget && (
         <FleetMaintenanceModal

@@ -141,7 +141,17 @@ export const adminApiClient = {
   analytics: (range = "30d") => fetchAdminApi<any>(`/api/v1/admin/analytics?range=${range}`),
 
   audit: {
-    list: (limit = 50) => fetchAdminApi<any[]>(`/api/v1/admin/audit?limit=${limit}`),
+    list: (params?: number | { limit?: number; category?: string; search?: string }) => {
+      if (typeof params === "number") {
+        return fetchAdminApi<any[]>(`/api/v1/admin/audit?limit=${params}`);
+      }
+      const query = new URLSearchParams();
+      if (params?.limit) query.set("limit", String(params.limit));
+      if (params?.category && params.category !== "all") query.set("category", params.category);
+      if (params?.search) query.set("search", params.search);
+      const qs = query.toString();
+      return fetchAdminApi<any[]>(`/api/v1/admin/audit${qs ? `?${qs}` : ""}`);
+    },
   },
 
   reviews: {
