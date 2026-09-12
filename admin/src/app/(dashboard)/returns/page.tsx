@@ -1,25 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-  RotateCcw, 
-  AlertTriangle, 
-  Phone, 
-  MessageSquare, 
-  Check, 
-  X, 
-  ShieldCheck, 
-  QrCode, 
-  Package, 
-  Camera, 
-  Search, 
-  FileText, 
-  Calculator, 
-  CheckCircle2, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Package,
+  Search,
+  Check,
+  Camera,
+  Layers,
+  Calculator,
   Printer,
-  Sparkles,
-  Layers
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  Phone,
+  MessageSquare,
+  ShieldCheck,
+  QrCode,
+  Loader2,
+  RefreshCw,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
+import { adminApiClient } from "@/lib/api-client";
+import { useAdminRealtime } from "@/lib/realtime";
 
 interface FlightCaseCheckItem {
   id: string;
@@ -46,10 +49,11 @@ interface InspectionCase {
   physicalCondition: "MINT" | "MINOR_WEAR" | "MISSING_ACCESSORY" | "DAMAGE_CLAIM";
   damageDescription?: string;
   damageCharge: number;
+  penaltyPaymentUrl?: string;
   notes?: string;
 }
 
-const INITIAL_CASES: InspectionCase[] = [
+const FALLBACK_CASES: InspectionCase[] = [
   {
     id: "PEL-R5-108",
     bookingId: "AUR-1039",
@@ -122,14 +126,99 @@ const INITIAL_CASES: InspectionCase[] = [
 ];
 
 export default function AdminReturnsPage() {
-  const [cases, setCases] = useState<InspectionCase[]>(INITIAL_CASES);
+  const [cases, setCases] = useState<InspectionCase[]>(FALLBACK_CASES);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCaseId, setSelectedCaseId] = useState<string>("PEL-R5-108");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [penaltyLinkCopied, setPenaltyLinkCopied] = useState(false);
+
+  // Sync with live bookings
+  const loadLiveBookings = useCallback(async () => {
+    try {
+      const res: any = await adminApiClient.bookings.list({ limit: 50 });
+      const bookingsList: any[] =
+        res?.bookings ||
+        res?.data?.bookings ||
+        (Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []);
+
+      if (bookingsList.length > 0) {
+        // Map live bookings to inspection cases
+        const mappedCases: InspectionCase[] = bookingsList
+          .filter(
+            (b) =>
+              b.status === "rented" ||
+              b.status === "confirmed" ||
+              b.status === "returned" ||
+              b.status === "completed"
+          )
+          .map((b, idx) => {
+            const isReturned = b.status === "returned" || b.status === "completed";
+            const caseId = `PEL-${(b.productName || "OPT").slice(0, 3).toUpperCase()}-${String(100 + idx)}`;
+            return {
+              id: caseId,
+              bookingId: b.id,
+              customerName: b.customerName || b.userName || "Filmmaker",
+              phone: b.customerPhone || b.userPhone || "+91 98000 00000",
+              equipmentName: b.productName || "Cinema Equipment System",
+              dispatchDate: b.startDate ? new Date(b.startDate).toLocaleDateString("en-IN") : "Active",
+              expectedReturn: b.endDate ? new Date(b.endDate).toLocaleDateString("en-IN") : "Today",
+              securityDeposit: b.securityDeposit || 15000,
+              hoursOverdue: 0,
+              status: isReturned ? "SETTLED_CLEARED" : "INSPECTION_PENDING",
+              sensorSanitized: true,
+              physicalCondition: "MINT",
+              damageCharge: 0,
+              items: [
+                {
+                  id: "it-1",
+                  name: `${b.productName || "Cinema"} System Body`,
+                  serialNumber: `SN-${b.id?.slice(-6).toUpperCase() || "778899"}`,
+                  isVerified: true,
+                },
+                {
+                  id: "it-2",
+                  name: "Pelican Air Protective Flight Case",
+                  serialNumber: `PEL-${caseId}`,
+                  isVerified: true,
+                },
+              ],
+            };
+          });
+
+        if (mappedCases.length > 0) {
+          // Merge unique cases keeping existing fallback details if not covered
+          setCases((prev) => {
+            const existingIds = new Set(mappedCases.map((m) => m.bookingId));
+            const retainedFallback = prev.filter((p) => !existingIds.has(p.bookingId));
+            return [...mappedCases, ...retainedFallback];
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Could not merge live bookings into returns:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveBookings();
+  }, [loadLiveBookings]);
+
+  useAdminRealtime(
+    useCallback(
+      (event: any) => {
+        if (event?.type === "BOOKING_UPDATED" || event?.type === "SYNC_REFRESH") {
+          loadLiveBookings();
+        }
+      },
+      [loadLiveBookings]
+    )
+  );
 
   const selectedCase = cases.find((c) => c.id === selectedCaseId) || cases[0];
 
-  // Filter cases based on status and search query
+  // Filter cases
   const filteredCases = cases.filter((c) => {
     const matchesFilter = statusFilter === "ALL" || c.status === statusFilter;
     const matchesSearch =
@@ -181,13 +270,56 @@ export default function AdminReturnsPage() {
     );
   };
 
+  // Generate Razorpay Penalty Link
+  const handleGeneratePenaltyLink = async () => {
+    if (selectedCase.damageCharge <= 0) return;
+    setGeneratingLink(true);
+    try {
+      const res = await adminApiClient.returns.generatePenaltyLink({
+        bookingId: selectedCase.bookingId,
+        amount: selectedCase.damageCharge,
+        description: `Damage/late penalty settlement for Pelican ${selectedCase.id} (${selectedCase.equipmentName})`,
+      });
+
+      if (res?.paymentUrl) {
+        setCases((prev) =>
+          prev.map((c) =>
+            c.id === selectedCase.id ? { ...c, penaltyPaymentUrl: res.paymentUrl } : c
+          )
+        );
+      }
+    } catch (err: any) {
+      alert("Failed to generate payment link: " + (err?.message || "Unknown error"));
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyPenaltyLink = () => {
+    if (!selectedCase.penaltyPaymentUrl) return;
+    navigator.clipboard.writeText(selectedCase.penaltyPaymentUrl);
+    setPenaltyLinkCopied(true);
+    setTimeout(() => setPenaltyLinkCopied(false), 3000);
+  };
+
   // Finalize return inspection
-  const finalizeInspection = () => {
+  const finalizeInspection = async () => {
     const unverified = selectedCase.items.filter((i) => !i.isVerified);
     if (unverified.length > 0) {
       if (!confirm(`Warning: ${unverified.length} item(s) are not verified yet. Proceed to clear deposit anyway?`)) {
         return;
       }
+    }
+
+    try {
+      // If valid booking, update booking status to returned
+      await adminApiClient.bookings.updateStatus(
+        selectedCase.bookingId,
+        "returned",
+        `Pelican ${selectedCase.id} returned in ${selectedCase.physicalCondition} condition.`
+      );
+    } catch {
+      // Local fallback
     }
 
     setCases((prev) =>
@@ -202,7 +334,7 @@ export default function AdminReturnsPage() {
     );
   };
 
-  // Generate & Print Branded Flight-Case Certificate Manifest
+  // Print manifest
   const printPackingManifest = () => {
     const win = window.open("", "_blank");
     if (!win) return;
@@ -225,9 +357,8 @@ export default function AdminReturnsPage() {
             table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background: #f5f5f5; text-transform: uppercase; font-size: 10px; }
-            .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; background: #e8f5e9; color: #2e7d32; }
-            .footer { margin-top: 40px; border-top: 1px dashed #aaa; pt: 20px; font-size: 10px; display: flex; justify-content: space-between; }
-            .sign { margin-top: 40px; border-top: 1px solid #000; width: 200px; text-align: center; pt: 5px; }
+            .footer { margin-top: 40px; border-top: 1px dashed #aaa; padding-top: 20px; font-size: 10px; display: flex; justify-content: space-between; }
+            .sign { margin-top: 40px; border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; }
           </style>
         </head>
         <body>
@@ -317,13 +448,22 @@ export default function AdminReturnsPage() {
           </p>
         </div>
 
-        <button
-          onClick={printPackingManifest}
-          className="px-4 py-2 bg-[#d8b36a] hover:bg-[#b98a43] text-[#070707] text-xs font-semibold uppercase tracking-wider rounded-xl transition flex items-center gap-2 cursor-pointer shadow-lg shadow-[#d8b36a]/10"
-        >
-          <Printer size={15} />
-          Print Manifest PDF
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => loadLiveBookings()}
+            className="px-3 py-2 rounded-xl border border-white/10 text-xs text-[#9a9995] hover:text-[#f5f1e8] hover:border-white/20 transition flex items-center gap-1.5"
+          >
+            <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
+            Sync Bookings
+          </button>
+          <button
+            onClick={printPackingManifest}
+            className="px-4 py-2 bg-[#d8b36a] hover:bg-[#b98a43] text-[#070707] text-xs font-semibold uppercase tracking-wider rounded-xl transition flex items-center gap-2 cursor-pointer shadow-lg shadow-[#d8b36a]/10"
+          >
+            <Printer size={15} />
+            Print Manifest PDF
+          </button>
+        </div>
       </div>
 
       {/* Barcode & Search Controls */}
@@ -366,7 +506,6 @@ export default function AdminReturnsPage() {
 
       {/* Main Workspace Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
         {/* Left Column: Cases List */}
         <div className="lg:col-span-4 space-y-3">
           <span className="text-[10px] uppercase font-mono tracking-widest text-[#9a9995] block">
@@ -406,7 +545,9 @@ export default function AdminReturnsPage() {
 
                   <div>
                     <h4 className="text-sm font-medium text-[#f5f1e8] line-clamp-1">{c.equipmentName}</h4>
-                    <p className="text-xs text-[#9a9995] font-light mt-0.5">{c.customerName} ({c.bookingId})</p>
+                    <p className="text-xs text-[#9a9995] font-light mt-0.5">
+                      {c.customerName} ({c.bookingId})
+                    </p>
                   </div>
 
                   <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[10px] font-mono text-[#9a9995]">
@@ -421,7 +562,6 @@ export default function AdminReturnsPage() {
 
         {/* Right Column: Interactive Terminal Inspection Station */}
         <div className="lg:col-span-8 space-y-6">
-          
           {/* Active Case Summary Card */}
           <div className="admin-card p-6 rounded-2xl border border-white/10 bg-[#0c0c0c] space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/5 pb-4">
@@ -523,7 +663,6 @@ export default function AdminReturnsPage() {
 
             {/* 2. Sensor Cleanliness & Optical Inspection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left pt-2">
-              {/* Sensor Sanitization */}
               <div
                 onClick={toggleSensorSanitized}
                 className={`p-4 rounded-xl border transition cursor-pointer space-y-2 ${
@@ -537,7 +676,13 @@ export default function AdminReturnsPage() {
                     <Camera size={16} />
                     <span className="text-xs font-semibold font-mono uppercase">2. Sensor Cleanliness</span>
                   </div>
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedCase.sensorSanitized ? "bg-emerald-500 text-black border-emerald-500" : "border-white/20"}`}>
+                  <div
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      selectedCase.sensorSanitized
+                        ? "bg-emerald-500 text-black border-emerald-500"
+                        : "border-white/20"
+                    }`}
+                  >
                     {selectedCase.sensorSanitized && <Check size={12} className="stroke-[3]" />}
                   </div>
                 </div>
@@ -548,7 +693,6 @@ export default function AdminReturnsPage() {
                 </p>
               </div>
 
-              {/* Physical Condition Assessment */}
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
                 <span className="text-xs font-semibold font-mono uppercase text-[#d8b36a] block">
                   3. Optics Physical Condition
@@ -584,7 +728,9 @@ export default function AdminReturnsPage() {
                 </div>
                 <div>
                   <span className="text-[9px] text-[#9a9995] uppercase block">Damage / Missing Fee</span>
-                  <span className="text-red-400 font-semibold">₹{(selectedCase.damageCharge - selectedCase.hoursOverdue * 600).toLocaleString()}</span>
+                  <span className="text-red-400 font-semibold">
+                    ₹{(selectedCase.damageCharge - selectedCase.hoursOverdue * 600).toLocaleString()}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[9px] text-[#d8b36a] uppercase block">Net Refund Released</span>
@@ -593,6 +739,58 @@ export default function AdminReturnsPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Razorpay Penalty Link Section (If damage or overdue fee) */}
+              {selectedCase.damageCharge > 0 && (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold text-amber-400">
+                        Razorpay Damage/Penalty Payment Settlement
+                      </p>
+                      <p className="text-[10px] text-[#9a9995]">
+                        Generate live payment link for ₹{selectedCase.damageCharge.toLocaleString()}
+                      </p>
+                    </div>
+
+                    {!selectedCase.penaltyPaymentUrl ? (
+                      <button
+                        onClick={handleGeneratePenaltyLink}
+                        disabled={generatingLink}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-semibold flex items-center gap-1.5 transition self-start sm:self-auto"
+                      >
+                        {generatingLink ? <Loader2 size={13} className="animate-spin" /> : <ExternalLink size={13} />}
+                        Generate Razorpay Link
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={copyPenaltyLink}
+                          className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#f5f1e8] text-xs font-mono flex items-center gap-1.5 transition"
+                        >
+                          <Copy size={13} />
+                          <span>{penaltyLinkCopied ? "Copied!" : "Copy Link"}</span>
+                        </button>
+                        <a
+                          href={selectedCase.penaltyPaymentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1.5 rounded-lg bg-amber-500 text-black text-xs font-semibold flex items-center gap-1.5 transition"
+                        >
+                          <ExternalLink size={13} />
+                          Open
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedCase.penaltyPaymentUrl && (
+                    <div className="p-2 rounded-lg bg-black/40 border border-white/10 text-[10px] font-mono text-amber-300 break-all">
+                      {selectedCase.penaltyPaymentUrl}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-end gap-3">
@@ -620,12 +818,9 @@ export default function AdminReturnsPage() {
                 )}
               </div>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
 }
-

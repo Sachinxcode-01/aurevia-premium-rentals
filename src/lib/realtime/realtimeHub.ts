@@ -10,7 +10,9 @@ export type RealtimeEventType =
   | "BOOKING_UPDATED"
   | "INVENTORY_UPDATED"
   | "KYC_STATUS_UPDATED"
-  | "STAFF_UPDATED";
+  | "STAFF_UPDATED"
+  | "COUPON_UPDATED"
+  | "CUSTOMER_UPDATED";
 
 export interface RealtimePayload<T = any> {
   type: RealtimeEventType;

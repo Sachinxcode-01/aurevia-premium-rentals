@@ -239,4 +239,65 @@ export const adminApiClient = {
         body: JSON.stringify({ action: "resend_invite", id }),
       }),
   },
+
+  coupons: {
+    list: () => fetchAdminApi<any[]>("/api/v1/admin/coupons"),
+    create: (payload: {
+      code: string;
+      discountType: "percentage" | "fixed";
+      discountValue: number;
+      minRentalDays?: number;
+      minOrderAmount?: number;
+      maxDiscountAmount?: number;
+      expiresAt?: string;
+      usageLimit?: number;
+    }) =>
+      fetchAdminApi<any>("/api/v1/admin/coupons", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    toggleStatus: (id: string, active: boolean) =>
+      fetchAdminApi<any>("/api/v1/admin/coupons", {
+        method: "PATCH",
+        body: JSON.stringify({ id, active }),
+      }),
+    delete: (id: string) =>
+      fetchAdminApi<any>(`/api/v1/admin/coupons?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+  },
+
+  customers: {
+    list: (query?: { search?: string; status?: string; tier?: string }) => {
+      const searchParams = new URLSearchParams();
+      if (query?.search) searchParams.set("search", query.search);
+      if (query?.status && query.status !== "all") searchParams.set("status", query.status);
+      if (query?.tier && query.tier !== "all") searchParams.set("tier", query.tier);
+      const qs = searchParams.toString();
+      return fetchAdminApi<any>(`/api/v1/admin/customers${qs ? `?${qs}` : ""}`);
+    },
+    toggleStatus: (id: string, status: "active" | "suspended") =>
+      fetchAdminApi<any>("/api/v1/admin/customers", {
+        method: "PATCH",
+        body: JSON.stringify({ id, status }),
+      }),
+  },
+
+  payments: {
+    list: (query?: { limit?: number; status?: string }) => {
+      const searchParams = new URLSearchParams();
+      if (query?.limit) searchParams.set("limit", String(query.limit));
+      if (query?.status && query.status !== "all") searchParams.set("status", query.status);
+      const qs = searchParams.toString();
+      return fetchAdminApi<any>(`/api/v1/admin/payments${qs ? `?${qs}` : ""}`);
+    },
+  },
+
+  returns: {
+    generatePenaltyLink: (payload: { bookingId: string; amount: number; description?: string }) =>
+      fetchAdminApi<{ success: boolean; paymentUrl: string; error?: string }>("/api/admin/penalty-link", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  },
 };

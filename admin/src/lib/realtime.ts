@@ -29,6 +29,8 @@ export function useAdminRealtime(onDatabaseChange: (payload: any) => void) {
     const unsubKyc = realtimeHub.subscribe("KYC_STATUS_UPDATED", (payload) => onDatabaseChange({ type: "KYC_STATUS_UPDATED", payload }));
     const unsubInventory = realtimeHub.subscribe("INVENTORY_UPDATED", (payload) => onDatabaseChange({ type: "INVENTORY_UPDATED", payload }));
     const unsubStaff = realtimeHub.subscribe("STAFF_UPDATED", (payload) => onDatabaseChange({ type: "STAFF_UPDATED", payload }));
+    const unsubCoupon = realtimeHub.subscribe("COUPON_UPDATED", (payload) => onDatabaseChange({ type: "COUPON_UPDATED", payload }));
+    const unsubCustomer = realtimeHub.subscribe("CUSTOMER_UPDATED", (payload) => onDatabaseChange({ type: "CUSTOMER_UPDATED", payload }));
 
     // 3. Fallback Polling (Every 4 seconds for instant responsiveness)
     const interval = setInterval(() => {
@@ -60,6 +62,8 @@ export function useAdminRealtime(onDatabaseChange: (payload: any) => void) {
       unsubKyc();
       unsubInventory();
       unsubStaff();
+      unsubCoupon();
+      unsubCustomer();
       clearInterval(interval);
       window.removeEventListener("visibilitychange", handleVisibilityOrOnline);
       window.removeEventListener("online", handleVisibilityOrOnline);

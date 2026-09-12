@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, CalendarCheck, Camera, Users, ShieldAlert,
   RotateCcw, CreditCard, RefreshCw, Ticket, BarChart3, FileSpreadsheet,
   Bell, Activity, UserCog, Settings, LogOut, ChevronLeft, ChevronRight,
-  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift
+  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift, ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminLogo } from "@/components/ui/AdminLogo";
@@ -89,8 +89,9 @@ export default function AdminDashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       const supabase = createClient();
       supabase.auth.getUser().then(({ data }) => {
@@ -105,6 +106,22 @@ export default function AdminDashboardLayout({
     }
   }, [router]);
 
+  // Global keyboard shortcut: Cmd+K or Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleLogout = async () => {
     try {
       const supabase = createClient();
@@ -114,6 +131,20 @@ export default function AdminDashboardLayout({
     }
     router.push("/admin-login");
   };
+
+  const handleNavigate = (href: string) => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    router.push(href);
+  };
+
+  // Flattened navigation links for omnibox matching
+  const allNavItems = NAV_SECTIONS.flatMap((sec) => sec.items);
+  const filteredNavItems = searchQuery.trim()
+    ? allNavItems.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : allNavItems.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-[#070707] text-[#f5f1e8] flex flex-col md:flex-row font-sans selection:bg-[#d8b36a]/30">
@@ -235,7 +266,7 @@ export default function AdminDashboardLayout({
           {/* Global Search Bar Trigger */}
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-3 w-80 px-3.5 py-2 rounded-xl bg-[#121212] border border-white/10 text-xs text-[#9a9995] hover:border-[#d8b36a]/40 transition group"
+            className="flex items-center gap-3 w-80 px-3.5 py-2 rounded-xl bg-[#121212] border border-white/10 text-xs text-[#9a9995] hover:border-[#d8b36a]/40 transition group cursor-pointer"
           >
             <Search size={15} className="group-hover:text-[#d8b36a] transition" />
             <span className="flex-1 text-left">Search bookings, gear, customers...</span>
@@ -281,8 +312,12 @@ export default function AdminDashboardLayout({
       {/* Global Admin Command Palette Modal */}
       <AnimatePresence>
         {searchOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/80 backdrop-blur-md">
+          <div
+            onClick={() => setSearchOpen(false)}
+            className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4 bg-black/80 backdrop-blur-md"
+          >
             <motion.div
+              onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -292,31 +327,79 @@ export default function AdminDashboardLayout({
                 <Search size={18} className="text-[#d8b36a]" />
                 <input
                   autoFocus
-                  placeholder="Type to search bookings, cameras, customers, or coupons..."
-                  className="w-full bg-transparent text-sm text-[#f5f1e8] focus:outline-none placeholder-[#9a9995]/60"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Type to search bookings, gear, customers, or coupons..."
+                  className="w-full bg-transparent text-sm text-[#f5f1e8] focus:outline-none placeholder-[#9a9995]/60 font-sans"
                 />
-                <button
-                  onClick={() => setSearchOpen(false)}
-                  className="p-1 text-[#9a9995] hover:text-[#f5f1e8]"
-                >
-                  <X size={18} />
-                </button>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="p-1 text-[#9a9995] hover:text-[#f5f1e8]"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-2 max-h-80 overflow-y-auto text-xs">
-                <p className="text-[10px] font-mono text-[#9a9995] uppercase px-3">Quick Actions</p>
-                <button onClick={() => { router.push("/bookings"); setSearchOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 flex items-center justify-between">
-                  <span>View All Bookings</span>
-                  <span className="font-mono text-[10px] text-[#d8b36a]">AUR-1042...</span>
-                </button>
-                <button onClick={() => { router.push("/inventory"); setSearchOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 flex items-center justify-between">
-                  <span>Add New Equipment</span>
-                  <span className="font-mono text-[10px] text-[#9a9995]">Inventory</span>
-                </button>
-                <button onClick={() => { router.push("/kyc"); setSearchOpen(false); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 flex items-center justify-between">
-                  <span>Review Pending KYC (4)</span>
-                  <span className="font-mono text-[10px] text-amber-400">Action Required</span>
-                </button>
+              {/* Dynamic Filter Search Actions */}
+              {searchQuery.trim() && (
+                <div className="space-y-1.5 border-b border-white/5 pb-3">
+                  <p className="text-[10px] font-mono text-[#d8b36a] uppercase px-3">Direct Search Actions</p>
+                  <button
+                    onClick={() => handleNavigate(`/bookings?search=${encodeURIComponent(searchQuery)}`)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 flex items-center justify-between text-xs text-[#f5f1e8] transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CalendarCheck size={14} className="text-[#d8b36a]" />
+                      Search Bookings for &quot;<strong className="text-[#d8b36a]">{searchQuery}</strong>&quot;
+                    </span>
+                    <ArrowRight size={13} className="text-[#9a9995]" />
+                  </button>
+                  <button
+                    onClick={() => handleNavigate(`/customers?search=${encodeURIComponent(searchQuery)}`)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 flex items-center justify-between text-xs text-[#f5f1e8] transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users size={14} className="text-emerald-400" />
+                      Search Customers for &quot;<strong className="text-emerald-400">{searchQuery}</strong>&quot;
+                    </span>
+                    <ArrowRight size={13} className="text-[#9a9995]" />
+                  </button>
+                  <button
+                    onClick={() => handleNavigate(`/inventory?search=${encodeURIComponent(searchQuery)}`)}
+                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 flex items-center justify-between text-xs text-[#f5f1e8] transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Camera size={14} className="text-blue-400" />
+                      Search Inventory for &quot;<strong className="text-blue-400">{searchQuery}</strong>&quot;
+                    </span>
+                    <ArrowRight size={13} className="text-[#9a9995]" />
+                  </button>
+                </div>
+              )}
+
+              {/* Quick Jump Navigation */}
+              <div className="space-y-1 max-h-72 overflow-y-auto text-xs">
+                <p className="text-[10px] font-mono text-[#9a9995] uppercase px-3 mb-1">
+                  {searchQuery ? "Matching Sections" : "Quick Section Jumps"}
+                </p>
+                {filteredNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => handleNavigate(item.href)}
+                      className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 flex items-center justify-between text-xs text-[#f5f1e8] transition"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <Icon size={15} className="text-[#d8b36a]" />
+                        <span>{item.name}</span>
+                      </span>
+                      <span className="font-mono text-[10px] text-[#9a9995]">{item.href}</span>
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           </div>
