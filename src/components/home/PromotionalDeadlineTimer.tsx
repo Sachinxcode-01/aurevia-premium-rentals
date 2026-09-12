@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
-import { Clock, Sparkles, Copy, Check, AlertCircle } from "lucide-react";
+import { Sparkles, Copy, Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
 
 interface TimeRemaining {
@@ -30,7 +30,7 @@ export default function PromotionalDeadlineTimer() {
     subtitle: "Unlock 20% savings on all flagship cinema packages before current reservation cycle closes.",
     couponCode: "WELCOME20",
     discountNote: "20% OFF ALL CAMERAS",
-    deadlineIso: new Date(Date.now() + 2 * 3600 * 1000 + 44 * 60 * 1000 + 18 * 1000).toISOString(),
+    deadlineIso: "",
   });
 
   const [copied, setCopied] = useState(false);
@@ -85,6 +85,8 @@ export default function PromotionalDeadlineTimer() {
 
   // Ticker loop
   useEffect(() => {
+    if (!promo.deadlineIso) return;
+
     function calculateRemaining(): TimeRemaining {
       const targetTime = new Date(promo.deadlineIso).getTime();
       const now = Date.now();

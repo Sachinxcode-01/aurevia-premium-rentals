@@ -37,7 +37,6 @@ describe("AUREVIA Pricing & Coupon Engine", () => {
   });
 
   test("Applies percentage coupon correctly (WELCOME20 - 20% off)", () => {
-    const subtotal = 10000;
     const coupon = {
       code: "WELCOME20",
       discountPercent: 20,

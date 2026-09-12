@@ -38,7 +38,7 @@ const DEFAULT_STAFF: StaffUser[] = [
   },
 ];
 
-let inMemoryStaff: StaffUser[] = [...DEFAULT_STAFF];
+const inMemoryStaff: StaffUser[] = [...DEFAULT_STAFF];
 
 export async function GET(req: NextRequest) {
   try {
