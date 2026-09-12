@@ -11,10 +11,11 @@ test("Fleet Maintenance Scheduling & Service Logging", async (t) => {
     const downtimeReason = "Scheduled Sensor Cleaning & Firmware Flash";
     const lockDowntime = true;
 
-    const notes = `${downtimeReason} | Shutter: ${shutterCount} | FW: ${firmwareVersion} | Sensor: ${sensorStatus}`;
+    const notes = `${downtimeReason} (${serialNumber}) | Shutter: ${shutterCount} | FW: ${firmwareVersion} | Sensor: ${sensorStatus}`;
     const status = lockDowntime ? "maintenance" : "available";
 
     assert.equal(status, "maintenance");
+    assert.ok(notes.includes(serialNumber));
     assert.ok(notes.includes("48,250 Clicks"));
     assert.ok(notes.includes("v3.01 Production Stable"));
     assert.ok(notes.includes("Cleaned & Calibrated (Pass)"));
