@@ -284,10 +284,11 @@ export default function AdminReturnsPage() {
         description: `Damage/late penalty settlement for Pelican ${selectedCase.id} (${selectedCase.equipmentName})`,
       });
 
-      if (res?.paymentUrl) {
+      const paymentUrl = res.data?.paymentUrl || (res as any).paymentUrl;
+      if (paymentUrl) {
         setCases((prev) =>
           prev.map((c) =>
-            c.id === selectedCase.id ? { ...c, penaltyPaymentUrl: res.paymentUrl } : c
+            c.id === selectedCase.id ? { ...c, penaltyPaymentUrl: paymentUrl } : c
           )
         );
       }

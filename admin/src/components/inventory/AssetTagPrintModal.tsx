@@ -37,30 +37,34 @@ export default function AssetTagPrintModal({ item, onClose }: AssetTagPrintModal
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-asset-tag, #printable-asset-tag * {
-            visibility: visible;
-          }
-          #printable-asset-tag {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 3.5in;
-            height: 2.2in;
-            margin: 0;
-            padding: 12px;
-            background: white !important;
-            color: black !important;
-            border: 2px solid black !important;
-            border-radius: 6px;
-            box-shadow: none !important;
-          }
-        }
-      `}</style>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @media print {
+              body * {
+                visibility: hidden !important;
+              }
+              #printable-asset-tag, #printable-asset-tag * {
+                visibility: visible !important;
+              }
+              #printable-asset-tag {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 3.5in !important;
+                height: 2.2in !important;
+                margin: 0 !important;
+                padding: 12px !important;
+                background: white !important;
+                color: black !important;
+                border: 2px solid black !important;
+                border-radius: 6px !important;
+                box-shadow: none !important;
+              }
+            }
+          `,
+        }}
+      />
 
       <div className="relative max-w-md w-full bg-[#0a0a0a] border border-[#d8b36a]/30 rounded-2xl p-6 space-y-6 shadow-2xl">
         {/* Modal Header */}
