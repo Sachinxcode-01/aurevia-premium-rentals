@@ -6,6 +6,7 @@ import {
   RefreshCw, CheckCircle2, AlertCircle, X, Loader2, Mail, Trash2
 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
 
 interface StaffUser {
   id: string;
@@ -52,6 +53,10 @@ export default function AdminStaffPage() {
 
   useEffect(() => {
     loadStaff();
+    const unsub = realtimeHub.subscribe("STAFF_UPDATED", () => {
+      loadStaff(true);
+    });
+    return () => unsub();
   }, [loadStaff]);
 
   const handleAddStaff = async (e: React.FormEvent) => {
@@ -77,6 +82,7 @@ export default function AdminStaffPage() {
         setNewEmail("");
         setNewPhone("");
         loadStaff(true);
+        realtimeHub.broadcast("STAFF_UPDATED", { action: "create" }, "admin");
       } else {
         setFeedback({
           type: "error",
@@ -102,6 +108,7 @@ export default function AdminStaffPage() {
         setFeedback({ type: "success", text: `Role updated for ${editUser.name}.` });
         setEditUser(null);
         loadStaff(true);
+        realtimeHub.broadcast("STAFF_UPDATED", { action: "update_role" }, "admin");
       } else {
         setFeedback({ type: "error", text: "Failed to update role." });
       }
@@ -124,6 +131,7 @@ export default function AdminStaffPage() {
           type: "success",
           text: `Staff member ${user.name} marked as ${nextStatus}.`,
         });
+        realtimeHub.broadcast("STAFF_UPDATED", { action: "toggle_status" }, "admin");
       }
     } catch {
       setFeedback({ type: "error", text: "Failed to update user status." });
@@ -141,6 +149,7 @@ export default function AdminStaffPage() {
           text: `Staff member ${user.name} removed successfully.`,
         });
         setDeleteUser(null);
+        realtimeHub.broadcast("STAFF_UPDATED", { action: "delete" }, "admin");
       } else {
         setFeedback({
           type: "error",
