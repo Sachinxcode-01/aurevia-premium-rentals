@@ -480,7 +480,7 @@ export default function AdminReturnsPage() {
               placeholder="Scan Barcode or Search Pelican ID (e.g. PEL-R5-108, Priya Nair)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#0c0c0c] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-[#d8b36a]/60 font-mono"
+              className="w-full bg-[#0c0c0c] border border-white/10 text-xs text-[#f5f1e8] rounded-xl pl-10 pr-4 py-3 focus:ring-1 focus:ring-[#d8b36a]/60 focus:outline-hidden font-mono"
             />
           </div>
 
@@ -704,7 +704,7 @@ export default function AdminReturnsPage() {
                 <select
                   value={selectedCase.physicalCondition}
                   onChange={(e) => setCondition(e.target.value as InspectionCase["physicalCondition"])}
-                  className="w-full bg-[#0c0c0c] border border-white/15 text-xs text-[#f5f1e8] rounded-lg p-2 focus:outline-none focus:border-[#d8b36a]"
+                  className="w-full bg-[#0c0c0c] border border-white/15 text-xs text-[#f5f1e8] rounded-lg p-2 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
                 >
                   <option value="MINT">Mint (No Scratches / Defects)</option>
                   <option value="MINOR_WEAR">Minor Surface Wear (Normal)</option>

@@ -265,7 +265,7 @@ export default function AdminReferralsPage() {
             <label className="text-[10px] uppercase font-mono text-gray-400 tracking-wider block">Referrer Credit (₹)</label>
             <input
               type="number" value={referrerReward} onChange={(e) => setReferrerReward(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-[#f5f5f7] font-mono focus:border-[#d8b36a]"
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-[#f5f5f7] font-mono focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
             />
           </div>
 
@@ -273,7 +273,7 @@ export default function AdminReferralsPage() {
             <label className="text-[10px] uppercase font-mono text-gray-400 tracking-wider block">Friend Discount (₹)</label>
             <input
               type="number" value={friendDiscount} onChange={(e) => setFriendDiscount(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-[#f5f5f7] font-mono focus:border-[#d8b36a]"
+              className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs text-[#f5f5f7] font-mono focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
             />
           </div>
 
@@ -300,7 +300,7 @@ export default function AdminReferralsPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text" placeholder="Search name, code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-black/40 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#f5f5f7] font-mono focus:border-[#d8b36a]"
+                className="bg-black/40 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-[#f5f5f7] font-mono focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
               />
             </div>
 

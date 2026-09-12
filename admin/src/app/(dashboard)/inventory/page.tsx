@@ -163,7 +163,7 @@ export default function AdminInventoryPage() {
             placeholder="Search serial number or model..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#070707] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-[#f5f1e8] focus:border-[#d8b36a] focus:outline-none"
+            className="w-full bg-[#070707] border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-[#f5f1e8] focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
           />
         </div>
 

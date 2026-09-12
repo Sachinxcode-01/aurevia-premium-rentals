@@ -166,7 +166,7 @@ export default function AdminActivityPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by actor email, action, resource, or IP..."
-            className="w-full bg-[#0c0c0c] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] placeholder:text-[#9a9995]/50 focus:outline-none focus:border-[#d8b36a] font-sans"
+            className="w-full bg-[#0c0c0c] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-xs text-[#f5f1e8] focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden font-sans"
           />
         </div>
 
