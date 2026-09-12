@@ -501,7 +501,7 @@ export default function AdminReviewsPage() {
                     value={adminNoteInput}
                     onChange={(e) => setAdminNoteInput(e.target.value)}
                     placeholder="Add internal note or moderation reason..."
-                    className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-2.5 focus:outline-none focus:border-[#d8b36a]"
+                    className="w-full bg-[#070707] border border-white/10 text-xs rounded-xl p-2.5 focus:ring-1 focus:ring-[#d8b36a] focus:outline-hidden"
                   />
                 </div>
               </div>
