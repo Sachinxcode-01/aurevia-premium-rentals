@@ -136,6 +136,7 @@ export default function AdminReturnsPage() {
 
   // Sync with live bookings
   const loadLiveBookings = useCallback(async () => {
+    setLoading(true);
     try {
       const res: any = await adminApiClient.bookings.list({ limit: 50 });
       const bookingsList: any[] =
@@ -198,6 +199,8 @@ export default function AdminReturnsPage() {
       }
     } catch (err) {
       console.warn("Could not merge live bookings into returns:", err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -512,7 +515,7 @@ export default function AdminReturnsPage() {
             Flight-Cases Queue ({filteredCases.length})
           </span>
 
-          <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-155 overflow-y-auto pr-1">
             {filteredCases.map((c) => {
               const isSelected = c.id === selectedCase.id;
               return (
@@ -628,7 +631,7 @@ export default function AdminReturnsPage() {
                     className={`p-3 rounded-xl border flex items-center justify-between transition cursor-pointer ${
                       item.isVerified
                         ? "bg-emerald-500/5 border-emerald-500/30 text-[#f5f1e8]"
-                        : "bg-white/[0.02] border-white/10 text-[#9a9995] hover:border-white/20"
+                        : "bg-white/2 border-white/10 text-[#9a9995] hover:border-white/20"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -639,7 +642,7 @@ export default function AdminReturnsPage() {
                             : "bg-transparent border-white/20"
                         }`}
                       >
-                        {item.isVerified && <Check size={14} className="stroke-[3]" />}
+                        {item.isVerified && <Check size={14} className="stroke-3" />}
                       </div>
                       <div>
                         <p className="text-xs font-medium">{item.name}</p>
@@ -668,7 +671,7 @@ export default function AdminReturnsPage() {
                 className={`p-4 rounded-xl border transition cursor-pointer space-y-2 ${
                   selectedCase.sensorSanitized
                     ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
-                    : "bg-white/[0.02] border-white/10 text-[#9a9995]"
+                    : "bg-white/2 border-white/10 text-[#9a9995]"
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -683,7 +686,7 @@ export default function AdminReturnsPage() {
                         : "border-white/20"
                     }`}
                   >
-                    {selectedCase.sensorSanitized && <Check size={12} className="stroke-[3]" />}
+                    {selectedCase.sensorSanitized && <Check size={12} className="stroke-3" />}
                   </div>
                 </div>
                 <p className="text-[11px] leading-relaxed font-light text-[#f5f1e8]">
@@ -693,7 +696,7 @@ export default function AdminReturnsPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2">
+              <div className="p-4 rounded-xl bg-white/2 border border-white/10 space-y-2">
                 <span className="text-xs font-semibold font-mono uppercase text-[#d8b36a] block">
                   3. Optics Physical Condition
                 </span>
