@@ -229,5 +229,14 @@ export const adminApiClient = {
         method: "PATCH",
         body: JSON.stringify({ id, status }),
       }),
+    delete: (id: string) =>
+      fetchAdminApi<any>(`/api/v1/admin/staff?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }),
+    resendInvite: (id: string) =>
+      fetchAdminApi<any>("/api/v1/admin/staff", {
+        method: "POST",
+        body: JSON.stringify({ action: "resend_invite", id }),
+      }),
   },
 };

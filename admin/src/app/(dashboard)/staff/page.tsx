@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  UserCog, Plus, ShieldCheck, Lock, UserX, UserCheck,
-  RefreshCw, CheckCircle2, AlertCircle, X, Loader2, Mail, Phone
+  UserCog, Plus,
+  RefreshCw, CheckCircle2, AlertCircle, X, Loader2, Mail, Trash2
 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 
@@ -23,6 +23,7 @@ export default function AdminStaffPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editUser, setEditUser] = useState<StaffUser | null>(null);
+  const [deleteUser, setDeleteUser] = useState<StaffUser | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -126,6 +127,49 @@ export default function AdminStaffPage() {
       }
     } catch {
       setFeedback({ type: "error", text: "Failed to update user status." });
+    }
+  };
+
+  const handleDeleteStaff = async (user: StaffUser) => {
+    try {
+      setSubmitting(true);
+      const res = await adminApiClient.staff.delete(user.id);
+      if (res.success) {
+        setStaff((prev) => prev.filter((s) => s.id !== user.id));
+        setFeedback({
+          type: "success",
+          text: `Staff member ${user.name} removed successfully.`,
+        });
+        setDeleteUser(null);
+      } else {
+        setFeedback({
+          type: "error",
+          text: res.error?.message || res.message || "Failed to remove staff member.",
+        });
+      }
+    } catch (err: any) {
+      setFeedback({ type: "error", text: err?.message || "Error removing staff member." });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResendInvite = async (user: StaffUser) => {
+    try {
+      const res = await adminApiClient.staff.resendInvite(user.id);
+      if (res.success) {
+        setFeedback({
+          type: "success",
+          text: `Invitation re-dispatched to ${user.email}.`,
+        });
+      } else {
+        setFeedback({
+          type: "error",
+          text: res.error?.message || res.message || "Failed to re-dispatch invitation.",
+        });
+      }
+    } catch {
+      setFeedback({ type: "error", text: "Network error resending invitation." });
     }
   };
 
@@ -236,7 +280,14 @@ export default function AdminStaffPage() {
                     </td>
                     <td className="p-4 text-right font-sans">
                       {s.role !== "super_admin" ? (
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleResendInvite(s)}
+                            title="Resend invitation email"
+                            className="p-1.5 rounded-lg border border-white/10 text-[11px] text-[#9a9995] hover:text-[#d8b36a] hover:border-[#d8b36a]/30 transition"
+                          >
+                            <Mail size={13} />
+                          </button>
                           <button
                             onClick={() => setEditUser(s)}
                             className="px-2 py-1 rounded-lg border border-white/10 text-[11px] text-[#9a9995] hover:text-[#f5f1e8] hover:border-white/20 transition"
@@ -247,11 +298,18 @@ export default function AdminStaffPage() {
                             onClick={() => handleToggleStatus(s)}
                             className={`px-2 py-1 rounded-lg border text-[11px] transition ${
                               s.status === "ACTIVE"
-                                ? "border-red-500/20 text-red-400 hover:bg-red-500/10"
+                                ? "border-amber-500/20 text-amber-400 hover:bg-amber-500/10"
                                 : "border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
                             }`}
                           >
                             {s.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                          </button>
+                          <button
+                            onClick={() => setDeleteUser(s)}
+                            title="Remove staff member"
+                            className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition"
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       ) : (
@@ -429,6 +487,45 @@ export default function AdminStaffPage() {
                 className="px-4 py-2 rounded-xl border border-white/10 text-xs text-[#9a9995] hover:text-[#f5f1e8] transition"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Staff Confirmation Modal */}
+      {deleteUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#141416] border border-red-500/30 rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-red-400">
+              <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-[#f5f1e8]">Revoke Staff Access</h3>
+                <p className="text-[11px] text-[#9a9995]">Irreversible security action</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#9a9995] leading-relaxed">
+              Are you sure you want to permanently remove <strong className="text-[#f5f1e8]">{deleteUser.name}</strong> ({deleteUser.email}) from staff credentials? Their administrative permissions will be revoked immediately.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setDeleteUser(null)}
+                disabled={submitting}
+                className="px-3 py-1.5 rounded-xl border border-white/10 text-xs text-[#9a9995] hover:text-[#f5f1e8] transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteStaff(deleteUser)}
+                disabled={submitting}
+                className="px-4 py-1.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/40 text-xs font-semibold hover:bg-red-500/30 transition flex items-center gap-1.5"
+              >
+                {submitting && <Loader2 size={12} className="animate-spin" />}
+                Confirm Deletion
               </button>
             </div>
           </div>

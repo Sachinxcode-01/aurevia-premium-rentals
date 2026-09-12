@@ -150,7 +150,7 @@ export default function PromotionalDeadlineTimer() {
 
   return (
     <section className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
-      <div className="relative overflow-hidden rounded-2xl border border-gold-champagne/30 bg-gradient-to-r from-obsidian via-[#141416] to-obsidian p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-2xl border border-gold-champagne/30 bg-linear-to-r from-obsidian via-[#141416] to-obsidian p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
         {/* Subtle Ambient Glow */}
         <div className="absolute -top-12 -left-12 h-40 w-40 rounded-full bg-gold-champagne/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -right-12 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
@@ -177,7 +177,7 @@ export default function PromotionalDeadlineTimer() {
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
               {time.days > 0 && (
                 <>
-                  <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-[56px]">
+                  <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-14">
                     <span className="font-mono text-lg sm:text-xl font-bold text-ivory">
                       {String(time.days).padStart(2, "0")}
                     </span>
@@ -187,7 +187,7 @@ export default function PromotionalDeadlineTimer() {
                 </>
               )}
 
-              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-[56px]">
+              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-14">
                 <span className="font-mono text-lg sm:text-xl font-bold text-gold-champagne">
                   {String(time.hours).padStart(2, "0")}
                 </span>
@@ -196,7 +196,7 @@ export default function PromotionalDeadlineTimer() {
 
               <span className="text-gold-champagne font-bold text-lg">:</span>
 
-              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-[56px]">
+              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-14">
                 <span className="font-mono text-lg sm:text-xl font-bold text-gold-champagne">
                   {String(time.minutes).padStart(2, "0")}
                 </span>
@@ -205,7 +205,7 @@ export default function PromotionalDeadlineTimer() {
 
               <span className="text-gold-champagne font-bold text-lg">:</span>
 
-              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-[56px]">
+              <div className="flex flex-col items-center bg-black/60 border border-white/10 rounded-xl px-3 py-2 min-w-14">
                 <span className="font-mono text-lg sm:text-xl font-bold text-amber-400">
                   {String(time.seconds).padStart(2, "0")}
                 </span>
