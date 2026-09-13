@@ -2,7 +2,10 @@ import React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://admin.aurevia.com"),
   title: "AUREVIA — Admin Operations & Control Center",
   description: "Enterprise Operations, Inventory Control, Booking Management, KYC Verification, and Financial Intelligence for AUREVIA Premium Camera Rentals.",
   icons: {
