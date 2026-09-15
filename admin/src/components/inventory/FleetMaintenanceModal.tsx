@@ -89,7 +89,7 @@ export default function FleetMaintenanceModal({
                 type="text"
                 value={shutterCount}
                 onChange={(e) => setShutterCount(e.target.value)}
-                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:border-[#d8b36a] focus:outline-none"
+                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:outline-none focus:ring-1 focus:ring-[#d8b36a]"
               />
             </div>
 
@@ -100,7 +100,7 @@ export default function FleetMaintenanceModal({
                 type="text"
                 value={firmwareVersion}
                 onChange={(e) => setFirmwareVersion(e.target.value)}
-                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:border-[#d8b36a] focus:outline-none"
+                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:outline-none focus:ring-1 focus:ring-[#d8b36a]"
               />
             </div>
 
@@ -111,7 +111,7 @@ export default function FleetMaintenanceModal({
                 type="text"
                 value={sensorStatus}
                 onChange={(e) => setSensorStatus(e.target.value)}
-                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:border-[#d8b36a] focus:outline-none"
+                className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs font-mono text-[#f5f1e8] focus:outline-none focus:ring-1 focus:ring-[#d8b36a]"
               />
             </div>
 
