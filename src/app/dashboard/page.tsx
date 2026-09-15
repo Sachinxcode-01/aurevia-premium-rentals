@@ -388,7 +388,14 @@ export default function CustomerDashboard() {
   };
 
   if (profileLoading || bookingsLoading) {
-    return <SkeletonDashboard />;
+    return (
+      <div className="min-h-screen bg-obsidian text-ivory">
+        <Navbar cartItemCount={cart.length} />
+        <main className="mx-auto max-w-7xl px-4 pt-36 pb-16 sm:px-6 lg:px-8">
+          <SkeletonDashboard />
+        </main>
+      </div>
+    );
   }
 
   const stats = {
@@ -407,7 +414,7 @@ export default function CustomerDashboard() {
       <div className="min-h-screen bg-obsidian text-ivory">
         <Navbar cartItemCount={cart.length} />
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl px-4 pt-36 pb-16 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-8 lg:flex-row">
             {/* Sidebar Navigation */}
             <DashboardNav
