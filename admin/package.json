@@ -10,6 +10,7 @@
     "dev": "next dev --webpack -p 3002",
     "dev:turbo": "next dev -p 3002",
     "build": "next build --webpack",
+    "postbuild": "node scripts/ensure-output-root.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
