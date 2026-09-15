@@ -17,5 +17,6 @@ try {
     console.log("[ensure-output-root] Synced parent .next/package.json for Vercel monorepo deployment.");
   }
 } catch (err) {
-  console.warn("[ensure-output-root] Notice:", err.message);
+  console.error("[ensure-output-root] Failed to prepare .next/package.json:", err);
+  process.exit(1);
 }
