@@ -253,9 +253,10 @@ export default function AdminInventoryPage() {
         <FleetMaintenanceModal
           equipmentName={maintenanceTarget.name}
           serialNumber={maintenanceTarget.serialNumber}
+          currentStatus={maintenanceTarget.status}
           onClose={() => setMaintenanceTarget(null)}
-          onSave={() => {
-            setItems(prev => prev.map(i => i.id === maintenanceTarget.id ? { ...i, status: "MAINTENANCE" } : i));
+          onSave={(newStatus) => {
+            setItems(prev => prev.map(i => i.id === maintenanceTarget.id ? { ...i, status: newStatus } : i));
           }}
         />
       )}
