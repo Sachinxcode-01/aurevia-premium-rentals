@@ -40,23 +40,46 @@ export async function POST(request: Request) {
     }
 
     // 2. Fetch authoritative product pricing from database
-    const { createServiceSupabaseClient } = await import("@/lib/supabase/server");
-    const supabase = await createServiceSupabaseClient();
-    const productIds = items.map((i: { productId: string }) => i.productId);
-    const { data: dbProducts } = await supabase
-      .from("products")
-      .select("id, daily_price, daily_rate")
-      .in("id", productIds);
+    const { isSupabaseConfigured, db } = await import("@/lib/db/store");
+    let dbProducts: any[] = [];
+    if (isSupabaseConfigured()) {
+      const { createServiceSupabaseClient } = await import("@/lib/supabase/server");
+      const supabase = await createServiceSupabaseClient();
+      const productIds = items.map((i: { productId: string }) => i.productId);
+      const { data } = await supabase
+        .from("products")
+        .select("id, daily_price, daily_rate")
+        .in("id", productIds);
+      dbProducts = data || [];
+    }
 
-    const pricingItems = items.map((i: { productId: string; quantity?: number; dailyPrice?: number }) => {
-      const match = dbProducts?.find((p: { id: string; daily_price?: number; daily_rate?: number }) => p.id === i.productId);
-      const actualPrice = match?.daily_price || match?.daily_rate || i.dailyPrice || 799;
-      return {
+    const pricingItems = [];
+    for (const i of items) {
+      let actualPrice: number | null = null;
+      const match = dbProducts.find((p: any) => p.id === i.productId);
+      if (match) {
+        actualPrice = Number(match.daily_price || match.daily_rate);
+      } else {
+        const storeProd = await db.getProductById(i.productId);
+        if (storeProd && !storeProd.isArchived) {
+          actualPrice = Number(storeProd.dailyPrice);
+        }
+      }
+
+      if (actualPrice === null || isNaN(actualPrice) || actualPrice <= 0) {
+        return apiError(
+          `Invalid or uncataloged equipment: ${i.productId}. Orders must reference valid catalog equipment.`,
+          "INVALID_PRODUCT",
+          400
+        );
+      }
+
+      pricingItems.push({
         productId: i.productId,
-        dailyPrice: Number(actualPrice),
+        dailyPrice: actualPrice,
         quantity: i.quantity || 1,
-      };
-    });
+      });
+    }
 
     // Compute base subtotal without coupon to accurately validate minimum coupon requirement
     const basePricing = calculateBookingPrice({

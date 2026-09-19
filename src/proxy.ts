@@ -16,17 +16,28 @@ export async function proxy(request: NextRequest) {
   // Handle API routes and CORS for admin and cross-origin access
   if (pathname.startsWith("/api")) {
     const origin = request.headers.get("origin");
+    const trustedOrigins = [
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.NEXT_PUBLIC_ADMIN_URL,
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+    ].filter(Boolean) as string[];
+
     const isAllowedOrigin =
       !origin ||
-      origin.includes("localhost") ||
-      origin.includes("127.0.0.1") ||
-      origin.endsWith(".vercel.app") ||
-      origin === process.env.NEXT_PUBLIC_SITE_URL ||
-      origin === process.env.NEXT_PUBLIC_ADMIN_URL;
+      trustedOrigins.includes(origin) ||
+      (origin.startsWith("http://localhost:") && process.env.NODE_ENV === "development") ||
+      (origin.startsWith("http://127.0.0.1:") && process.env.NODE_ENV === "development");
 
-    const allowedOrigin = isAllowedOrigin && origin ? origin : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
+    const defaultOrigin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const allowedOrigin = isAllowedOrigin && origin ? origin : defaultOrigin;
 
     if (request.method === "OPTIONS") {
+      if (!isAllowedOrigin && origin) {
+        return new NextResponse(null, { status: 403 });
+      }
       const preflightHeaders = new Headers({
         "Access-Control-Allow-Origin": allowedOrigin,
         "Access-Control-Allow-Credentials": "true",
@@ -38,10 +49,12 @@ export async function proxy(request: NextRequest) {
     }
 
     const res = NextResponse.next();
-    res.headers.set("Access-Control-Allow-Origin", allowedOrigin);
-    res.headers.set("Access-Control-Allow-Credentials", "true");
-    res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version");
+    if (isAllowedOrigin) {
+      res.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+      res.headers.set("Access-Control-Allow-Credentials", "true");
+      res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+      res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-CSRF-Token, Accept, Accept-Version");
+    }
     return res;
   }
 

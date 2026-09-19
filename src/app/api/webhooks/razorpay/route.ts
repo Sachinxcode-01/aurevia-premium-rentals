@@ -23,7 +23,13 @@ export async function POST(request: Request) {
       .update(rawBody)
       .digest("hex");
 
-    if (expectedSignature !== signature) {
+    const expectedBuf = Buffer.from(expectedSignature, "utf8");
+    const signatureBuf = Buffer.from(signature, "utf8");
+
+    if (
+      expectedBuf.length !== signatureBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, signatureBuf)
+    ) {
       return NextResponse.json({ error: "Webhook signature verification failed." }, { status: 400 });
     }
 

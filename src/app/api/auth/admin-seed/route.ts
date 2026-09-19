@@ -25,13 +25,20 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createServiceSupabaseClient();
 
-  const adminEmail    = process.env.ADMIN_EMAIL    ?? "premmundargi135@gmail.com";
-  const adminPassword = process.env.ADMIN_PASSWORD ?? "AureviaAdmin@2026";
-  const adminName     = process.env.ADMIN_NAME     ?? "Prem Mundargi";
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminName = process.env.ADMIN_NAME ?? "Admin User";
 
-  const staffEmail    = process.env.STAFF_EMAIL    ?? "sachiii8827@gmail.com";
-  const staffPassword = process.env.STAFF_PASSWORD ?? "AureviaStaff@2026";
-  const staffName     = process.env.STAFF_NAME     ?? "Sachin";
+  const staffEmail = process.env.STAFF_EMAIL;
+  const staffPassword = process.env.STAFF_PASSWORD;
+  const staffName = process.env.STAFF_NAME ?? "Staff User";
+
+  if (!adminEmail || !adminPassword || !staffEmail || !staffPassword) {
+    return NextResponse.json(
+      { error: "ADMIN_EMAIL, ADMIN_PASSWORD, STAFF_EMAIL, and STAFF_PASSWORD environment variables must be configured." },
+      { status: 500 }
+    );
+  }
 
   const results: Record<string, unknown> = {};
 

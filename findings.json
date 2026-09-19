@@ -1,0 +1,342 @@
+[
+  {
+    "verdict": "confirmed",
+    "fingerprint": "aurevia:api:client-side-price-tampering-create-order",
+    "title": "Client-controlled price tampering in create-order endpoint via unknown product fallback",
+    "description": "In /api/create-order, when a requested productId is not found in the database, the server falls back to client-supplied dailyPrice from the request body while availabilityEngine accepts uncataloged IDs as available by default, allowing creation of Razorpay orders at arbitrary prices.",
+    "root_cause": "src/app/api/create-order/route.ts falls back to i.dailyPrice instead of aborting when a product is missing from the database query result.",
+    "intended_behavior": "If any item in the order does not resolve to an active product in the authoritative database, the endpoint must reject the request with 400/404.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/app/api/create-order/route.ts",
+        "line": 9,
+        "scope": "POST",
+        "description": "Receives items array from client with arbitrary productId and dailyPrice values."
+      },
+      {
+        "kind": "propagation",
+        "file": "src/lib/services/availabilityEngine.ts",
+        "line": 96,
+        "scope": "checkProductAvailability",
+        "description": "Defaults uncataloged product IDs to available: true with stock 5."
+      },
+      {
+        "kind": "sink",
+        "file": "src/app/api/create-order/route.ts",
+        "line": 53,
+        "scope": "pricingItems calculation",
+        "description": "Falls back to i.dailyPrice from user input, which is then fed directly into Razorpay order creation amount."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "src/app/api/create-order/route.ts",
+        "line": 53,
+        "description": "const actualPrice = match?.daily_price || match?.daily_rate || i.dailyPrice || 799;"
+      },
+      {
+        "file": "src/lib/services/availabilityEngine.ts",
+        "line": 97,
+        "description": "return { available: true, productStock: 5, availableStock: 5, conflictingBookingsCount: 0 };"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "Public or authenticated checkout customer."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Checkout customer attempting price modification",
+      "payloads": [
+        "{\"items\": [{\"productId\": \"custom-fake-id\", \"dailyPrice\": 1, \"startDate\": \"2026-10-01\", \"endDate\": \"2026-10-05\", \"quantity\": 1}]}"
+      ],
+      "instructions": [
+        "Submit POST to /api/create-order with arbitrary productId and dailyPrice: 1.",
+        "Inspect generated Razorpay order amount."
+      ],
+      "observed_result": "Razorpay order is generated with an amount calculated from 1 INR per day."
+    },
+    "remediation": {
+      "strategy": "Reject orders with 400 Bad Request if any item is not present in the authoritative database.",
+      "code_changes": [
+        {
+          "file_name": "src/app/api/create-order/route.ts",
+          "fixed_code": "if (!match) return apiError('Invalid product selected', 'INVALID_PRODUCT', 400);"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Trivially reproducible with HTTP request body manipulation."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Allows customers to checkout high-value camera equipment at arbitrary discounted rates."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Confirmed directly from source code fallback behavior."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "aurevia:api:unauthenticated-booking-return-settlement",
+    "title": "Unauthenticated access to equipment return and deposit refund settlement endpoint",
+    "description": "The POST handler at /api/bookings/return performs return inspection processing, changes inventory unit states, and triggers financial deposit settlement calculations without requiring authentication or administrative privileges.",
+    "root_cause": "The route handler in src/app/api/bookings/return/route.ts contains no session validation, verifyApiAuth call, or RBAC check.",
+    "intended_behavior": "Return inspections and financial adjustments must require authenticated staff or admin credentials.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/app/api/bookings/return/route.ts",
+        "line": 121,
+        "scope": "POST",
+        "description": "Public HTTP endpoint accepts booking return inspection payload without auth checks."
+      },
+      {
+        "kind": "propagation",
+        "file": "src/app/api/bookings/return/route.ts",
+        "line": 181,
+        "scope": "db.processReturn",
+        "description": "Invokes database return processing, zeroing or altering late fees and damage costs based on caller input."
+      },
+      {
+        "kind": "sink",
+        "file": "src/app/api/bookings/return/route.ts",
+        "line": 196,
+        "scope": "sendReturnSettlementReceipt",
+        "description": "Dispatches settlement receipts and finalizes rental status."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "src/app/api/bookings/return/route.ts",
+        "line": 121,
+        "description": "POST function begins without any call to verifyApiAuth or createServerSupabaseClient."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "network_routing",
+        "description": "Endpoint /api/bookings/return is publicly reachable over HTTP."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Unauthenticated external attacker",
+      "payloads": [
+        "{\"bookingId\": \"valid-booking-id\", \"checklist\": {\"serialsMatched\": true, \"allAccessoriesReturned\": true}, \"damageCost\": 0, \"lateFeeOverride\": 0}"
+      ],
+      "instructions": [
+        "Send HTTP POST to /api/bookings/return with bookingId and checklist flags.",
+        "Observe return confirmation response."
+      ],
+      "observed_result": "Booking status is transitioned to completed and inventory status modified without credentials."
+    },
+    "remediation": {
+      "strategy": "Wrap the route handler with verifyApiAuth(req, ['admin', 'staff']) and reject unauthorized requests.",
+      "code_changes": [
+        {
+          "file_name": "src/app/api/bookings/return/route.ts",
+          "fixed_code": "const { user, response } = await verifyApiAuth(req, ['admin', 'staff']); if (response || !user) return response;"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Endpoint is exposed to the internet with no authentication barrier."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Allows an untrusted actor to prematurely mark rentals as returned and manipulate deposit refunds."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Verified by reviewing route source code."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "aurevia:proxy:insecure-cors-wildcard-credentialed-access",
+    "title": "Overly permissive CORS origin validation allowing credentialed cross-origin access from arbitrary Vercel deployments",
+    "description": "The middleware proxy allows any origin ending with .vercel.app to make authenticated, credentialed cross-origin requests to /api/* routes, enabling any third-party app hosted on Vercel to access sensitive APIs.",
+    "root_cause": "src/proxy.ts checks origin.endsWith('.vercel.app') and reflects it in Access-Control-Allow-Origin with Access-Control-Allow-Credentials: true.",
+    "intended_behavior": "CORS allowed origins should be strictly enumerated in an explicit allowlist or match the exact production domain and admin domain.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "src/proxy.ts",
+        "line": 18,
+        "scope": "proxy middleware",
+        "description": "Inspects Origin header of incoming HTTP requests."
+      },
+      {
+        "kind": "propagation",
+        "file": "src/proxy.ts",
+        "line": 23,
+        "scope": "isAllowedOrigin check",
+        "description": "Matches any origin substring ending with .vercel.app."
+      },
+      {
+        "kind": "sink",
+        "file": "src/proxy.ts",
+        "line": 42,
+        "scope": "response headers",
+        "description": "Sets Access-Control-Allow-Origin to the attacker's Vercel origin with Access-Control-Allow-Credentials: true."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "src/proxy.ts",
+        "line": 23,
+        "description": "origin.endsWith(\".vercel.app\") matched without domain prefix validation."
+      },
+      {
+        "file": "src/proxy.ts",
+        "line": 42,
+        "description": "res.headers.set(\"Access-Control-Allow-Credentials\", \"true\");"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "network_routing",
+        "description": "Attacker hosts a malicious site on Vercel (e.g. evil-app.vercel.app)."
+      },
+      {
+        "kind": "user_interaction",
+        "description": "Victim with active Aurevia session visits the attacker's site."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Attacker web page hosted on Vercel",
+      "payloads": [
+        "fetch('https://aurevia-app.com/api/v1/admin/customers', { credentials: 'include' })"
+      ],
+      "instructions": [
+        "Host a script on an arbitrary .vercel.app deployment that issues fetch with credentials to Aurevia API.",
+        "Victim visits page, browser allows reading the authenticated response."
+      ],
+      "observed_result": "Browser permits cross-origin reading of authenticated customer data due to reflected origin and credentials allow header."
+    },
+    "remediation": {
+      "strategy": "Replace wildcard suffix matching with an explicit list of authorized origin URLs.",
+      "code_changes": [
+        {
+          "file_name": "src/proxy.ts",
+          "fixed_code": "const allowed = [process.env.NEXT_PUBLIC_SITE_URL, process.env.NEXT_PUBLIC_ADMIN_URL, 'http://localhost:3000', 'http://localhost:3001'].filter(Boolean); const isAllowedOrigin = allowed.includes(origin);"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Requires hosting a page on Vercel and inducing an authenticated user to visit."
+      },
+      "impact": {
+        "score": "high",
+        "reason": "Permits unauthorized reading and writing of sensitive user or admin session actions cross-origin."
+      },
+      "overall_severity": "high"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Direct code evidence in src/proxy.ts."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "aurevia:supabase:rls-insert-privilege-escalation",
+    "title": "Privilege escalation to administrator role via Supabase profiles table INSERT policy",
+    "description": "The Row Level Security INSERT policy on public.profiles allows authenticated users to insert arbitrary roles, and the trigger intended to prevent role escalation only runs BEFORE UPDATE, leaving newly registered users able to grant themselves admin privileges.",
+    "root_cause": "The trg_prevent_role_escalation trigger was declared with BEFORE UPDATE only, omitting BEFORE INSERT, while the profiles_insert_self RLS policy only validates auth.uid() = id without restricting the inserted role column.",
+    "intended_behavior": "The role column on public.profiles must be immutable to client callers, enforced on both INSERT and UPDATE, defaulting to 'customer' unless created by service_role or administrative functions.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "supabase/migrations/20260715120000_realtime_rls.sql",
+        "line": 176,
+        "scope": "public.profiles",
+        "description": "profiles_insert_self policy allows authenticated users to insert rows where auth.uid() = id without checking role."
+      },
+      {
+        "kind": "propagation",
+        "file": "supabase/migrations/20260907000000_security_role_escalation_guard.sql",
+        "line": 30,
+        "scope": "trg_prevent_role_escalation",
+        "description": "Trigger is bound exclusively to BEFORE UPDATE, failing to intercept INSERT operations."
+      },
+      {
+        "kind": "sink",
+        "file": "src/lib/auth/rbac.ts",
+        "line": 88,
+        "scope": "verifyApiAuth",
+        "description": "Administrative authorization checks trust the role column from the profiles table, granting full super_admin/admin access."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "supabase/migrations/20260907000000_security_role_escalation_guard.sql",
+        "line": 31,
+        "description": "BEFORE UPDATE ON public.profiles trigger is missing BEFORE INSERT."
+      },
+      {
+        "file": "supabase/migrations/20260715120000_realtime_rls.sql",
+        "line": 178,
+        "description": "CREATE POLICY profiles_insert_self ON profiles FOR INSERT WITH CHECK (auth.uid() = id);"
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "Attacker registers an arbitrary customer account via standard Supabase auth."
+      },
+      {
+        "kind": "data_state",
+        "description": "Target profile record has not yet been populated by an administrative seeding process."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "Unprivileged registered user via Supabase JS client",
+      "payloads": [
+        "supabase.from('profiles').insert({ id: user.id, email: user.email, full_name: 'Attacker', role: 'admin' })"
+      ],
+      "instructions": [
+        "Sign up as a regular user via supabase.auth.signUp().",
+        "Issue an immediate insert to public.profiles setting role to 'admin'.",
+        "Access /api/v1/admin endpoints with the resulting session."
+      ],
+      "observed_result": "Row is created in public.profiles with role='admin', passing is_admin_or_staff checks."
+    },
+    "remediation": {
+      "strategy": "Attach trg_prevent_role_escalation to both INSERT and UPDATE, or enforce role = 'customer' in the RLS WITH CHECK clause.",
+      "code_changes": [
+        {
+          "file_name": "supabase/migrations/20260907000000_security_role_escalation_guard.sql",
+          "fixed_code": "CREATE TRIGGER trg_prevent_role_escalation BEFORE INSERT OR UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.prevent_profile_role_escalation();"
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "Requires only public self-registration and a standard Supabase insert query."
+      },
+      "impact": {
+        "score": "critical",
+        "reason": "Grants complete administrative and staff control over customer data, bookings, inventory, and refunds."
+      },
+      "overall_severity": "critical"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "Verified directly from SQL DDL and RLS policy definitions."
+    }
+  }
+]

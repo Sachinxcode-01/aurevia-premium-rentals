@@ -13,15 +13,16 @@ import {
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const token = searchParams.get("token");
     const authHeader = request.headers.get("Authorization");
+    const headerSecret = request.headers.get("x-cron-secret");
     const cronSecret = process.env.CRON_SECRET;
     const adminSecret = process.env.ADMIN_SEED_SECRET;
 
-    // Verify authentication
-    const isAuthorized = 
-      (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+    // Verify authentication via Bearer token or custom secret header
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : (headerSecret || null);
+
+    const isAuthorized =
+      (cronSecret && token === cronSecret) ||
       (adminSecret && token === adminSecret) ||
       (process.env.NODE_ENV === "development");
 

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { db } from "@/lib/db/store";
 import { sendReturnSettlementReceipt } from "@/lib/email/mailer";
+import { verifyApiAuth } from "@/lib/auth/rbac";
 
 export async function GET(req: NextRequest) {
   try {
@@ -120,6 +121,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const { isSupabaseConfigured } = await import("@/lib/db/store");
+    if (isSupabaseConfigured()) {
+      const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
+      if (response || !user) return response!;
+    }
+
     const body = await req.json();
     const {
       bookingId,
