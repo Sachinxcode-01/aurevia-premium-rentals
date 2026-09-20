@@ -12,6 +12,15 @@ export interface ChatAction {
   action?: string;
 }
 
+export interface ChatProduct {
+  name: string;
+  dailyPrice: number;
+  specs: string;
+  category: string;
+  slug: string;
+  imagePrimary?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -19,6 +28,9 @@ export interface ChatMessage {
   timestamp: Date;
   status: "sending" | "sent" | "error";
   actions?: ChatAction[];
+  products?: ChatProduct[];
+  suggestedFollowUps?: string[];
+  feedback?: "up" | "down";
 }
 
 interface ChatbotContextType {
@@ -27,6 +39,8 @@ interface ChatbotContextType {
   isMinimized: boolean;
   isTyping: boolean;
   unreadCount: number;
+  soundEnabled: boolean;
+  toggleSound: () => void;
   sendMessage: (content: string) => Promise<void>;
   openChat: () => void;
   closeChat: () => void;
@@ -35,28 +49,78 @@ interface ChatbotContextType {
   maximizeChat: () => void;
   clearChat: () => void;
   handleSuggestedAction: (action: string) => void;
+  rateMessage: (messageId: string, rating: "up" | "down") => void;
 }
 
 const ChatbotContext = createContext<ChatbotContextType | null>(null);
 
+/* ─── Web Audio Luxury Synth Chimes ─────────────────────────── */
+function playAudioTone(type: "send" | "receive") {
+  if (typeof window === "undefined") return;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    const now = ctx.currentTime;
+
+    if (type === "send") {
+      // Soft high-frequency metallic tap
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    } else {
+      // Warm luxury chime chord (two soft notes)
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // A4 -> E5
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    }
+  } catch {
+    // AudioContext blocked or not allowed until user interaction
+  }
+}
+
 /* ─── Suggested actions handler ─────────────────────────────── */
 const SUGGESTED_ACTION_PROMPTS: Record<string, string> = {
-  pricing: "What is the rental pricing?",
-  coupon: "How do I use the coupon code AUREVIA199?",
-  availability: "How do I check camera availability?",
+  pricing: "What are the camera rental rates?",
+  coupon: "What coupon codes can I use?",
+  availability: "How do I check camera availability for my dates?",
+  deposit: "How does the zero deposit policy work?",
+  wedding: "What camera do you recommend for wedding shoots?",
+  cinema: "What is the best camera for indie film production?",
 };
 
-/* ─── Provider ──────────────────────────────────────────────── */
+/* ─── Welcome Message ───────────────────────────────────────── */
 const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
   role: "assistant",
-  content: "Hello! I'm **AURA**, AUREVIA's AI assistant. 🎥\n\nI can help with camera availability, pricing, booking, and more. What can I do for you?",
+  content: "Greetings! I am **AURA**, your personal digital concierge at **AUREVIA** — Premium Camera & Optics Vault. 🎥✨\n\nI can assist with real-time gear specifications, personalized shoot recommendations, zero-deposit reservations, active promotional offers, and studio logistics.\n\nHow may I elevate your production today?",
   timestamp: new Date(),
   status: "sent",
   actions: [
-    { label: "Which cameras are available?", action: "availability" },
-    { label: "How to get ₹600 offer?", action: "coupon" },
-    { label: "Contact Prem", href: "https://wa.me/919686909048" },
+    { label: "📸 Explore Cameras", action: "availability" },
+    { label: "🛡️ Zero Deposit Info", action: "deposit" },
+    { label: "🎟️ View Coupons", action: "coupon" },
+    { label: "💬 WhatsApp Prem", href: "https://wa.me/919686909048" },
+  ],
+  suggestedFollowUps: [
+    "Which cameras are available?",
+    "Recommend gear for wedding shoot",
+    "How does zero deposit work?",
+    "How do I apply coupon AUREVIA199?",
   ],
 };
 
@@ -66,7 +130,28 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isTyping, setIsTyping]       = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Load sound setting from localStorage on client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("aurevia_chat_sound");
+      if (saved !== null) {
+        setSoundEnabled(saved === "true");
+      }
+    }
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("aurevia_chat_sound", String(next));
+      }
+      return next;
+    });
+  }, []);
 
   // History slice for API context (last 8 messages, user+assistant only)
   const getHistory = useCallback((msgs: ChatMessage[]) =>
@@ -85,6 +170,10 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    if (soundEnabled) {
+      playAudioTone("send");
+    }
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
@@ -102,10 +191,7 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
       status: "sending",
     };
 
-    setMessages((prev) => {
-      const updated = [...prev, userMsg, placeholder];
-      return updated;
-    });
+    setMessages((prev) => [...prev, userMsg, placeholder]);
     setIsTyping(true);
 
     // Retry logic (max 2 attempts)
@@ -138,10 +224,16 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
                   content: data.message ?? "Sorry, I couldn't process that.",
                   status: "sent",
                   actions: data.actions ?? [],
+                  products: data.products ?? undefined,
+                  suggestedFollowUps: data.suggestedFollowUps ?? [],
                 }
               : m
           )
         );
+
+        if (soundEnabled) {
+          playAudioTone("receive");
+        }
 
         // Increment unread if chat is closed or minimized
         setIsOpen((open) => {
@@ -158,7 +250,7 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
               m.id === placeholderId
                 ? {
                     ...m,
-                    content: "I'm having trouble connecting right now. Please try again or contact Prem directly on WhatsApp.",
+                    content: "I'm having trouble connecting to the concierge network right now. Please try again or reach Prem directly on WhatsApp for immediate assistance.",
                     status: "error",
                     actions: [{ label: "WhatsApp Prem", href: "https://wa.me/919686909048" }],
                   }
@@ -167,13 +259,12 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
           );
           break;
         }
-        // Brief wait before retry
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
 
     setIsTyping(false);
-  }, [messages, getHistory]);
+  }, [messages, getHistory, soundEnabled]);
 
   const openChat = useCallback(() => {
     setIsOpen(true);
@@ -210,6 +301,16 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
     sendMessage(prompt);
   }, [sendMessage]);
 
+  const rateMessage = useCallback((messageId: string, rating: "up" | "down") => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId
+          ? { ...m, feedback: m.feedback === rating ? undefined : rating }
+          : m
+      )
+    );
+  }, []);
+
   // Keyboard: Escape closes chat
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -222,8 +323,10 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
   return (
     <ChatbotContext.Provider value={{
       messages, isOpen, isMinimized, isTyping, unreadCount,
+      soundEnabled, toggleSound,
       sendMessage, openChat, closeChat, toggleChat,
       minimizeChat, maximizeChat, clearChat, handleSuggestedAction,
+      rateMessage,
     }}>
       {children}
     </ChatbotContext.Provider>
