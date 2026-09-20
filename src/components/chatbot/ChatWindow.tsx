@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useChatbot, type ChatMessage } from "./ChatbotProvider";
 import {
-  X, Minus, Send, Trash2,
+  X, Minus, Send,
   Sparkles, User, ArrowRight,
   Volume2, VolumeX, Copy, Check,
   ThumbsUp, ThumbsDown, Mic, MicOff,
   ChevronDown, ExternalLink, Tag,
-  Camera, ShieldCheck, TicketPercent,
-  Calendar, RotateCcw,
+  Camera, ShieldCheck,
+  RotateCcw,
 } from "lucide-react";
 import { animate } from "animejs";
 import { Logo } from "@/components/ui/Logo";
