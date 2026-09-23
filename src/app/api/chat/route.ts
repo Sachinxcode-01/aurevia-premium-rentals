@@ -185,16 +185,18 @@ function generateResponse(
 ): BotResponse {
   const { products, coupons } = catalog;
   const whatsappUrl = `https://wa.me/${process.env.NEXT_PUBLIC_CONCIERGE_WHATSAPP || "919686909048"}?text=${encodeURIComponent("Hi Prem, I am inquiring about camera gear rentals from AUREVIA.")}`;
-  const couponPills = coupons
-    .filter((c) => c.is_active)
-    .map((c) => c.discountFlat ? `**${c.code}** (₹${c.discountFlat} OFF)` : `**${c.code}** (${c.discountPercent}% OFF)`)
-    .join(", ");
+  const activeCoupons = coupons.filter((c) => c.is_active);
+  const couponPills = activeCoupons.length > 0
+    ? activeCoupons
+        .map((c) => c.discountFlat ? `**${c.code}** (₹${c.discountFlat} OFF)` : `**${c.code}** (${c.discountPercent}% OFF)`)
+        .join(", ")
+    : "Special seasonal discounts available via concierge";
 
   switch (intent) {
     case "greeting":
       return {
         intent,
-        message: "Welcome to **AUREVIA** — High-Performance Cinema & Optical Vault. 🎥✨\n\nI am **AURA**, your personal production concierge. I'm here to ensure your shoot is powered by pristine, calibrated equipment.\n\n**Here are quick ways I can assist:**\n• **Flagship Cameras & Specs** (Canon EOS R5, Nikon Z8, lenses)\n• **Personalized Shoot Recommendations** (Weddings, Cinema, YouTube, Wildlife)\n• **Real-Time Tariff & Savings** (Active offers: " + couponPills + ")\n• **Zero Security Deposit Policy & Fast Digital KYC**\n• **Doorstep Pelican-Case Delivery & Studio Pickups**\n\nWhat are you filming next?",
+        message: "Welcome to **AUREVIA** — High-Performance Cinema & Optical Vault. 🎥✨\n\nI am **AURA**, your personal production concierge. I'm here to ensure your shoot is powered by pristine, calibrated equipment.\n\n**Here are quick ways I can assist:**\n• **Flagship Cameras & Specs** (Canon EOS R5, Nikon Z8, lenses)\n• **Personalized Shoot Recommendations** (Weddings, Cinema, YouTube, Wildlife)\n• **Real-Time Tariff & Savings** (" + (activeCoupons.length > 0 ? "Active offers: " + couponPills : couponPills) + ")\n• **Zero Security Deposit Policy & Fast Digital KYC**\n• **Doorstep Pelican-Case Delivery & Studio Pickups**\n\nWhat are you filming next?",
         actions: [
           { label: "Explore Vault Gear", href: "/explore" },
           { label: "Reserve Online", href: "/booking" },
@@ -320,10 +322,12 @@ function generateResponse(
         ],
       };
 
-    case "camera_canon":
+    case "camera_canon": {
+      const canonProduct = products.find((p) => p.slug.includes("canon") || p.name.toLowerCase().includes("canon"));
+      const canonTariff = canonProduct ? canonProduct.dailyPrice.toLocaleString("en-IN") : "799";
       return {
         intent,
-        message: "📷 **Canon EOS R5 Full-Frame Mirrorless:**\n\n• **Rental Tariff**: ₹799 / day\n• **Sensor**: 45MP Full-Frame CMOS with 8K RAW video\n• **Stabilization**: 8-stops IBIS with RF optical IS lenses\n• **Autofocus**: 1,053 AF zones with deep learning eye/animal tracking\n• **Included**: Camera body, body cap, 1x LP-E6NH battery, dual charger, strap, and Pelican hard case.\n\n*Pro add-ons available: Extra LP-E6NH batteries (₹199), CFexpress 512GB (₹499).*",
+        message: `📷 **Canon EOS R5 Full-Frame Mirrorless:**\n\n• **Rental Tariff**: ₹${canonTariff} / day\n• **Sensor**: 45MP Full-Frame CMOS with 8K RAW video\n• **Stabilization**: 8-stops IBIS with RF optical IS lenses\n• **Autofocus**: 1,053 AF zones with deep learning eye/animal tracking\n• **Included**: Camera body, body cap, 1x LP-E6NH battery, dual charger, strap, and Pelican hard case.\n\n*Pro add-ons available: Extra LP-E6NH batteries (₹199), CFexpress 512GB (₹499).*`,
         products: products.filter((p) => p.slug.includes("canon")),
         actions: [
           { label: "Rent Canon EOS R5", href: "/booking" },
@@ -335,11 +339,14 @@ function generateResponse(
           "Is deposit needed?",
         ],
       };
+    }
 
-    case "camera_nikon":
+    case "camera_nikon": {
+      const nikonProduct = products.find((p) => p.slug.includes("nikon") || p.name.toLowerCase().includes("nikon"));
+      const nikonTariff = nikonProduct ? nikonProduct.dailyPrice.toLocaleString("en-IN") : "799";
       return {
         intent,
-        message: "📷 **Nikon Z8 Flagship Hybrid:**\n\n• **Rental Tariff**: ₹799 / day\n• **Sensor**: 45.7MP Stacked Full-Frame CMOS (zero rolling shutter)\n• **Video**: 8K 60p N-RAW Internal & 4K 120p ProRes\n• **Burst Rate**: Up to 120fps with full AF/AE tracking\n• **Included**: Nikon Z8 body, EN-EL15c battery, charger, strap, and protective hard shell case.",
+        message: `📷 **Nikon Z8 Flagship Hybrid:**\n\n• **Rental Tariff**: ₹${nikonTariff} / day\n• **Sensor**: 45.7MP Stacked Full-Frame CMOS (zero rolling shutter)\n• **Video**: 8K 60p N-RAW Internal & 4K 120p ProRes\n• **Burst Rate**: Up to 120fps with full AF/AE tracking\n• **Included**: Nikon Z8 body, EN-EL15c battery, charger, strap, and protective hard shell case.`,
         products: products.filter((p) => p.slug.includes("nikon")),
         actions: [
           { label: "Rent Nikon Z8", href: "/booking" },
@@ -351,6 +358,7 @@ function generateResponse(
           "What coupons are available?",
         ],
       };
+    }
 
     case "camera_info": {
       let msg = "🎥 **Flagship Cameras in the AUREVIA Vault:**\n\n";
@@ -379,7 +387,8 @@ function generateResponse(
     case "pricing": {
       let msg = "💎 **Authoritative Rental Rates & Transparent Pricing:**\n\n";
       products.forEach((p) => {
-        msg += `• **${p.name}**: ₹${p.dailyPrice.toLocaleString("en-IN")} / day (₹4,999 / week)\n`;
+        const weeklyRate = (p.dailyPrice * 7).toLocaleString("en-IN");
+        msg += `• **${p.name}**: ₹${p.dailyPrice.toLocaleString("en-IN")} / day (₹${weeklyRate} / week)\n`;
       });
       msg += "\n🎁 **Active Savings & Promo Codes:**\n";
       msg += `• ${couponPills}\n`;
@@ -401,15 +410,18 @@ function generateResponse(
       };
     }
 
-    case "coupon":
+    case "coupon": {
+      const couponMessage = activeCoupons.length > 0
+        ? `🎟️ **Exclusive AUREVIA Production Coupons:**\n\n${activeCoupons
+            .map((c) => c.discountFlat 
+              ? `• **${c.code}**: Flat ₹${c.discountFlat} instant discount on checkout!`
+              : `• **${c.code}**: Instant ${c.discountPercent}% OFF entire rental total!`)
+            .join("\n")}\n\n**How to Redeem:**\n1. Select your dates on the **/booking** page\n2. Enter the code in the **Coupon Code** field\n3. The discount is deducted immediately from your Razorpay total!`
+        : "🎟️ **Production Coupons:**\n\nThere are no active codes right now. Please check back soon or message our concierge for custom production volume quotes.";
+
       return {
         intent,
-        message: `🎟️ **Exclusive AUREVIA Production Coupons:**\n\n${coupons
-          .filter((c) => c.is_active)
-          .map((c) => c.discountFlat 
-            ? `• **${c.code}**: Flat ₹${c.discountFlat} instant discount on checkout!`
-            : `• **${c.code}**: Instant ${c.discountPercent}% OFF entire rental total!`)
-          .join("\n")}\n\n**How to Redeem:**\n1. Select your dates on the **/booking** page\n2. Enter the code in the **Coupon Code** field\n3. The discount is deducted immediately from your Razorpay total!`,
+        message: couponMessage,
         actions: [
           { label: "Apply Code in Booking", href: "/booking" },
           { label: "Explore Cameras", href: "/explore" },
@@ -420,6 +432,7 @@ function generateResponse(
           "Contact Prem on WhatsApp",
         ],
       };
+    }
 
     case "booking_process":
       return {

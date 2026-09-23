@@ -55,39 +55,62 @@ interface ChatbotContextType {
 const ChatbotContext = createContext<ChatbotContextType | null>(null);
 
 /* ─── Web Audio Luxury Synth Chimes ─────────────────────────── */
+let sharedAudioCtx: AudioContext | null = null;
+
+function getSharedAudioContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new AudioCtx();
+  }
+  return sharedAudioCtx;
+}
+
 function playAudioTone(type: "send" | "receive") {
-  if (typeof window === "undefined") return;
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    const ctx = getSharedAudioContext();
+    if (!ctx) return;
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc.type = "sine";
     const now = ctx.currentTime;
+    const duration = type === "send" ? 0.12 : 0.28;
+    const stopTime = now + duration;
 
     if (type === "send") {
       // Soft high-frequency metallic tap
       osc.frequency.setValueAtTime(520, now);
       osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
       gain.gain.setValueAtTime(0.04, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stopTime);
     } else {
       // Warm luxury chime chord (two soft notes)
       osc.frequency.setValueAtTime(440, now);
       osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12); // A4 -> E5
       gain.gain.setValueAtTime(0.05, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.28);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stopTime);
     }
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.onended = () => {
+      try {
+        osc.disconnect();
+        gain.disconnect();
+      } catch {
+        // ignore
+      }
+    };
+
+    osc.start(now);
+    osc.stop(stopTime);
   } catch {
     // AudioContext blocked or not allowed until user interaction
   }

@@ -272,6 +272,20 @@ export default function ChatWindow() {
     }
   };
 
+  // Cleanup active speech recognition on component unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
+
   // Copy message text to clipboard
   const handleCopyMessage = (msg: ChatMessage) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
