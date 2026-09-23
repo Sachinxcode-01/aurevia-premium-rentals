@@ -728,13 +728,13 @@ export default function CameraShowroom() {
     <div 
       ref={containerRef}
       className={`w-full relative glass-panel border-white/5 rounded-lg overflow-hidden flex flex-col lg:flex-row shadow-2xl transition-all duration-300 ${
-        isFullscreen ? "h-screen bg-black" : "h-[620px] md:h-[680px]"
+        isFullscreen ? "h-screen bg-black" : "h-155 md:h-170"
       }`}
     >
       
       {/* 3D Scene Viewport Canvas */}
       <div 
-        className="flex-1 h-[380px] lg:h-full bg-obsidian relative overflow-hidden"
+        className="flex-1 h-95 lg:h-full bg-obsidian relative overflow-hidden"
         onPointerDown={startInteraction}
         onPointerUp={endInteraction}
       >
@@ -931,7 +931,7 @@ export default function CameraShowroom() {
       </div>
 
       {/* Showroom Specs & Information Sidebar Panel */}
-      <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-white/5 p-6 lg:p-8 flex flex-col justify-between bg-rich-black/30 overflow-y-auto">
+      <div className="w-full lg:w-90 border-t lg:border-t-0 lg:border-l border-white/5 p-6 lg:p-8 flex flex-col justify-between bg-rich-black/30 overflow-y-auto">
         <div className="space-y-6">
           <div className="text-left">
             <span className="text-[9px] uppercase tracking-widest text-gold-champagne font-mono block">
@@ -1008,9 +1008,9 @@ export default function CameraShowroom() {
           </div>
 
           {/* Dynamic Information Display Box */}
-          <div className="pt-4 border-t border-white/5 text-left min-h-[140px] flex flex-col justify-center">
+          <div className="pt-4 border-t border-white/5 text-left min-h-35 flex flex-col justify-center">
             {activeHotspot ? (
-              <div className="p-4 bg-white/[0.02] border border-white/5 rounded-lg space-y-2 animate-fade-in">
+              <div className="p-4 bg-white/2 border border-white/5 rounded-lg space-y-2 animate-fade-in">
                 <div className="flex items-center gap-2 text-gold-champagne">
                   {activeHotspot.icon}
                   <span className="text-[10px] font-mono font-semibold uppercase tracking-wider">
@@ -1027,9 +1027,9 @@ export default function CameraShowroom() {
                 )}
               </div>
             ) : (
-              <div className="p-4 bg-white/[0.01] border border-dashed border-white/5 rounded-lg text-center space-y-2 py-8">
+              <div className="p-4 bg-white/1 border border-dashed border-white/5 rounded-lg text-center space-y-2 py-8">
                 <HelpCircle size={20} className="mx-auto text-muted-gray/50" />
-                <p className="text-[10px] text-muted-gray leading-normal max-w-[220px] mx-auto">
+                <p className="text-[10px] text-muted-gray leading-normal max-w-55 mx-auto">
                   Click a camera feature hotspot button or examine details by tapping elements inside the showroom.
                 </p>
               </div>
