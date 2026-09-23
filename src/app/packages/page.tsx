@@ -37,32 +37,32 @@ export default function ProductionPackagesPage() {
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         {/* ─── HEADER & VALUE PROPOSITION ─── */}
         <div className="mb-10 text-center max-w-4xl mx-auto">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3.5 py-1 text-xs font-mono font-bold uppercase tracking-widest text-amber-300">
-            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-gold-champagne/30 bg-gold-champagne/10 px-3.5 py-1 text-xs font-mono font-medium text-gold-champagne">
+            <Sparkles className="h-3.5 w-3.5 text-gold-champagne" />
             <span>Complete Production Packages &amp; Multi-Day Rates</span>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Pre-Packaged <span className="bg-linear-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent">Cinema Rigs</span> &amp; Tiered Rates
+          <h1 className="text-3xl font-black tracking-tight text-ivory sm:text-5xl lg:text-6xl">
+            Pre-Packaged <span className="bg-linear-to-r from-gold-champagne via-amber-300 to-gold-warm bg-clip-text text-transparent">Cinema Rigs</span> &amp; Tiered Rates
           </h1>
 
-          <p className="mt-4 text-sm text-neutral-400 sm:text-base leading-relaxed">
-            Eliminate equipment incompatibility on set. Rent fully-rigged camera systems in certified Pelican flight cases with automated multi-day discounts: <strong className="text-white">Weekend Special (3 Days = 2-Day Rate)</strong>, <strong className="text-white">1-Week Tier (7 Days = 4-Day Rate)</strong>, and <strong className="text-white">Monthly Feature Tier (30 Days = 12-Day Rate)</strong>.
+          <p className="mt-4 text-sm text-muted-gray sm:text-base leading-relaxed">
+            Eliminate equipment incompatibility on set. Rent fully-rigged camera systems in certified Pelican flight cases with automated multi-day discounts: <strong className="text-ivory">Weekend Special (3 Days = 2-Day Rate)</strong>, <strong className="text-ivory">1-Week Tier (7 Days = 4-Day Rate)</strong>, and <strong className="text-ivory">Monthly Feature Tier (30 Days = 12-Day Rate)</strong>.
           </p>
 
           {/* Quick Value Metrics */}
-          <div className="mt-6 flex flex-wrap justify-center items-center gap-6 text-xs text-neutral-300 font-mono">
+          <div className="mt-6 flex flex-wrap justify-center items-center gap-6 text-xs text-muted-gray font-mono">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-emerald-400" />
-              <span>Pelican Flight-Case Verified</span>
+              <span className="text-ivory/90">Pelican Flight-Case Verified</span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-400" />
-              <span>15% - 60% Multi-Day Savings</span>
+              <Clock className="h-4 w-4 text-gold-champagne" />
+              <span className="text-ivory/90">15% - 60% Multi-Day Savings</span>
             </div>
             <div className="flex items-center gap-2">
-              <Film className="h-4 w-4 text-cyan-400" />
-              <span>Full Cine Accessories Included</span>
+              <Film className="h-4 w-4 text-gold-champagne" />
+              <span className="text-ivory/90">Full Cine Accessories Included</span>
             </div>
           </div>
         </div>

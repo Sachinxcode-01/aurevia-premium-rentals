@@ -214,14 +214,12 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
           {/* Frame-Aware Cinematic Typography Overlay */}
           <CinematicText progress={scrollProgress} onExploreClick={onExploreClick} />
 
-          {/* Real-Time Sequence Telemetry Badge (Bottom Left HUD) */}
-          <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-3 bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 text-[10px] font-mono text-muted-gray shadow-2xl">
-            <span className={`w-2 h-2 rounded-full ${isReady ? "bg-gold-champagne animate-ping" : "bg-emerald-400 animate-pulse"}`} />
-            <span className="text-ivory font-medium">
-              {isReady ? `FRAME ${String(currentFrameNum).padStart(3, "0")} / ${TOTAL_FRAMES}` : `PREPARING 8K SEQUENCE (${progressPct}%)`}
+          {/* Real-Time Sequence Telemetry Badge (Discreet Bottom Left HUD) */}
+          <div className="absolute bottom-8 left-6 md:left-12 z-30 hidden sm:flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 text-[9px] font-mono text-muted-gray/70 select-none">
+            <span className={`w-1.5 h-1.5 rounded-full ${isReady ? "bg-gold-champagne/60" : "bg-emerald-400/60"}`} />
+            <span>
+              {isReady ? `FRAME ${String(currentFrameNum).padStart(3, "0")} / ${TOTAL_FRAMES}` : `SYNCING (${progressPct}%)`}
             </span>
-            <span className="text-white/20">|</span>
-            <span className="text-gold-champagne font-semibold">8K RAW 30FPS</span>
           </div>
 
           {/* Interactive Desktop Sequence Stage Navigation Dots (Right Side) */}
@@ -279,16 +277,19 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             })}
           </div>
 
-          {/* Scroll Hint */}
+          {/* Prominent High-Contrast Scroll Interaction Hint */}
           <div
-            className={`absolute bottom-16 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 transition-opacity duration-300 pointer-events-none text-center ${
-              scrollProgress > 0.15 ? "opacity-0" : "opacity-100"
+            className={`absolute bottom-16 sm:bottom-10 left-1/2 -translate-x-1/2 z-30 transition-all duration-300 pointer-events-none text-center ${
+              scrollProgress > 0.12 ? "opacity-0 scale-95" : "opacity-100 scale-100"
             }`}
           >
-            <span className="text-[9px] uppercase tracking-[0.3em] text-muted-gray/80 font-mono block mb-2">
-              Scroll to Scrub Sequence
-            </span>
-            <div className="w-px h-8 sm:h-10 mx-auto bg-linear-to-b from-gold-champagne to-transparent animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-obsidian/95 backdrop-blur-md border border-gold-champagne/60 shadow-2xl shadow-black/90">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-champagne animate-pulse" />
+              <span className="text-xs sm:text-[13px] font-bold tracking-[0.2em] uppercase text-ivory font-mono">
+                Scroll to Scrub Sequence
+              </span>
+            </div>
+            <div className="w-px h-6 sm:h-8 mx-auto mt-2 bg-linear-to-b from-gold-champagne to-transparent animate-pulse" />
           </div>
         </div>
       </div>

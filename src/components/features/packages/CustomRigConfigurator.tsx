@@ -430,7 +430,7 @@ export default function CustomRigConfigurator() {
 
           {/* Shoot Duration Selector */}
           <div>
-            <label className="mb-2 block text-[10px] font-mono uppercase font-bold text-neutral-400">
+            <label className="mb-2 block text-[10px] font-mono font-medium text-muted-gray">
               Rental Duration ({durationDays} Days)
             </label>
             <div className="grid grid-cols-3 gap-1.5 font-mono text-xs">
@@ -438,10 +438,10 @@ export default function CustomRigConfigurator() {
                 <button
                   key={d}
                   onClick={() => setDurationDays(d)}
-                  className={`rounded-lg py-2 transition-all ${
+                  className={`rounded-lg py-2 transition-all cursor-pointer ${
                     durationDays === d
-                      ? "bg-amber-400 text-black font-bold"
-                      : "bg-black/60 text-neutral-400 hover:text-white border border-white/5"
+                      ? "bg-gold-champagne text-obsidian font-bold shadow-md"
+                      : "btn-secondary text-muted-gray py-2"
                   }`}
                 >
                   {d === 1 ? "1 Day" : d === 3 ? "3D Weekend" : "7D Week"}
@@ -451,18 +451,18 @@ export default function CustomRigConfigurator() {
           </div>
 
           {/* Price Breakdown */}
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 space-y-2">
-            <div className="flex justify-between text-xs text-neutral-400 font-mono">
+          <div className="rounded-2xl border border-gold-champagne/20 bg-gold-champagne/5 p-4 space-y-2">
+            <div className="flex justify-between text-xs text-muted-gray font-mono">
               <span>Unbundled A La Carte:</span>
               <span className="line-through">₹{(rawUnbundledDaily * durationDays).toLocaleString("en-IN")}</span>
             </div>
 
             <div className="flex items-baseline justify-between">
               <div>
-                <span className="text-[10px] font-mono text-amber-400 uppercase">
+                <span className="text-[10px] font-mono text-gold-champagne">
                   {pricing.tierName}
                 </span>
-                <p className="text-2xl font-black text-white font-mono">
+                <p className="text-2xl font-black text-ivory font-mono">
                   ₹{pricing.totalPackageFee.toLocaleString("en-IN")}
                 </p>
               </div>
@@ -475,7 +475,7 @@ export default function CustomRigConfigurator() {
           {/* Add to Cart CTA */}
           <button
             onClick={handleAddCustomRigToCart}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-amber-400 via-amber-300 to-amber-500 py-3.5 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
+            className="btn-primary w-full py-3.5 text-xs font-bold"
           >
             <ShoppingBag className="h-4 w-4" />
             Book Custom Cinema Package

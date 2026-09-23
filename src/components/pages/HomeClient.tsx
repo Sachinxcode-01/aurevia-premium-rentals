@@ -1074,31 +1074,42 @@ export default function HomeClient() {
               Premium Camera Rentals by Prem Mundargi.<br />Frame the Extraordinary.
             </p>
             <div className="space-y-1.5 text-[11px] font-mono">
-              <p className="text-gold-champagne uppercase tracking-wider text-[10px] mb-2">Rental Enquiries</p>
+              <p className="text-gold-champagne uppercase tracking-wider text-[10px] mb-2 font-semibold">Concierge Contact</p>
               <a href="tel:+919686909048" className="flex items-center gap-2 text-muted-gray hover:text-gold-champagne transition">
-                <Phone aria-hidden="true" size={15} className="shrink-0 text-gold-champagne/60" /> +91 96869 09048
-              </a>
-              <a
-                href="https://wa.me/919686909048"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-muted-gray hover:text-[#25D366] transition"
-              >
-                <MessageCircle aria-hidden="true" size={15} className="shrink-0" /> WhatsApp Prem
+                <Phone aria-hidden="true" size={14} className="shrink-0 text-gold-champagne/70" /> +91 96869 09048
               </a>
               <a href="mailto:premmundargi135@gmail.com" className="flex items-center gap-2 text-muted-gray hover:text-gold-champagne transition break-all">
-                <Mail aria-hidden="true" size={15} className="shrink-0 text-gold-champagne/60" /> premmundargi135@gmail.com
+                <Mail aria-hidden="true" size={14} className="shrink-0 text-gold-champagne/70" /> premmundargi135@gmail.com
               </a>
-              <a
-                href="https://www.instagram.com/mr__prem___.135?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==&igsi=ZDNlZDc0MzIxNw=="
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-muted-gray hover:text-pink-400 transition"
-              >
-                <svg className="w-3.5 h-3.5 fill-current shrink-0 text-gold-champagne/60" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg> Instagram: @mr__prem___.135
-              </a>
+            </div>
+
+            {/* Social Channels with Standard Iconography */}
+            <div className="pt-2">
+              <p className="text-muted-gray uppercase tracking-wider text-[9px] font-mono mb-2 font-semibold">Follow &amp; Connect</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="https://www.instagram.com/mr__prem___.135?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==&igsi=ZDNlZDc0MzIxNw=="
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram Profile @mr__prem___.135"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-pink-500/50 hover:bg-pink-500/10 text-muted-gray hover:text-pink-400 transition-all text-xs font-mono group"
+                >
+                  <svg className="w-3.5 h-3.5 fill-current text-gold-champagne group-hover:text-pink-400 group-hover:scale-110 transition-all" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                  <span>Instagram</span>
+                </a>
+                <a
+                  href="https://wa.me/919686909048"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp Concierge"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-emerald-500/50 hover:bg-emerald-500/10 text-muted-gray hover:text-emerald-400 transition-all text-xs font-mono group"
+                >
+                  <MessageCircle size={15} className="group-hover:scale-110 transition-transform text-emerald-400" />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
             </div>
           </div>
 
@@ -1143,28 +1154,30 @@ export default function HomeClient() {
             <div className="pt-3 border-t border-white/5 space-y-2">
               <p className="text-[10px] uppercase font-mono tracking-wider text-gold-champagne font-semibold">Website Developer</p>
               <p className="text-xs text-ivory/90 font-medium">Sachin (Full-Stack Dev)</p>
-              <div className="flex flex-col gap-1.5 pt-1">
+              <div className="flex items-center gap-2 pt-1">
                 <a
                   href="https://github.com/Sachinxcode-01"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[11px] font-mono text-muted-gray hover:text-ivory transition"
+                  aria-label="GitHub Profile"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/30 text-muted-gray hover:text-ivory transition-all text-[11px] font-mono group"
                 >
-                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
                   </svg>
-                  GitHub: Sachinxcode-01
+                  <span>GitHub</span>
                 </a>
                 <a
                   href="https://www.instagram.com/ohh_itz_sachin_?igsh=eWRkeDBmdzc3MzBl&igsi=eWRkeDBmdzc3MzBl"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[11px] font-mono text-muted-gray hover:text-pink-400 transition"
+                  aria-label="Instagram Profile"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-pink-500/40 text-muted-gray hover:text-pink-400 transition-all text-[11px] font-mono group"
                 >
-                  <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 fill-current group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                   </svg>
-                  Instagram: @ohh_itz_sachin_
+                  <span>Instagram</span>
                 </a>
               </div>
               <p className="text-[10px] text-gold-champagne/80 font-light pt-1">

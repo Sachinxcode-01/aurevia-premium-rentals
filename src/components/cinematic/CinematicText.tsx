@@ -65,9 +65,9 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
           <Sparkles size={11} /> AUREVIA PRESENTS
         </span>
         <h1 className="serif-heading text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-ivory tracking-tight drop-shadow-2xl">
-          CANON <span className="text-gold-champagne">EOS R5</span>
+          Canon <span className="text-gold-champagne">EOS R5</span>
         </h1>
-        <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-muted-gray font-mono">
+        <p className="text-[10px] sm:text-xs tracking-[0.2em] text-muted-gray font-mono">
           The Cinema Vault Series
         </p>
       </div>
@@ -81,12 +81,12 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
           visibility: op2 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold tracking-[0.2em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
           01 • Masterclass Optics
         </span>
         <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
-          PRECISION <br />
-          <span className="text-gold-champagne font-normal">IN EVERY FRAME.</span>
+          Precision <br />
+          <span className="text-gold-champagne font-normal">in Every Frame.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray leading-relaxed font-light">
           Crafted with 45MP high-resolution full-frame sensors and advanced RF optical glass engineered for uncompromising visual clarity.
@@ -106,12 +106,12 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
           visibility: op3 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold tracking-[0.2em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
           02 • Ergonomics &amp; Control
         </span>
         <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
-          BUILT FOR <br />
-          <span className="text-gold-champagne font-normal">STORYTELLERS.</span>
+          Built for <br />
+          <span className="text-gold-champagne font-normal">Storytellers.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray leading-relaxed font-light ml-auto">
           From high-budget commercial film sets to intimate documentary captures, intuitive controls give you complete creative authority.
@@ -131,12 +131,12 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
           visibility: op4 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[8px] sm:text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
+        <span className="inline-block text-[8px] sm:text-[9px] font-semibold tracking-[0.2em] text-gold-champagne bg-gold-champagne/10 px-3 py-1 rounded-full border border-gold-champagne/20">
           03 • 8K RAW Cinema Power
         </span>
         <h2 className="serif-heading text-2xl sm:text-4xl md:text-5xl font-light text-ivory leading-tight">
-          CINEMATIC POWER. <br />
-          <span className="text-gold-champagne font-normal">PROFESSIONAL CONTROL.</span>
+          Cinematic Power. <br />
+          <span className="text-gold-champagne font-normal">Professional Control.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray leading-relaxed font-light">
           Record 8K RAW video internally with Dual Pixel CMOS AF II precision tracking and 5-axis in-body image stabilization.
@@ -204,12 +204,12 @@ export default function CinematicText({ progress, onExploreClick }: CinematicTex
           visibility: op6 < 0.01 ? "hidden" : "visible",
         }}
       >
-        <span className="inline-block text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.4em] text-gold-champagne bg-gold-champagne/10 px-4 py-1.5 rounded-full border border-gold-champagne/30">
-          RENT • CREATE • CAPTURE
+        <span className="inline-block text-[9px] sm:text-[10px] font-mono tracking-[0.3em] text-gold-champagne bg-gold-champagne/10 px-4 py-1.5 rounded-full border border-gold-champagne/30">
+          Rent • Create • Capture
         </span>
         <h2 className="serif-heading text-3xl sm:text-5xl md:text-6xl font-light text-ivory leading-tight tracking-tight">
-          FRAME THE <br />
-          <span className="text-gold-champagne font-normal">EXTRAORDINARY.</span>
+          Frame the <br />
+          <span className="text-gold-champagne font-normal">Extraordinary.</span>
         </h2>
         <p className="text-xs sm:text-sm text-muted-gray font-light max-w-md mx-auto leading-relaxed">
           Experience the pinnacle of cinema optics. Reserve the Canon EOS R5 vault package today.

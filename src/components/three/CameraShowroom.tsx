@@ -1037,17 +1037,17 @@ export default function CameraShowroom() {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-white/5 flex flex-col gap-2">
+        <div className="pt-4 border-t border-white/5 flex items-center justify-center">
           <button
             onClick={() => {
               selectHotspot(null);
               setIsExploded(false);
               setShowOpticsRay(false);
             }}
-            className="w-full py-2.5 bg-white/5 border border-white/10 hover:border-gold-champagne text-gold-champagne text-xs font-semibold uppercase tracking-wider rounded transition cursor-pointer flex items-center justify-center gap-1.5"
+            className="btn-ghost text-[11px] font-mono text-muted-gray hover:text-ivory px-3 py-1.5 rounded-full border border-white/10 hover:border-white/20 transition cursor-pointer inline-flex items-center gap-1.5"
           >
-            <RotateCcw size={12} />
-            Reset Camera View
+            <RotateCcw size={11} className="text-gold-champagne" />
+            <span>Reset View</span>
           </button>
         </div>
       </div>

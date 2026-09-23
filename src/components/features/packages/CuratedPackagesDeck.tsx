@@ -117,15 +117,15 @@ Prepared by AUREVIA Vault Operations
   return (
     <div className="space-y-8">
       {/* ─── DURATION TIER BARREL SELECTOR ─── */}
-      <div className="rounded-2xl border border-white/10 bg-neutral-900/80 p-5 backdrop-blur-xl shadow-xl">
+      <div className="rounded-2xl border border-white/10 bg-charcoal/80 p-5 backdrop-blur-xl shadow-xl">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+            <span className="text-[10px] font-mono font-medium text-gold-champagne">
               Multi-Day Production Tier Pricing
             </span>
-            <h3 className="text-base font-bold text-white">
+            <h2 className="text-base font-bold text-ivory">
               Select Your Shoot Schedule Duration
-            </h3>
+            </h2>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -135,16 +135,16 @@ Prepared by AUREVIA Vault Operations
                 <button
                   key={tier.days}
                   onClick={() => setSelectedDurationDays(tier.days)}
-                  className={`flex flex-col items-start rounded-xl px-4 py-2 text-left transition-all ${
+                  className={`flex flex-col items-start rounded-xl px-4 py-2 text-left transition-all cursor-pointer ${
                     isSelected
-                      ? "border-amber-400 bg-amber-400 text-black shadow-lg shadow-amber-400/20 font-bold"
-                      : "border border-white/10 bg-black/60 text-neutral-300 hover:border-white/20 hover:text-white"
+                      ? "bg-gold-champagne text-obsidian shadow-lg shadow-gold-champagne/20 font-bold"
+                      : "btn-secondary text-muted-gray"
                   }`}
                 >
                   <span className="text-xs font-bold">{tier.label}</span>
                   <span
                     className={`text-[10px] font-mono ${
-                      isSelected ? "text-neutral-900 font-semibold" : "text-amber-400/80"
+                      isSelected ? "text-obsidian/80 font-semibold" : "text-gold-champagne/90"
                     }`}
                   >
                     {tier.desc}
@@ -169,7 +169,7 @@ Prepared by AUREVIA Vault Operations
           return (
             <div
               key={pkg.id}
-              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-neutral-900/90 shadow-2xl transition-all duration-300 hover:border-amber-400/40 hover:shadow-amber-500/5"
+              className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-charcoal/90 shadow-2xl transition-all duration-300 hover:border-gold-champagne/40 hover:shadow-gold-champagne/5"
             >
               {/* Top Banner Image with Badges */}
               <div className="relative h-60 w-full overflow-hidden sm:h-72">
@@ -180,14 +180,14 @@ Prepared by AUREVIA Vault Operations
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 1024px) 100vw, 600px"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-obsidian via-obsidian/40 to-transparent" />
 
                 {/* Badges */}
                 <div className="absolute top-4 right-4 left-4 flex items-center justify-between">
-                  <span className="rounded-full bg-black/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 backdrop-blur-md border border-amber-400/30">
+                  <span className="rounded-full bg-black/80 px-3 py-1 text-[10px] font-semibold text-gold-champagne backdrop-blur-md border border-gold-champagne/30">
                     {pkg.category}
                   </span>
-                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300 backdrop-blur-md border border-emerald-500/40">
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-semibold text-emerald-300 backdrop-blur-md border border-emerald-500/40">
                     <Sparkles className="h-3 w-3" />
                     {pkg.bundleDiscountPercent}% Bundle Off
                   </span>
@@ -195,10 +195,10 @@ Prepared by AUREVIA Vault Operations
 
                 {/* Package Title inside Image overlay */}
                 <div className="absolute right-4 bottom-4 left-4">
-                  <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-amber-400">
+                  <span className="text-[10px] font-mono font-medium text-gold-champagne">
                     {pkg.badge}
                   </span>
-                  <h3 className="text-xl font-black text-white sm:text-2xl">
+                  <h3 className="text-xl font-black text-ivory sm:text-2xl">
                     {pkg.name}
                   </h3>
                 </div>
@@ -206,19 +206,19 @@ Prepared by AUREVIA Vault Operations
 
               {/* Package Body Details */}
               <div className="flex-1 space-y-6 p-6">
-                <p className="text-xs text-neutral-300 leading-relaxed">
+                <p className="text-xs text-muted-gray leading-relaxed">
                   {pkg.tagline}
                 </p>
 
                 {/* Highlights List */}
                 <div className="space-y-2 rounded-xl border border-white/5 bg-black/40 p-4">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400">
+                  <span className="text-[10px] font-mono text-muted-gray">
                     Key Equipment Highlights:
                   </span>
-                  <ul className="space-y-1.5 text-xs text-neutral-200">
+                  <ul className="space-y-1.5 text-xs text-ivory/90">
                     {pkg.highlightSpecs.map((spec, i) => (
                       <li key={i} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-gold-champagne shrink-0" />
                         <span>{spec}</span>
                       </li>
                     ))}
@@ -231,7 +231,7 @@ Prepared by AUREVIA Vault Operations
                     onClick={() =>
                       setExpandedPackageId(isExpanded ? null : pkg.id)
                     }
-                    className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors"
+                    className="flex w-full items-center justify-between text-xs font-semibold text-gold-champagne hover:text-gold-warm transition-colors cursor-pointer"
                   >
                     <span className="flex items-center gap-1.5">
                       <Layers className="h-3.5 w-3.5" />
@@ -239,7 +239,7 @@ Prepared by AUREVIA Vault Operations
                         ? "Hide Full Equipment Manifest"
                         : "View Complete Equipment Manifest"}
                     </span>
-                    <span className="font-mono text-[10px] text-neutral-400">
+                    <span className="font-mono text-[10px] text-muted-gray">
                       {pkg.includedGear.reduce(
                         (acc, curr) => acc + curr.items.length,
                         0
@@ -249,38 +249,38 @@ Prepared by AUREVIA Vault Operations
                   </button>
 
                   {isExpanded && (
-                    <div className="mt-3 space-y-3 rounded-xl border border-white/10 bg-neutral-950 p-4 text-xs">
+                    <div className="mt-3 space-y-3 rounded-xl border border-white/10 bg-obsidian p-4 text-xs">
                       {pkg.includedGear.map((dept, i) => (
                         <div key={i} className="space-y-1">
-                          <span className="text-[10px] font-mono uppercase font-bold text-neutral-400">
+                          <span className="text-[10px] font-mono font-bold text-muted-gray">
                             {dept.department}
                           </span>
-                          <ul className="list-disc pl-4 text-neutral-300 space-y-0.5">
+                          <ul className="list-disc pl-4 text-ivory/80 space-y-0.5">
                             {dept.items.map((it, j) => (
                               <li key={j}>{it}</li>
                             ))}
                           </ul>
                         </div>
                       ))}
-                      <div className="mt-2 border-t border-white/10 pt-2 text-[10px] text-neutral-400 font-mono">
-                        Packaged in: <strong className="text-white">{pkg.pelicanCaseModel}</strong> (Total Est. {pkg.estimatedWeightKg} kg)
+                      <div className="mt-2 border-t border-white/10 pt-2 text-[10px] text-muted-gray font-mono">
+                        Packaged in: <strong className="text-ivory">{pkg.pelicanCaseModel}</strong> (Total Est. {pkg.estimatedWeightKg} kg)
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Tiered Price Summary Card */}
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
+                <div className="rounded-2xl border border-gold-champagne/20 bg-gold-champagne/5 p-4">
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-[10px] uppercase font-mono tracking-wider text-amber-400">
+                      <span className="text-[10px] font-mono text-gold-champagne">
                         {pricing.tierName} ({selectedDurationDays} Days)
                       </span>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black text-white font-mono">
+                        <span className="text-2xl font-black text-ivory font-mono">
                           ₹{pricing.totalPackageFee.toLocaleString("en-IN")}
                         </span>
-                        <span className="text-xs text-neutral-400 line-through font-mono">
+                        <span className="text-xs text-muted-gray line-through font-mono">
                           ₹{(pkg.dailyRate * selectedDurationDays).toLocaleString("en-IN")}
                         </span>
                       </div>
@@ -290,7 +290,7 @@ Prepared by AUREVIA Vault Operations
                       <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[11px] font-bold text-emerald-300 border border-emerald-500/30">
                         Save ₹{pricing.totalSavingsAmount.toLocaleString("en-IN")}
                       </span>
-                      <p className="mt-1 text-[10px] text-neutral-400 font-mono">
+                      <p className="mt-1 text-[10px] text-muted-gray font-mono">
                         (₹{pricing.effectiveDailyCost.toLocaleString("en-IN")}/day effective)
                       </p>
                     </div>
@@ -303,7 +303,7 @@ Prepared by AUREVIA Vault Operations
                 <button
                   onClick={() => handleCopyManifest(pkg)}
                   title="Copy Equipment Manifest for Call Sheet"
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-neutral-900 px-4 py-3 text-xs font-semibold text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white"
+                  className="btn-secondary text-xs"
                 >
                   {copiedManifestId === pkg.id ? (
                     <>
@@ -312,7 +312,7 @@ Prepared by AUREVIA Vault Operations
                     </>
                   ) : (
                     <>
-                      <FileText className="h-4 w-4 text-amber-400" />
+                      <FileText className="h-4 w-4 text-gold-champagne" />
                       <span className="hidden sm:inline">Call Sheet</span>
                     </>
                   )}
@@ -320,7 +320,7 @@ Prepared by AUREVIA Vault Operations
 
                 <button
                   onClick={() => handleBookPackage(pkg)}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-linear-to-r from-amber-400 via-amber-300 to-amber-500 py-3 text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-400/20 transition-all hover:scale-[1.02]"
+                  className="btn-primary flex-1 text-xs"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   Book Complete Package

@@ -13,13 +13,13 @@ export default function PackagesClient() {
     <div className="space-y-10">
       {/* ─── TAB NAVIGATION SWITCHER ─── */}
       <div className="flex justify-center">
-        <div className="inline-flex rounded-2xl border border-white/10 bg-neutral-900/90 p-1.5 backdrop-blur-xl shadow-2xl">
+        <div className="inline-flex rounded-2xl border border-white/10 bg-charcoal/90 p-1.5 backdrop-blur-xl shadow-2xl">
           <button
             onClick={() => setActiveTab("curated")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === "curated"
-                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-gold-champagne text-obsidian shadow-lg shadow-gold-champagne/20"
+                : "text-muted-gray hover:text-ivory"
             }`}
           >
             <Package className="h-4 w-4" />
@@ -28,10 +28,10 @@ export default function PackagesClient() {
 
           <button
             onClick={() => setActiveTab("custom")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === "custom"
-                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-gold-champagne text-obsidian shadow-lg shadow-gold-champagne/20"
+                : "text-muted-gray hover:text-ivory"
             }`}
           >
             <Sliders className="h-4 w-4" />
@@ -40,10 +40,10 @@ export default function PackagesClient() {
 
           <button
             onClick={() => setActiveTab("schedule")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all ${
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === "schedule"
-                ? "bg-linear-to-r from-amber-400 to-amber-500 text-black shadow-lg shadow-amber-400/20"
-                : "text-neutral-400 hover:text-white"
+                ? "bg-gold-champagne text-obsidian shadow-lg shadow-gold-champagne/20"
+                : "text-muted-gray hover:text-ivory"
             }`}
           >
             <Calendar className="h-4 w-4" />

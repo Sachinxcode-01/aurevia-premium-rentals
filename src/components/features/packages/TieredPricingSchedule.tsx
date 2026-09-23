@@ -12,27 +12,27 @@ export default function TieredPricingSchedule() {
   const testDays = [1, 2, 3, 5, 7, 14, 30];
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-neutral-900/80 p-8 backdrop-blur-xl shadow-2xl space-y-8">
+    <div className="rounded-3xl border border-white/10 bg-charcoal/80 p-8 backdrop-blur-xl shadow-2xl space-y-8">
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-6 md:flex-row md:items-end">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-widest text-amber-400">
+          <div className="flex items-center gap-2 text-xs font-mono font-medium text-gold-champagne">
             <Calendar className="h-4 w-4" />
             Cinema Rental Industry Standard Rules
           </div>
-          <h2 className="mt-1 text-2xl font-black text-white sm:text-3xl">
+          <h2 className="mt-1 text-2xl font-black text-ivory sm:text-3xl">
             Tiered Multi-Day Rate Schedule
           </h2>
-          <p className="mt-1 text-xs text-neutral-400 max-w-2xl">
+          <p className="mt-1 text-xs text-muted-gray max-w-2xl">
             AUREVIA operates on transparent multi-day cinema tiers designed for commercial productions and feature film principal photography schedules.
           </p>
         </div>
 
         {/* Interactive Rate Tester */}
         <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/60 p-3">
-          <span className="text-xs font-mono text-neutral-400">Sample Rate:</span>
+          <span className="text-xs font-mono text-muted-gray">Sample Rate:</span>
           <div className="flex items-center gap-1 font-mono">
-            <span className="text-amber-400 font-bold">₹</span>
+            <span className="text-gold-champagne font-bold">₹</span>
             <input
               type="number"
               min={1000}
@@ -40,9 +40,9 @@ export default function TieredPricingSchedule() {
               step={1000}
               value={sampleDailyRate}
               onChange={(e) => setSampleDailyRate(Number(e.target.value) || 1000)}
-              className="w-24 rounded bg-neutral-900 px-2 py-1 text-sm font-bold text-white outline-none border border-white/10 focus:border-amber-400"
+              className="w-24 rounded bg-neutral-900 px-2 py-1 text-sm font-bold text-ivory outline-none border border-white/10 focus:border-gold-champagne"
             />
-            <span className="text-[10px] text-neutral-500">/day</span>
+            <span className="text-[10px] text-muted-gray">/day</span>
           </div>
         </div>
       </div>
@@ -118,34 +118,34 @@ export default function TieredPricingSchedule() {
       {/* 3 Core Production Rules Badges */}
       <div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-3">
         <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase font-mono">
+          <div className="flex items-center gap-2 text-xs font-medium text-gold-champagne font-mono">
             <Sparkles className="h-4 w-4" />
             Weekend Special
           </div>
-          <h4 className="text-sm font-bold text-white">Pickup Friday, Return Monday</h4>
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <h3 className="text-sm font-bold text-ivory">Pickup Friday, Return Monday</h3>
+          <p className="text-xs text-muted-gray leading-relaxed">
             Pickup after 2:00 PM on Friday and return before 11:00 AM on Monday. Billed as 2 days only (Sunday is completely on the house).
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase font-mono">
+          <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 font-mono">
             <CheckCircle2 className="h-4 w-4" />
             1-Week Production Tier
           </div>
-          <h4 className="text-sm font-bold text-white">7 Full Days = 4-Day Rate</h4>
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <h3 className="text-sm font-bold text-ivory">7 Full Days = 4-Day Rate</h3>
+          <p className="text-xs text-muted-gray leading-relaxed">
             Shoot for a full 7-day week and only pay for 4 days. Enjoy 3 free production days automatically at checkout.
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase font-mono">
+          <div className="flex items-center gap-2 text-xs font-medium text-cyan-400 font-mono">
             <ShieldCheck className="h-4 w-4" />
             Monthly Feature Film
           </div>
-          <h4 className="text-sm font-bold text-white">30 Days = 12-Day Rate</h4>
-          <p className="text-xs text-neutral-400 leading-relaxed">
+          <h3 className="text-sm font-bold text-ivory">30 Days = 12-Day Rate</h3>
+          <p className="text-xs text-muted-gray leading-relaxed">
             For long-form narrative features and television series, 30 days is billed at a 60% discount with dedicated backup body support.
           </p>
         </div>

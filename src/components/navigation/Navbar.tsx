@@ -49,6 +49,7 @@ export default function Navbar({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [cineToolsDropdownOpen, setCineToolsDropdownOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementActive, setAnnouncementActive] = useState(false);
@@ -230,7 +231,7 @@ export default function Navbar({
         }`}
         style={{ top: announcementActive && announcementText ? "32px" : "0" }}
       >
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between h-full">
+        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 flex items-center justify-between h-full">
           {/* Left Group: Brand Logo & Desktop Navigation Links */}
           <div className="flex items-center gap-6 xl:gap-8 2xl:gap-10 h-full">
             {/* Brand Logo */}
@@ -322,46 +323,98 @@ export default function Navbar({
               </AnimatePresence>
             </div>
 
-            {navLinks.slice(3).map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`group relative py-1 text-[11px] xl:text-[12px] 2xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
-                    isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
-                  }`}
-                >
-                  {link.name}
-                  {isActive ? (
-                    <motion.span
-                      layoutId="activeNavIndicator"
-                      className="absolute -bottom-1.5 left-0 w-full h-[1.5px] bg-gold-champagne"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  ) : (
-                    <span className="absolute -bottom-1.5 left-0 w-0 h-[1.5px] bg-gold-champagne transition-all duration-300 group-hover:w-full" />
-                  )}
-                </Link>
-              );
-            })}
+            {/* Compact 'More' Dropdown for Viewports under 2xl */}
+            <div
+              className="relative py-1 lg:block 2xl:hidden"
+              onMouseEnter={() => setMoreDropdownOpen(true)}
+              onMouseLeave={() => setMoreDropdownOpen(false)}
+            >
+              <button
+                className={`group flex items-center gap-1 text-[11px] xl:text-[12px] uppercase tracking-wider transition duration-300 font-medium whitespace-nowrap leading-none ${
+                  navLinks.slice(3).some((l) => pathname === l.href) ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
+                }`}
+              >
+                <span>More</span>
+                <ChevronDown size={12} className={`transition-transform duration-200 ${moreDropdownOpen ? "rotate-180 text-gold-champagne" : "text-muted-gray"}`} />
+              </button>
+
+              <AnimatePresence>
+                {moreDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 rounded-xl border border-white/15 bg-neutral-950/95 p-1.5 backdrop-blur-2xl shadow-2xl z-50"
+                  >
+                    <div className="space-y-0.5">
+                      {navLinks.slice(3).map((link) => {
+                        const isActive = pathname === link.href;
+                        return (
+                          <Link
+                            key={link.name}
+                            href={link.href}
+                            onClick={() => {
+                              playClick();
+                              setMoreDropdownOpen(false);
+                            }}
+                            className={`block px-3 py-2 rounded-lg text-xs font-medium uppercase tracking-wider transition-colors ${
+                              isActive ? "bg-gold-champagne/15 text-gold-champagne" : "text-neutral-300 hover:bg-white/5 hover:text-white"
+                            }`}
+                          >
+                            {link.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Full Links for Extra Large Desktops (2xl+) */}
+            <div className="hidden 2xl:flex items-center gap-6 2xl:gap-7 h-full">
+              {navLinks.slice(3).map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={`group relative py-1 text-[13px] uppercase tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                      isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
+                    }`}
+                  >
+                    {link.name}
+                    {isActive ? (
+                      <motion.span
+                        layoutId="activeNavIndicator"
+                        className="absolute -bottom-1.5 left-0 w-full h-[1.5px] bg-gold-champagne"
+                        transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      />
+                    ) : (
+                      <span className="absolute -bottom-1.5 left-0 w-0 h-[1.5px] bg-gold-champagne transition-all duration-300 group-hover:w-full" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
             </nav>
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-2.5 xl:gap-4 2xl:gap-5 shrink-0 h-full">
-            {/* Fast Search / Command Palette Trigger */}
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 2xl:gap-4 shrink-0 h-full">
+            {/* Fast Search / Command Palette Trigger (Responsive Width) */}
             <button
               id="global-search-trigger"
               onClick={handleOpenSearch}
               aria-label="Search gear and tools"
-              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 xl:w-44 2xl:w-52 px-2.5 xl:px-3.5 flex items-center justify-center xl:justify-between transition-all duration-300 cursor-pointer group"
+              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 w-9 xl:w-10 2xl:w-48 px-0 2xl:px-3.5 flex items-center justify-center 2xl:justify-between transition-all duration-300 cursor-pointer group"
             >
               <div className="flex items-center gap-2">
                 <Search size={15} className="stroke-2 text-gold-champagne shrink-0" />
-                <span className="hidden xl:inline text-[11px] 2xl:text-xs">Fast Search...</span>
+                <span className="hidden 2xl:inline text-xs">Fast Search...</span>
               </div>
-              <kbd className="hidden xl:inline-block px-1.5 py-0.5 text-[8px] 2xl:text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
+              <kbd className="hidden 2xl:inline-block px-1.5 py-0.5 text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
                 ⌘K
               </kbd>
             </button>
@@ -427,7 +480,7 @@ export default function Navbar({
             ) : (
               <Link
                 href="/login"
-                className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center text-xs font-mono uppercase tracking-wider"
+                className="text-ivory/80 hover:text-gold-champagne transition duration-300 p-1.5 flex items-center text-xs font-mono uppercase tracking-wider shrink-0"
               >
                 <User className="w-4.5 h-4.5 stroke-2 mr-1" />
                 <span>Sign In</span>
@@ -438,10 +491,10 @@ export default function Navbar({
             <button
               onClick={() => setReferralModalOpen(true)}
               title="Refer & Get 15% Off"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/25 text-gold-champagne hover:bg-gold-champagne hover:text-obsidian transition-all duration-300 text-[10px] font-mono font-semibold uppercase tracking-wider cursor-pointer group"
+              className="hidden sm:flex items-center gap-1.5 p-2 2xl:px-3 2xl:py-1.5 rounded-full bg-gold-champagne/10 border border-gold-champagne/25 text-gold-champagne hover:bg-gold-champagne hover:text-obsidian transition-all duration-300 text-[10px] font-mono font-semibold uppercase tracking-wider cursor-pointer group shrink-0"
             >
               <Gift size={13} className="shrink-0 group-hover:scale-110 transition-transform" />
-              <span>Gift 15% Off</span>
+              <span className="hidden 2xl:inline">Gift 15% Off</span>
             </button>
 
             {/* Magnetic CTA Book Now */}

@@ -16,26 +16,25 @@ function useIsMounted() {
   );
 }
 
-function getInitialPosition(): { x: number; y: number } {
+function getSavedPosition(): { x: number; y: number } | null {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("aurevia_chat_position");
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch {
-        return { x: window.innerWidth - 68, y: window.innerHeight - 144 };
+        return null;
       }
     }
-    return { x: window.innerWidth - 68, y: window.innerHeight - 144 };
   }
-  return { x: 0, y: 0 };
+  return null;
 }
 
 export default function FloatingChatLauncher() {
   const { toggleChat, openChat, isOpen, unreadCount } = useChatbot();
   const isMounted = useIsMounted();
 
-  const [position, setPosition] = useState<{ x: number; y: number }>(getInitialPosition);
+  const [customPosition, setCustomPosition] = useState<{ x: number; y: number } | null>(getSavedPosition);
   const [showGreeting, setShowGreeting] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const greetingRef = useRef<HTMLDivElement>(null);
@@ -81,9 +80,10 @@ export default function FloatingChatLauncher() {
 
   // Update position on window resize to prevent leaving viewport
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || !customPosition) return;
     const handleResize = () => {
-      setPosition((prev) => {
+      setCustomPosition((prev) => {
+        if (!prev) return null;
         const maxX = window.innerWidth - 70;
         const maxY = window.innerHeight - 70;
         const newX = Math.min(Math.max(16, prev.x), maxX);
@@ -93,14 +93,18 @@ export default function FloatingChatLauncher() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [isMounted]);
+  }, [isMounted, customPosition]);
 
   // Save position when it changes
   useEffect(() => {
-    if (isMounted && position.x > 0 && position.y > 0) {
-      localStorage.setItem("aurevia_chat_position", JSON.stringify(position));
+    if (isMounted) {
+      if (customPosition && customPosition.x > 0 && customPosition.y > 0) {
+        localStorage.setItem("aurevia_chat_position", JSON.stringify(customPosition));
+      } else if (!customPosition) {
+        localStorage.removeItem("aurevia_chat_position");
+      }
     }
-  }, [position, isMounted]);
+  }, [customPosition, isMounted]);
 
   // Idle breathing animation
   useEffect(() => {
@@ -130,12 +134,17 @@ export default function FloatingChatLauncher() {
     if (!launcher) return;
 
     launcher.setPointerCapture(e.pointerId);
+
+    const currentRect = launcher.getBoundingClientRect();
+    const currentPosX = customPosition ? customPosition.x : currentRect.left;
+    const currentPosY = customPosition ? customPosition.y : currentRect.top;
+
     dragInfo.current = {
       isDragging: true,
       startX: e.clientX,
       startY: e.clientY,
-      startPosX: position.x,
-      startPosY: position.y,
+      startPosX: currentPosX,
+      startPosY: currentPosY,
       hasMoved: false,
     };
   };
@@ -161,7 +170,7 @@ export default function FloatingChatLauncher() {
     const clampedY = Math.min(Math.max(padding, nextY), maxY);
 
     requestAnimationFrame(() => {
-      setPosition({ x: clampedX, y: clampedY });
+      setCustomPosition({ x: clampedX, y: clampedY });
     });
   };
 
@@ -188,19 +197,23 @@ export default function FloatingChatLauncher() {
 
   const resetPosition = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const defaultX = window.innerWidth - 68;
-    const defaultY = window.innerHeight - 144;
+    if (launcherRef.current && customPosition) {
+      const targetRect = {
+        x: window.innerWidth - 70,
+        y: window.innerHeight - 150,
+      };
 
-    if (launcherRef.current) {
       animate(launcherRef.current, {
-        translateX: [position.x, defaultX],
-        translateY: [position.y, defaultY],
-        duration: 500,
+        translateX: [0, targetRect.x - customPosition.x],
+        translateY: [0, targetRect.y - customPosition.y],
+        duration: 400,
         easing: "easeOutExpo",
         complete: () => {
-          setPosition({ x: defaultX, y: defaultY });
+          setCustomPosition(null);
         },
       });
+    } else {
+      setCustomPosition(null);
     }
   };
 
@@ -208,12 +221,20 @@ export default function FloatingChatLauncher() {
 
   return (
     <div
-      className="fixed z-50 pointer-events-none"
-      style={{
-        left: 0,
-        top: 0,
-        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
-      }}
+      className={
+        customPosition
+          ? "fixed z-50 pointer-events-none"
+          : "fixed bottom-20 right-4 md:bottom-24 md:right-6 z-50 pointer-events-none"
+      }
+      style={
+        customPosition
+          ? {
+              left: 0,
+              top: 0,
+              transform: `translate3d(${customPosition.x}px, ${customPosition.y}px, 0)`,
+            }
+          : undefined
+      }
     >
       <div className="relative group pointer-events-auto">
         {/* Proactive Greeting Tooltip Pill */}
