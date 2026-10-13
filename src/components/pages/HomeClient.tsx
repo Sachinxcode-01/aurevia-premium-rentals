@@ -1100,7 +1100,7 @@ export default function HomeClient() {
                   <span>Instagram</span>
                 </a>
                 <a
-                  href={`https://wa.me/919686909048?text=${encodeURIComponent("Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date & Time:*\n🔄 *Return Date & Time:*\n📍 *Pickup / Delivery:*\n\n📷 *Requested Equipment List:*\n• Camera Body:\n• Lenses:\n• Accessories & Power:\n\n📄 *KYC Verification:* Ready with Government ID proof\n\nCould you please confirm live availability and share the quote? Looking forward to locking this reservation with AUREVIA. 🙏")}`}
+                  href={`https://wa.me/919686909048?text=${encodeURIComponent("Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date & Time:*\n🔄 *Return Date & Time:*\n📍 *Pickup / Delivery:*\n\n📷 *Requested Equipment List:*\n• Camera Body:\n• Lenses:\n• Accessories & Power:\n\n📄 *KYC Verification:* [Govt ID proof: Aadhaar / DL / Passport]\n\nCould you please confirm live availability and share the quote? Looking forward to locking this reservation with AUREVIA. 🙏")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp Concierge"

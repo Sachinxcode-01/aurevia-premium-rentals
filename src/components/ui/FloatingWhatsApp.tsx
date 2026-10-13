@@ -11,7 +11,7 @@ interface FloatingWhatsAppProps {
 
 export default function FloatingWhatsApp({
   phoneNumber = "919686909048",
-  defaultMessage = `Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date & Time:*\n🔄 *Return Date & Time:*\n📍 *Pickup / Delivery:*\n\n📷 *Requested Equipment List:*\n• Camera Body:\n• Lenses:\n• Accessories & Power:\n\n📄 *KYC Verification:* Ready with Government ID proof\n\nCould you please confirm live availability and share the quote? Looking forward to locking this reservation with AUREVIA. 🙏`,
+  defaultMessage = `Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date & Time:*\n🔄 *Return Date & Time:*\n📍 *Pickup / Delivery:*\n\n📷 *Requested Equipment List:*\n• Camera Body:\n• Lenses:\n• Accessories & Power:\n\n📄 *KYC Verification:* [Govt ID proof: Aadhaar / DL / Passport]\n\nCould you please confirm live availability and share the quote? Looking forward to locking this reservation with AUREVIA. 🙏`,
 }: FloatingWhatsAppProps) {
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(defaultMessage)}`;
 
