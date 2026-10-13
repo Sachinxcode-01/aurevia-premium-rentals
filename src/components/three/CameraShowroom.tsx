@@ -728,7 +728,7 @@ export default function CameraShowroom() {
     <div 
       ref={containerRef}
       className={`w-full relative glass-panel border-white/5 rounded-lg overflow-hidden flex flex-col lg:flex-row shadow-2xl transition-all duration-300 ${
-        isFullscreen ? "h-screen bg-black" : "h-155 md:h-170"
+        isFullscreen ? "h-screen bg-black" : "h-auto min-h-140 lg:h-170"
       }`}
     >
       

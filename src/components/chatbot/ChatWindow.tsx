@@ -346,10 +346,10 @@ export default function ChatWindow() {
         isMinimized
           ? "pointer-events-none opacity-0 translate-y-12 scale-95"
           : "pointer-events-auto"
-      } bottom-0 right-0 left-0 h-[88vh] sm:left-auto sm:right-6 sm:bottom-22 sm:rounded-2xl`}
+      } bottom-0 right-0 left-0 h-[88dvh] max-h-[88dvh] rounded-t-2xl sm:left-auto sm:right-6 sm:bottom-24 sm:rounded-2xl`}
       style={{
         width: typeof window !== "undefined" && window.innerWidth < 640 ? "100%" : `${size.width}px`,
-        height: typeof window !== "undefined" && window.innerWidth < 640 ? "88vh" : `${size.height}px`,
+        height: typeof window !== "undefined" && window.innerWidth < 640 ? "88dvh" : `${size.height}px`,
       }}
     >
       {/* Resizing handle for top-left (Desktop only) */}

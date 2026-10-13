@@ -33,8 +33,8 @@ export default function FloatingWhatsApp({
         {/* Pulsing online status indicator */}
         <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-300 rounded-full border-2 border-obsidian animate-pulse" />
 
-        {/* Hover Tooltip (Expands to the left) */}
-        <span className="absolute right-16 px-3 py-1.5 bg-charcoal/95 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-xl pointer-events-none">
+        {/* Hover Tooltip (Expands to the left, desktop only) */}
+        <span className="hidden md:block absolute right-16 px-3 py-1.5 bg-charcoal/95 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-semibold uppercase tracking-wider rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-xl pointer-events-none">
           WhatsApp Concierge
         </span>
       </motion.a>

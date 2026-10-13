@@ -256,8 +256,8 @@ export default function CanonScrollSequence({ onExploreClick }: CanonScrollSeque
             </div>
           </div>
 
-          {/* Mobile Interactive Floating Stage Pills Bar */}
-          <div className="lg:hidden absolute bottom-4 left-4 right-4 z-35 flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto py-1.5 px-2.5 bg-black/80 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl scrollbar-none">
+          {/* Mobile Interactive Floating Stage Pills Bar (Safely cleared from floating WhatsApp/Chatbot on right) */}
+          <div className="lg:hidden absolute bottom-4 left-4 right-20 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-35 flex items-center justify-start sm:justify-center gap-1.5 overflow-x-auto py-1.5 px-2.5 bg-black/80 backdrop-blur-xl rounded-full border border-white/10 shadow-2xl scrollbar-none">
             {stages.map((stg) => {
               const isActive = Math.abs(scrollProgress - stg.progress) < 0.12;
               const cleanName = stg.label.includes("•") ? stg.label.split("•")[1].trim() : stg.label;
