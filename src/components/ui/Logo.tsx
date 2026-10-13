@@ -74,13 +74,24 @@ export function Logo({
     ? "invert(1) brightness(0.1)" // Inverts white/gold to dark charcoal/black
     : "none";
 
+  const sizeStyle: React.CSSProperties = {};
+  if (width !== undefined) sizeStyle.width = width;
+  if (height !== undefined) sizeStyle.height = height;
+  if (width !== undefined && height === undefined) sizeStyle.height = width;
+  if (height !== undefined && width === undefined) sizeStyle.width = height;
+
+  const defaultClasses =
+    width === undefined &&
+    height === undefined &&
+    !className.includes("w-") &&
+    !className.includes("h-")
+      ? "w-14 h-14"
+      : "";
+
   return (
     <div 
-      className={`relative inline-block select-none shrink-0 ${className}`}
-      style={{ 
-        width: width ?? 150, 
-        height: height ?? 42,
-      }}
+      className={`relative inline-block select-none shrink-0 ${defaultClasses} ${className}`.trim()}
+      style={sizeStyle}
     >
       <Image
         src="/readme/aurevia-logo.png"
