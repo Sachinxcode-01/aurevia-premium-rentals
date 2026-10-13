@@ -139,7 +139,7 @@ export default function ContactClient() {
               </a>
 
               <a
-                href={`https://wa.me/919686909048?text=${encodeURIComponent("Hi Prem, I'm interested in renting from AUREVIA. Could you help me with availability and pricing?")}`}
+                href={`https://wa.me/919686909048?text=${encodeURIComponent("Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date & Time:*\n🔄 *Return Date & Time:*\n📍 *Pickup / Delivery:*\n\n📷 *Requested Equipment List:*\n• Camera Body:\n• Lenses:\n• Accessories & Power:\n\n📄 *KYC Verification:* Ready with Government ID proof\n\nCould you please confirm live availability and share the quote? Looking forward to locking this reservation with AUREVIA. 🙏")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/25 text-[#25D366] text-xs font-semibold rounded transition"
