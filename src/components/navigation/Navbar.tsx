@@ -224,23 +224,31 @@ export default function Navbar({
         </div>
       )}
       <header
-        className={`fixed left-0 w-full z-40 transition-all duration-300 h-21.5 flex items-center border-b ${
+        className={`fixed left-0 w-full z-40 transition-all duration-300 h-16 sm:h-18 lg:h-20 flex items-center border-b ${
           scrolled
             ? "bg-obsidian/85 backdrop-blur-xl border-gold-champagne/15 shadow-lg shadow-black/80"
             : "bg-obsidian/30 backdrop-blur-md border-white/5"
         }`}
         style={{ top: announcementActive && announcementText ? "32px" : "0" }}
       >
-        <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-6 xl:px-8 flex items-center justify-between h-full">
+        <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-full">
           {/* Left Group: Brand Logo & Desktop Navigation Links */}
-          <div className="flex items-center gap-6 xl:gap-8 2xl:gap-10 h-full">
-            {/* Brand Logo */}
-            <Link href="/" className="flex items-center gap-1.5 xl:gap-2 group select-none shrink-0" aria-label="AUREVIA Premium Camera Rentals">
-              <Logo variant="wordmark" theme="light" width={125} height={34} />
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-6 xl:gap-8 h-full">
+            {/* Brand Logo - Scaled to exact fit navbar height */}
+            <Link
+              href="/"
+              className="flex items-center group select-none shrink-0 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
+              aria-label="AUREVIA Premium Camera Rentals"
+            >
+              <Logo
+                variant="wordmark"
+                theme="light"
+                className="w-11 h-11 sm:w-12 sm:h-12 lg:w-14.5 lg:h-14.5"
+              />
             </Link>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 2xl:gap-7 h-full">
+            <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 2xl:gap-6 h-full">
             {navLinks.slice(0, 3).map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -323,9 +331,9 @@ export default function Navbar({
               </AnimatePresence>
             </div>
 
-            {/* Compact 'More' Dropdown for Viewports under 2xl */}
+            {/* Compact 'More' Dropdown ONLY for Viewports under xl (1024px - 1279px) */}
             <div
-              className="relative py-1 lg:block 2xl:hidden"
+              className="relative py-1 lg:block xl:hidden"
               onMouseEnter={() => setMoreDropdownOpen(true)}
               onMouseLeave={() => setMoreDropdownOpen(false)}
             >
@@ -372,15 +380,15 @@ export default function Navbar({
               </AnimatePresence>
             </div>
 
-            {/* Full Links for Extra Large Desktops (2xl+) */}
-            <div className="hidden 2xl:flex items-center gap-6 2xl:gap-7 h-full">
+            {/* Full Links for Desktops (xl+: 1280px and wider) */}
+            <div className="hidden xl:flex items-center gap-3.5 xl:gap-5 2xl:gap-6 h-full">
               {navLinks.slice(3).map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.name}
                     href={link.href}
-                    className={`group relative py-1 text-[13px] uppercase tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
+                    className={`group relative py-1 text-[11px] xl:text-[12px] 2xl:text-[13px] uppercase tracking-wider xl:tracking-widest transition duration-300 font-medium whitespace-nowrap leading-none ${
                       isActive ? "text-gold-champagne" : "text-ivory/80 hover:text-gold-champagne"
                     }`}
                   >
@@ -408,13 +416,13 @@ export default function Navbar({
               id="global-search-trigger"
               onClick={handleOpenSearch}
               aria-label="Search gear and tools"
-              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 w-9 xl:w-10 2xl:w-48 px-0 2xl:px-3.5 flex items-center justify-center 2xl:justify-between transition-all duration-300 cursor-pointer group"
+              className="bg-white/5 border border-white/10 hover:border-gold-champagne/40 text-muted-gray hover:text-ivory rounded-full h-9 xl:h-10 w-9 xl:w-36 2xl:w-44 px-0 xl:px-3 flex items-center justify-center xl:justify-between transition-all duration-300 cursor-pointer group"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Search size={15} className="stroke-2 text-gold-champagne shrink-0" />
-                <span className="hidden 2xl:inline text-xs">Fast Search...</span>
+                <span className="hidden xl:inline text-[11px] 2xl:text-xs text-muted-gray">Fast Search...</span>
               </div>
-              <kbd className="hidden 2xl:inline-block px-1.5 py-0.5 text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
+              <kbd className="hidden xl:inline-block px-1 py-0.5 text-[9px] font-mono text-muted-gray bg-white/10 rounded group-hover:text-gold-champagne">
                 ⌘K
               </kbd>
             </button>
@@ -577,7 +585,7 @@ export default function Navbar({
             {/* Mobile Header */}
             <div className="relative z-10 px-6 py-6 flex items-center justify-between border-b border-white/5">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2" aria-label="AUREVIA Premium Camera Rentals">
-                <Logo variant="monogram" theme="light" width={32} height={32} />
+                <Logo variant="wordmark" theme="light" className="w-11 h-11" />
               </Link>
 
               <button
