@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export interface AuthResult {
   success: boolean;
@@ -184,6 +185,13 @@ export async function signOutAction(): Promise<AuthResult> {
 // ─── Get current user profile ────────────────────────────────
 export async function getCurrentUserAction() {
   try {
+    const cookieStore = await cookies();
+    const allCookies = cookieStore.getAll();
+    const hasAuthToken = allCookies.some(
+      (c) => c.name.includes("-auth-token") || c.name.startsWith("sb-")
+    );
+    if (!hasAuthToken) return null;
+
     // Race against a 4-second timeout so the dashboard never hangs indefinitely
     const timeoutPromise = new Promise<null>((resolve) =>
       setTimeout(() => resolve(null), 4000)

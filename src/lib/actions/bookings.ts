@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient, createServiceSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import type { BookingStatus } from "@/lib/supabase/types";
 
 export interface CreateBookingPayload {
@@ -267,6 +268,13 @@ export async function cancelBookingAction(bookingId: string): Promise<{ success:
 
 // ─── 4. Get current user's bookings ─────────────────────────
 export async function getUserBookingsAction() {
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
+  const hasAuthToken = allCookies.some(
+    (c) => c.name.includes("-auth-token") || c.name.startsWith("sb-")
+  );
+  if (!hasAuthToken) return [];
+
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];

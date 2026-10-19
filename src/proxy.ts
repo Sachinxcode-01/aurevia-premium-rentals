@@ -63,35 +63,81 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
-
-  // Refresh session with a 2-second timeout to prevent hanging middleware
-  const user = await Promise.race([
-    supabase.auth.getUser().then((res) => res.data?.user || null).catch(() => null),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-  ]);
+  // Skip auth checks on Server Actions and non-GET requests (e.g. form POST, action POST)
+  // Server actions run in server component context and handle their own authentication.
+  // Running Supabase auth network calls on Server Action POSTs locks the body stream and causes connection resets.
+  const isServerAction = request.headers.has("next-action");
+  if (request.method !== "GET" || isServerAction) {
+    return NextResponse.next();
+  }
 
   const isProtectedCustomer = PROTECTED_CUSTOMER.some((p) =>
     pathname.startsWith(p)
   );
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
+
+  // If this route is neither a protected customer route nor an auth page, skip session refresh
+  if (!isProtectedCustomer && !isAuthPage) {
+    return NextResponse.next();
+  }
+
+  // Quick check: does the request even carry any Supabase auth cookies?
+  const allCookies = request.cookies.getAll();
+  const hasAuthCookie = allCookies.some(
+    (c) => c.name.includes("-auth-token") || c.name.startsWith("sb-")
+  );
+
+  // If no auth cookie exists:
+  if (!hasAuthCookie) {
+    if (isProtectedCustomer) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    // Visiting an auth page without cookies is completely valid (anonymous user)
+    return NextResponse.next();
+  }
+
+  // At this point, the user has an auth cookie and is accessing either a protected page or an auth page.
+  // Validate the session with an AbortController timeout so the connection is cleanly aborted if Supabase stalls.
+  let response = NextResponse.next({ request });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+  let user = null;
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+      global: {
+        fetch: (input, init) => {
+          return fetch(input, {
+            ...init,
+            signal: controller.signal,
+          });
+        },
+      },
+    });
+
+    const { data } = await supabase.auth.getUser();
+    user = data?.user ?? null;
+  } catch {
+    user = null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   // Not logged in → redirect to login for protected routes
   if (!user && isProtectedCustomer) {

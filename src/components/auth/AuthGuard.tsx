@@ -26,14 +26,14 @@ export function AuthGuard({ children, requiredRole, allowAdmin = true }: AuthGua
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout: 2.5 seconds max for session verification so user is never stuck
+    // Safety timeout: 5 seconds max for session verification so user is never stuck
     const timeoutId = setTimeout(() => {
       if (mounted) {
         console.warn("[AuthGuard] Session check timed out — proceeding");
         setAllowed(true);
         setChecking(false);
       }
-    }, 2500);
+    }, 5000);
 
     const checkAuth = async () => {
       try {
