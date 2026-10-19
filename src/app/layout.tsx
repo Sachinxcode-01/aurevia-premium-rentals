@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/next";
 import Spotlight from "@/components/effects/Spotlight";
 import AmbientParticles from "@/components/effects/AmbientParticles";
 import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
+import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import CookieConsentBanner from "@/components/compliance/CookieConsentBanner";
 
 const playfair = Playfair_Display({
@@ -170,6 +171,8 @@ export default function RootLayout({
               <FloatingChatLauncher />
               <ChatWindow />
               <FloatingWhatsApp />
+              {/* Sticky Mobile Conversion Bar */}
+              <StickyMobileCTA />
               {/* Luxury Cookie & Privacy Consent Banner */}
               <CookieConsentBanner />
             </ChatbotProvider>
