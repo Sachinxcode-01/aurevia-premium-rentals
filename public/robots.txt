@@ -1,0 +1,32 @@
+# ==============================================================================
+# AUREVIA Premium Rentals — Official Robots Configuration
+# https://aurevia-premium-rentals.vercel.app
+# ==============================================================================
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /cart
+Disallow: /checkout
+Disallow: /kyc
+Disallow: /verify/
+Disallow: /reset-password
+Disallow: /forgot-password
+
+# Major search engine crawlers with full public access
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /readme/
+Allow: /icon.svg
+Allow: /favicon.ico
+
+User-agent: Bingbot
+Allow: /
+
+# Canonical XML Sitemap
+Sitemap: https://aurevia-premium-rentals.vercel.app/sitemap.xml

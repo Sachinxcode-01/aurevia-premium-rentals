@@ -12,6 +12,7 @@ import { Analytics } from "@vercel/analytics/next";
 import Spotlight from "@/components/effects/Spotlight";
 import AmbientParticles from "@/components/effects/AmbientParticles";
 import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
+import CookieConsentBanner from "@/components/compliance/CookieConsentBanner";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -27,27 +28,28 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "AUREVIA Premium Camera Rentals | Professional Cameras & Lenses for Rent",
+    default: "AUREVIA Premium Rentals | Cinema Camera & Lens Concierge",
     template: "%s | AUREVIA Premium Rentals",
   },
-  description: "Rent premium DSLR, mirrorless, cinema cameras, cinema lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
+  description: "Rent premium cinema cameras, full-frame mirrorless bodies, cinema lenses, and professional production gear from AUREVIA Premium Rentals by Prem Mundargi. Frame the Extraordinary.",
   keywords: [
-    "camera rental",
-    "camera rentals Gadag",
-    "lens rental",
-    "cinema camera rental",
+    "AUREVIA Premium Rentals",
+    "Aurevia camera rentals",
+    "Aurevia rentals",
+    "camera rental Gadag",
+    "camera rental Bangalore",
+    "cinema camera rental Karnataka",
     "Sony FX3 for rent",
     "Canon EOS R5 rental",
     "RED Komodo rental",
     "rent mirrorless camera",
     "dslr camera rental Karnataka",
-    "Aurevia camera rentals",
     "Prem Mundargi camera rentals",
-    "photography gear hire",
+    "photography gear hire India",
   ],
   authors: [{ name: "Prem Mundargi", url: "https://aurevia-premium-rentals.vercel.app" }],
   creator: "Prem Mundargi",
-  publisher: "AUREVIA Premium Camera Rentals",
+  publisher: "AUREVIA Premium Rentals",
   metadataBase: new URL("https://aurevia-premium-rentals.vercel.app"),
   icons: {
     icon: [
@@ -65,8 +67,8 @@ export const metadata: Metadata = {
   },
   alternates: { canonical: "https://aurevia-premium-rentals.vercel.app" },
   openGraph: {
-    title: "AUREVIA Premium Camera Rentals | Frame the Extraordinary",
-    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
+    title: "AUREVIA Premium Rentals | Frame the Extraordinary",
+    description: "Rent premium cinema cameras, mirrorless bodies, cinema lenses and professional production gear from AUREVIA Premium Rentals by Prem Mundargi.",
     url: "https://aurevia-premium-rentals.vercel.app",
     siteName: "AUREVIA Premium Rentals",
     images: [
@@ -74,16 +76,16 @@ export const metadata: Metadata = {
         url: "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
         width: 1200,
         height: 630,
-        alt: "AUREVIA Premium Camera Rentals Concierge",
+        alt: "AUREVIA Premium Rentals Concierge",
       },
     ],
-    locale: "en_US",
+    locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Aurevia Premium Camera Rentals",
-    description: "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
+    title: "AUREVIA Premium Rentals",
+    description: "Rent premium cinema cameras, mirrorless bodies, lenses and professional production gear from AUREVIA Premium Rentals by Prem Mundargi.",
     images: ["https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png"],
     creator: "@aurevia_rentals",
   },
@@ -115,31 +117,21 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${playfair.variable} ${inter.variable} h-full antialiased`}>
       <head>
-        {/* WebSite structured JSON-LD data for Google Search Site Name */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              "name": "AUREVIA",
-              "alternateName": [
-                "Aurevia Premium Rentals",
-                "Aurevia Camera Rentals",
-                "Aurevia Cinema Vault"
-              ],
-              "url": "https://aurevia-premium-rentals.vercel.app"
-            })
-          }}
-        />
-        {/* Organization structured JSON-LD data with official brand logo */}
+        {/* Google Site Verification Meta Tag */}
+        <meta name="google-site-verification" content="google2af6b85353900719" />
+        {/* Core Organization structured JSON-LD data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "AUREVIA Premium Camera Rentals",
+              "name": "AUREVIA Premium Rentals",
+              "alternateName": [
+                "AUREVIA",
+                "Aurevia Camera Rentals",
+                "Aurevia Cinema Vault"
+              ],
               "url": "https://aurevia-premium-rentals.vercel.app",
               "logo": "https://aurevia-premium-rentals.vercel.app/icon.svg",
               "founder": {
@@ -153,30 +145,6 @@ export default function RootLayout({
                 "areaServed": "IN",
                 "availableLanguage": ["English", "Kannada", "Hindi"]
               }
-            })
-          }}
-        />
-        {/* LocalBusiness structured JSON-LD data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "LocalBusiness",
-              "name": "AUREVIA Premium Camera Rentals",
-              "image": "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
-              "telephone": "+919686909048",
-              "email": "prem@aurevia.com",
-              "address": {
-                "@type": "PostalAddress",
-                "streetAddress": "Aurevia Studio Vault, Gadag Main Road",
-                "addressLocality": "Gadag",
-                "addressRegion": "Karnataka",
-                "postalCode": "582101",
-                "addressCountry": "IN"
-              },
-              "priceRange": "INR",
-              "url": "https://aurevia-premium-rentals.vercel.app"
             })
           }}
         />
@@ -202,6 +170,8 @@ export default function RootLayout({
               <FloatingChatLauncher />
               <ChatWindow />
               <FloatingWhatsApp />
+              {/* Luxury Cookie & Privacy Consent Banner */}
+              <CookieConsentBanner />
             </ChatbotProvider>
           </CartProvider>
         </ToastProvider>

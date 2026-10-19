@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
 import { db } from "@/lib/db/store";
 import { Product, MOCK_CATEGORIES, MOCK_BRANDS } from "@/lib/db/mockData";
 import { useCart } from "@/hooks/useCart";
@@ -587,6 +588,7 @@ function ExplorePageContent() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

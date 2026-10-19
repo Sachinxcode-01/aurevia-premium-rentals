@@ -2,16 +2,30 @@ import { Metadata } from "next";
 import HomeClient from "@/components/pages/HomeClient";
 
 export const metadata: Metadata = {
-  title: "AUREVIA Premium Camera Rentals | Rent Professional Cameras & Lenses",
+  title: "AUREVIA Premium Rentals | Cinema Camera & Lens Concierge",
   description:
-    "Rent premium DSLR, mirrorless, cinema cameras, cinema lenses and professional production gear from Aurevia Camera Rentals by Prem. Frame the Extraordinary.",
+    "Rent premium cinema cameras, full-frame mirrorless bodies, cinema lenses, and production gear from AUREVIA Premium Rentals by Prem Mundargi. 100% calibrated sensors, zero-deposit options, and Pelican flight cases across Karnataka & India.",
+  keywords: [
+    "AUREVIA Premium Rentals",
+    "Aurevia camera rentals",
+    "Aurevia rentals",
+    "camera rental Gadag",
+    "camera rental Bangalore",
+    "cinema camera rental Karnataka",
+    "rent Sony FX3",
+    "rent Canon EOS R5",
+    "RED Komodo rental",
+    "cinema lens rental",
+    "Prem Mundargi camera rentals",
+    "professional photography gear hire India",
+  ],
   alternates: {
     canonical: "https://aurevia-premium-rentals.vercel.app",
   },
   openGraph: {
-    title: "AUREVIA Premium Camera Rentals | Rent Professional Cameras & Lenses",
+    title: "AUREVIA Premium Rentals | Cinema Camera & Lens Concierge",
     description:
-      "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear from Aurevia Camera Rentals by Prem.",
+      "Rent premium cinema cameras, full-frame mirrorless bodies, cinema lenses, and production gear from AUREVIA Premium Rentals by Prem Mundargi. Frame the Extraordinary.",
     url: "https://aurevia-premium-rentals.vercel.app",
     siteName: "AUREVIA Premium Rentals",
     images: [
@@ -19,17 +33,19 @@ export const metadata: Metadata = {
         url: "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
         width: 1200,
         height: 630,
-        alt: "AUREVIA Cinema & Camera Vault",
+        alt: "AUREVIA Premium Rentals Cinema & Camera Vault",
       },
     ],
     type: "website",
+    locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AUREVIA Premium Camera Rentals",
+    title: "AUREVIA Premium Rentals | Cinema Camera & Lens Concierge",
     description:
-      "Rent premium DSLR, mirrorless, cinema cameras, lenses and professional production gear.",
+      "Rent premium cinema cameras, mirrorless bodies, cinema lenses and professional production gear from Prem Mundargi.",
     images: ["https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png"],
+    creator: "@aurevia_rentals",
   },
 };
 
@@ -42,15 +58,31 @@ export default function HomePage() {
         "@id": "https://aurevia-premium-rentals.vercel.app/#website",
         "url": "https://aurevia-premium-rentals.vercel.app",
         "name": "AUREVIA Premium Rentals",
-        "description": "Professional Camera & Cinema Gear Concierge Rentals",
+        "alternateName": [
+          "AUREVIA",
+          "Aurevia Premium Rentals",
+          "Aurevia Camera Rentals",
+          "Aurevia Cinema Vault",
+        ],
+        "description": "Professional Cinema Camera, Lens & Production Gear Concierge Rentals",
         "publisher": {
           "@id": "https://aurevia-premium-rentals.vercel.app/#organization",
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate":
+              "https://aurevia-premium-rentals.vercel.app/explore?search={search_term_string}",
+          },
+          "query-input": "required name=search_term_string",
         },
       },
       {
         "@type": "Organization",
         "@id": "https://aurevia-premium-rentals.vercel.app/#organization",
-        "name": "AUREVIA Premium Camera Rentals",
+        "name": "AUREVIA Premium Rentals",
+        "legalName": "AUREVIA Premium Camera Rentals",
         "url": "https://aurevia-premium-rentals.vercel.app",
         "logo": "https://aurevia-premium-rentals.vercel.app/icon.svg",
         "founder": {
@@ -68,10 +100,10 @@ export default function HomePage() {
       {
         "@type": ["LocalBusiness", "Store"],
         "@id": "https://aurevia-premium-rentals.vercel.app/#localbusiness",
-        "name": "AUREVIA Premium Camera Rentals",
+        "name": "AUREVIA Premium Rentals",
         "image": "https://aurevia-premium-rentals.vercel.app/readme/aurevia-banner.png",
         "telephone": "+919686909048",
-        "email": "prem@aurevia.com",
+        "email": "premmundargi135@gmail.com",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Aurevia Studio Vault, Gadag Main Road",
@@ -101,6 +133,18 @@ export default function HomePage() {
             ],
             "opens": "07:00",
             "closes": "22:00",
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://aurevia-premium-rentals.vercel.app/#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://aurevia-premium-rentals.vercel.app",
           },
         ],
       },

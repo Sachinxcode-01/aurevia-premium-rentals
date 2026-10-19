@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
 import { useCart } from "@/hooks/useCart";
 import { Phone, Mail, MapPin, MessageSquare, CheckCircle, Camera, Code2 } from "lucide-react";
 
@@ -414,6 +415,7 @@ export default function ContactClient() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

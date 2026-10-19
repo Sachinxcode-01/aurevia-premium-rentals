@@ -2,6 +2,7 @@
 
 import React from "react";
 import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
 import { useCart } from "@/hooks/useCart";
 import { Check } from "lucide-react";
 
@@ -80,6 +81,7 @@ export default function RentalProcessClient() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

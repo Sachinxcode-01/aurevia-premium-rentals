@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+  <!-- Primary Homepage (Priority 1.0) -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Equipment Catalog & Vault -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/explore</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- Production Packages & Kits -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/packages</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+
+  <!-- Rental Guidelines & Handover Process -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/rental-process</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Flagship Equipment Pages -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/gear/canon-eos-r5</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/gear/nikon-z8</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+
+  <!-- About Company & Founder -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/about</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Concierge Contact & Studio Location -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/contact</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Frequently Asked Questions -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/faq</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Gear Comparison & Recommendations -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/explore/compare</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/explore/recommendations</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Filmmaker & Production Tools -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/tools/rig-builder</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/tools/lens-match</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/tools/power-media-calculator</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/tools/sensor-simulator</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/tools/callsheet-manifest</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- Legal & Terms of Use -->
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/terms</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.30</priority>
+  </url>
+  <url>
+    <loc>https://aurevia-premium-rentals.vercel.app/privacy</loc>
+    <lastmod>2026-10-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.30</priority>
+  </url>
+</urlset>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Navbar from "@/components/navigation/Navbar";
+import Footer from "@/components/navigation/Footer";
 import { useCart } from "@/hooks/useCart";
 import Link from "next/link";
 import { Camera, ShieldCheck, Heart, Phone, Mail } from "lucide-react";
@@ -192,6 +193,7 @@ export default function AboutClient() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
