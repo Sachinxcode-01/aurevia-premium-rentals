@@ -42,8 +42,27 @@ export default function StickyMobileCTA() {
           <span className="hidden xs:inline">WhatsApp</span>
         </a>
 
-        {/* Primary CTA (View Cart or Explore Vault) */}
-        {cartCount > 0 ? (
+        {/* Primary CTA: When on /cart, offer Proceed to Checkout (or Browse if empty); elsewhere, show Cart count or Explore */}
+        {pathname === "/cart" ? (
+          cartCount > 0 ? (
+            <Link
+              href="/booking"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-neutral-950 font-bold text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <Link
+              href="/explore"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-neutral-950 font-bold text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Browse Gear Vault</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )
+        ) : cartCount > 0 ? (
           <Link
             href="/cart"
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-neutral-950 font-bold text-xs uppercase tracking-wider font-mono shadow-lg shadow-amber-500/20 active:scale-95 transition-all"

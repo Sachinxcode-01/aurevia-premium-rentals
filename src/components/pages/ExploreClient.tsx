@@ -127,7 +127,7 @@ function ExplorePageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian text-ivory pb-20">
+    <div className="min-h-screen bg-obsidian text-ivory pb-32 md:pb-20">
       <Navbar cartItemCount={cart.length} />
 
       {/* Hero Header spacer */}

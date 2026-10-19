@@ -2,7 +2,11 @@ import React from "react";
 
 export default function ExploreLoading() {
   return (
-    <div className="min-h-screen bg-obsidian text-ivory pt-28 pb-20 px-6 md:px-12 max-w-7xl mx-auto space-y-8 animate-pulse">
+    <div className="min-h-screen bg-obsidian text-ivory pt-28 pb-32 md:pb-20 px-6 md:px-12 max-w-7xl mx-auto space-y-8 animate-pulse">
+      <div role="status" className="sr-only">
+        Loading rentals…
+      </div>
+
       {/* Header skeleton */}
       <div className="space-y-3 max-w-xl">
         <div className="h-4 w-32 bg-white/10 rounded-md" />

@@ -56,7 +56,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-obsidian text-ivory flex flex-col">
       <Navbar cartItemCount={cart.length} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-32 md:pb-20">
         {/* Breadcrumb / Header */}
         <div className="space-y-2 mb-8 border-b border-white/10 pb-6">
           <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-gold-champagne">
