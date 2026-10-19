@@ -96,18 +96,18 @@ export function checkRateLimit(
   const existing = rateLimitStore.get(key);
 
   if (!existing || now > existing.resetAt) {
-    // If new key, enforce hard cap on rateLimitStore
+    // If new key, bound rateLimitStore by evicting expired/oldest entry when at capacity
     if (!existing) {
       if (rateLimitStore.size >= MAX_STORE_SIZE) {
         pruneExpired(now);
       }
-      if (rateLimitStore.size >= MAX_STORE_SIZE) {
-        return {
-          allowed: false,
-          remaining: 0,
-          resetMs: config.windowMs,
-          retryAfterSec: Math.ceil(config.windowMs / 1000),
-        };
+      while (rateLimitStore.size >= MAX_STORE_SIZE) {
+        const oldestKey = rateLimitStore.keys().next().value;
+        if (oldestKey !== undefined) {
+          rateLimitStore.delete(oldestKey);
+        } else {
+          break;
+        }
       }
     }
 

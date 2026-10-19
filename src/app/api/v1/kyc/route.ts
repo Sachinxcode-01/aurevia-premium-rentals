@@ -117,22 +117,49 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate MIME type if provided
-    if (mimeType && !ALLOWED_MIME_TYPES.includes(mimeType.toLowerCase())) {
-      return errorResponse(
-        "INVALID_MIME_TYPE",
-        `Unsupported file format. Allowed formats: JPG, PNG, WEBP, PDF`,
-        400
-      );
+    let normalizedMimeType = "image/jpeg";
+    if (mimeType !== undefined && mimeType !== null) {
+      if (typeof mimeType !== "string") {
+        return errorResponse(
+          "INVALID_MIME_TYPE",
+          "MIME type must be a string",
+          400
+        );
+      }
+      const trimmedMime = mimeType.trim().toLowerCase();
+      if (trimmedMime !== "") {
+        if (!ALLOWED_MIME_TYPES.includes(trimmedMime)) {
+          return errorResponse(
+            "INVALID_MIME_TYPE",
+            `Unsupported file format. Allowed formats: JPG, PNG, WEBP, PDF`,
+            400
+          );
+        }
+        normalizedMimeType = trimmedMime;
+      }
     }
 
     // Validate File Size
     let finalFileSize = 1024;
-    if (fileSize !== undefined && fileSize !== null) {
+    const isFileSizeAbsentOrEmpty =
+      fileSize === undefined ||
+      fileSize === null ||
+      fileSize === "" ||
+      (typeof fileSize === "string" && fileSize.trim() === "");
+
+    if (!isFileSizeAbsentOrEmpty) {
       const parsedSize = typeof fileSize === "number" ? fileSize : Number(fileSize);
-      if (!Number.isFinite(parsedSize) || parsedSize <= 0 || parsedSize > MAX_FILE_SIZE_BYTES) {
+      if (!Number.isFinite(parsedSize) || parsedSize <= 0) {
         return errorResponse(
           "INVALID_FILE_SIZE",
-          "File size must be a positive finite number not exceeding 15MB",
+          "File size must be a positive finite number",
+          400
+        );
+      }
+      if (parsedSize > MAX_FILE_SIZE_BYTES) {
+        return errorResponse(
+          "INVALID_FILE_SIZE",
+          "File size exceeds maximum permitted limit of 15MB",
           400
         );
       }
@@ -146,10 +173,57 @@ export async function POST(req: NextRequest) {
     if (
       cleanFilePath.includes("..") ||
       lowerPath.startsWith("javascript:") ||
-      lowerPath.startsWith("data:") ||
       lowerPath.startsWith("vbscript:")
     ) {
       return errorResponse("INVALID_FILE_PATH", "Insecure or malformed file path provided", 400);
+    }
+
+    const isSafeDataUri =
+      lowerPath.startsWith("data:image/jpeg") ||
+      lowerPath.startsWith("data:image/png") ||
+      lowerPath.startsWith("data:image/webp") ||
+      lowerPath.startsWith("data:application/pdf");
+
+    if (lowerPath.startsWith("data:")) {
+      if (!isSafeDataUri) {
+        return errorResponse("INVALID_FILE_PATH", "Insecure or malformed file path provided", 400);
+      }
+      if (cleanFilePath.length > MAX_FILE_SIZE_BYTES) {
+        return errorResponse(
+          "INVALID_FILE_SIZE",
+          "File size exceeds maximum permitted limit of 15MB",
+          400
+        );
+      }
+    } else {
+      // Validate web path: only same-origin Supabase storage URLs or root-relative paths that do not begin with //
+      const isRootRelative = cleanFilePath.startsWith("/") && !cleanFilePath.startsWith("//");
+      let isSameOriginSupabaseStorage = false;
+
+      if (lowerPath.startsWith("http://") || lowerPath.startsWith("https://")) {
+        try {
+          const parsed = new URL(cleanFilePath);
+          const envSupabase = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          if (envSupabase) {
+            try {
+              const parsedEnv = new URL(envSupabase);
+              if (parsed.origin === parsedEnv.origin && parsed.pathname.startsWith("/storage/v1/")) {
+                isSameOriginSupabaseStorage = true;
+              }
+            } catch {}
+          }
+          if (parsed.hostname.endsWith(".supabase.co") && parsed.pathname.startsWith("/storage/v1/")) {
+            isSameOriginSupabaseStorage = true;
+          }
+        } catch {
+          isSameOriginSupabaseStorage = false;
+        }
+      }
+
+      const isSafeWebPath = isRootRelative || isSameOriginSupabaseStorage;
+      if (!isSafeWebPath) {
+        return errorResponse("INVALID_FILE_PATH", "Insecure or malformed file path provided", 400);
+      }
     }
 
     // 4. Force Tenant Isolation: Always bind document to authenticated caller
@@ -166,7 +240,7 @@ export async function POST(req: NextRequest) {
           document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
           file_path: cleanFilePath,
           file_size: finalFileSize,
-          mime_type: mimeType || "image/jpeg",
+          mime_type: normalizedMimeType,
           status: "pending",
           created_at: new Date().toISOString(),
         },
@@ -186,7 +260,7 @@ export async function POST(req: NextRequest) {
         document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
         file_path: cleanFilePath,
         file_size: finalFileSize,
-        mime_type: mimeType || "image/jpeg",
+        mime_type: normalizedMimeType,
         status: "pending",
       })
       .select()
