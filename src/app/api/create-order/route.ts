@@ -3,9 +3,15 @@ import { apiError, apiSuccess } from "@/lib/utils/apiResponse";
 import { checkProductAvailability } from "@/lib/services/availabilityEngine";
 import { validateCoupon } from "@/lib/services/couponService";
 import { calculateBookingPrice } from "@/lib/services/pricingService";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const rateCheck = checkRateLimit(request, "create-order", { windowMs: 5 * 60 * 1000, maxRequests: 15 });
+    if (!rateCheck.allowed) {
+      return apiError("Too many order requests. Please wait a few moments before retrying.", "RATE_LIMITED", 429);
+    }
+
     const body = await request.json().catch(() => ({}));
     const { items, deliveryMethod, couponCode, receipt } = body;
 

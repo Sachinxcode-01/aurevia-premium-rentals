@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
+    const rateCheck = checkRateLimit(req, "compliance-dsr", { windowMs: 15 * 60 * 1000, maxRequests: 5 });
+    if (!rateCheck.allowed) {
+      return errorResponse("TOO_MANY_REQUESTS", "Rate limit exceeded. Please wait before submitting another compliance request.", 429);
+    }
+
     const body = await req.json();
     const {
       requestType,

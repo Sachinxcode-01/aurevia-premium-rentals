@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { db } from "@/lib/db/store";
 import { apiError, apiSuccess } from "@/lib/utils/apiResponse";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 async function syncPaymentToSupabase(bookingId: string, transactionId: string, method: string) {
   try {
@@ -43,6 +44,11 @@ async function syncPaymentToSupabase(bookingId: string, transactionId: string, m
 
 export async function POST(request: Request) {
   try {
+    const rateCheck = checkRateLimit(request, "verify-payment", { windowMs: 5 * 60 * 1000, maxRequests: 20 });
+    if (!rateCheck.allowed) {
+      return apiError("Too many payment verification attempts. Please wait a moment.", "RATE_LIMITED", 429);
+    }
+
     const body = await request.json().catch(() => ({}));
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, bookingId } = body;
 

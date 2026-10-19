@@ -65,6 +65,20 @@ export async function signInAction(email: string, password: string): Promise<Aut
 }
 
 // ─── Sign Up (Native Supabase Auth) ──────────────────────────
+function validateStrongPassword(password: string): string | null {
+  if (!password || password.length < 8) {
+    return "Password must be at least 8 characters long.";
+  }
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+    return "Password must contain both letters and numbers.";
+  }
+  const commonWeak = ["password", "12345678", "aurevia123", "qwerty123", "password123"];
+  if (commonWeak.includes(password.toLowerCase())) {
+    return "This password is too easily guessed. Please choose a stronger password.";
+  }
+  return null;
+}
+
 export async function signUpAction(
   email: string,
   password: string,
@@ -74,8 +88,9 @@ export async function signUpAction(
   if (!email || !email.includes("@")) {
     return { success: false, error: "Please enter a valid email address." };
   }
-  if (!password || password.length < 6) {
-    return { success: false, error: "Password must be at least 6 characters." };
+  const passwordError = validateStrongPassword(password);
+  if (passwordError) {
+    return { success: false, error: passwordError };
   }
   if (!fullName) {
     return { success: false, error: "Full name is required." };
@@ -226,8 +241,9 @@ export async function verifyOTPAndResetPasswordAction(
     return { success: false, error: "Email, OTP code, and new password are required." };
   }
 
-  if (newPassword.length < 6) {
-    return { success: false, error: "Password must be at least 6 characters." };
+  const passwordError = validateStrongPassword(newPassword);
+  if (passwordError) {
+    return { success: false, error: passwordError };
   }
 
   const cleanEmail = email.toLowerCase().trim();
