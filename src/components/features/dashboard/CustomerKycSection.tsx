@@ -156,7 +156,9 @@ export default function CustomerKycSection({ profile }: CustomerKycSectionProps)
         body: JSON.stringify({
           documentType,
           documentNumber: documentNumber.trim() || undefined,
-          filePath: previewUrl, // base64 data url or storage path
+          filePath: previewUrl && !previewUrl.startsWith("data:")
+            ? previewUrl
+            : `/uploads/kyc/${selectedFile?.name || "document.jpg"}`,
           fileSize: selectedFile.size,
           mimeType: selectedFile.type || "image/jpeg",
         }),

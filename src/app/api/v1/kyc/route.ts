@@ -4,7 +4,7 @@ import { verifyApiAuth, recordAuditLog } from "@/lib/auth/rbac";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 
-const ALLOWED_DOC_TYPES = ["aadhaar", "pan", "driving_licence", "college_id", "passport"];
+export const ALLOWED_DOC_TYPES = ["aadhaar", "pan", "driving_licence", "college_id", "passport"];
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB
 
@@ -103,7 +103,11 @@ export async function POST(req: NextRequest) {
       return errorResponse("INVALID_KYC_DATA", "documentType and filePath are required fields", 400);
     }
 
-    const normalizedDocType = String(documentType).toLowerCase().trim();
+    let normalizedDocType = String(documentType).toLowerCase().trim();
+    if (normalizedDocType === "driving_license") {
+      normalizedDocType = "driving_licence";
+    }
+
     if (!ALLOWED_DOC_TYPES.includes(normalizedDocType)) {
       return errorResponse(
         "INVALID_DOC_TYPE",
@@ -122,33 +126,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate File Size
-    const parsedSize = Number(fileSize);
-    if (!isNaN(parsedSize) && (parsedSize <= 0 || parsedSize > MAX_FILE_SIZE_BYTES)) {
-      return errorResponse(
-        "INVALID_FILE_SIZE",
-        `File size exceeds maximum permitted limit of 15MB`,
-        400
-      );
+    let finalFileSize = 1024;
+    if (fileSize !== undefined && fileSize !== null) {
+      const parsedSize = typeof fileSize === "number" ? fileSize : Number(fileSize);
+      if (!Number.isFinite(parsedSize) || parsedSize <= 0 || parsedSize > MAX_FILE_SIZE_BYTES) {
+        return errorResponse(
+          "INVALID_FILE_SIZE",
+          "File size must be a positive finite number not exceeding 15MB",
+          400
+        );
+      }
+      finalFileSize = Math.round(parsedSize);
     }
 
     // Sanitize File Path against path traversal and dangerous schemes
     const cleanFilePath = String(filePath).trim();
-    const isSafeDataUri =
-      cleanFilePath.startsWith("data:image/jpeg") ||
-      cleanFilePath.startsWith("data:image/png") ||
-      cleanFilePath.startsWith("data:image/webp") ||
-      cleanFilePath.startsWith("data:application/pdf");
-
-    const isSafeWebPath =
-      cleanFilePath.startsWith("http://") ||
-      cleanFilePath.startsWith("https://") ||
-      cleanFilePath.startsWith("/");
+    const lowerPath = cleanFilePath.toLowerCase();
 
     if (
       cleanFilePath.includes("..") ||
-      cleanFilePath.toLowerCase().startsWith("javascript:") ||
-      cleanFilePath.toLowerCase().startsWith("vbscript:") ||
-      (!isSafeDataUri && !isSafeWebPath)
+      lowerPath.startsWith("javascript:") ||
+      lowerPath.startsWith("data:") ||
+      lowerPath.startsWith("vbscript:")
     ) {
       return errorResponse("INVALID_FILE_PATH", "Insecure or malformed file path provided", 400);
     }
@@ -166,7 +165,7 @@ export async function POST(req: NextRequest) {
           document_type: normalizedDocType,
           document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
           file_path: cleanFilePath,
-          file_size: parsedSize || 1024,
+          file_size: finalFileSize,
           mime_type: mimeType || "image/jpeg",
           status: "pending",
           created_at: new Date().toISOString(),
@@ -186,7 +185,7 @@ export async function POST(req: NextRequest) {
         document_type: normalizedDocType,
         document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
         file_path: cleanFilePath,
-        file_size: parsedSize || 1024,
+        file_size: finalFileSize,
         mime_type: mimeType || "image/jpeg",
         status: "pending",
       })

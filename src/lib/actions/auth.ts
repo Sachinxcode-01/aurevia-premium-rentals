@@ -66,7 +66,11 @@ export async function signInAction(email: string, password: string): Promise<Aut
 
 // ─── Sign Up (Native Supabase Auth) ──────────────────────────
 function validateStrongPassword(password: string): string | null {
-  if (!password || password.length < 8) {
+  const charCount = typeof Intl !== "undefined" && typeof (Intl as any).Segmenter === "function"
+    ? Array.from(new (Intl as any).Segmenter().segment(password || "")).length
+    : Array.from(password || "").length;
+
+  if (!password || charCount < 8) {
     return "Password must be at least 8 characters long.";
   }
   if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {

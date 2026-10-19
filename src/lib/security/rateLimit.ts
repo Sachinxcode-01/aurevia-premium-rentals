@@ -7,6 +7,15 @@ interface RateLimitRecord {
 
 // In-memory store keyed by route namespace + client IP
 const rateLimitStore = new Map<string, RateLimitRecord>();
+const MAX_STORE_SIZE = 10000;
+
+function pruneExpired(now: number) {
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetAt) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
 
 // Periodic cleanup every 5 minutes to prevent memory growth
 let lastCleanup = Date.now();
@@ -14,12 +23,21 @@ function cleanupExpired() {
   const now = Date.now();
   if (now - lastCleanup < 5 * 60 * 1000) return;
   lastCleanup = now;
+  pruneExpired(now);
+}
 
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (now > record.resetAt) {
-      rateLimitStore.delete(key);
-    }
-  }
+function isValidIP(ip: string): boolean {
+  if (!ip || typeof ip !== "string" || ip.length > 45) return false;
+
+  // IPv4: 4 octets 0-255 separated by dots
+  const ipv4Pattern =
+    /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+  if (ipv4Pattern.test(ip)) return true;
+
+  // IPv6: standard, compressed, and loopback
+  const ipv6Pattern =
+    /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$/;
+  return ipv6Pattern.test(ip);
 }
 
 export interface RateLimitConfig {
@@ -36,7 +54,7 @@ export interface RateLimitResult {
 
 /**
  * Enforce rate limiting by client IP address
- * @param req Incoming NextRequest
+ * @param req Incoming NextRequest or standard Request
  * @param namespace Unique route tag (e.g., "create-order", "verify-payment")
  * @param config { windowMs: number, maxRequests: number }
  */
@@ -46,28 +64,53 @@ export function checkRateLimit(
   config: RateLimitConfig
 ): RateLimitResult {
   cleanupExpired();
+  const now = Date.now();
 
-  // Extract client IP from standard proxy headers
-  let ip = "127.0.0.1";
+  // 1. Extract client IP ONLY from the configurable trusted proxy header
+  const trustedHeaderName = process.env.TRUSTED_IP_HEADER || "x-forwarded-for";
+  let clientIp: string | null = null;
+
   if ("headers" in req && typeof req.headers.get === "function") {
-    const xForwardedFor = req.headers.get("x-forwarded-for");
-    const xRealIp = req.headers.get("x-real-ip");
-    const cfConnectingIp = req.headers.get("cf-connecting-ip");
-
-    if (cfConnectingIp) {
-      ip = cfConnectingIp;
-    } else if (xForwardedFor) {
-      ip = xForwardedFor.split(",")[0].trim();
-    } else if (xRealIp) {
-      ip = xRealIp.trim();
+    const rawHeader = req.headers.get(trustedHeaderName);
+    if (rawHeader) {
+      const candidate = trustedHeaderName.toLowerCase() === "x-forwarded-for"
+        ? rawHeader.split(",")[0].trim()
+        : rawHeader.trim();
+      if (isValidIP(candidate)) {
+        clientIp = candidate;
+      }
     }
   }
 
-  const key = `${namespace}:${ip}`;
-  const now = Date.now();
+  // 2. Reject request if IP is missing or invalid (avoid defaulting to 127.0.0.1 or trusting unverified headers)
+  if (!clientIp) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetMs: config.windowMs,
+      retryAfterSec: Math.ceil(config.windowMs / 1000),
+    };
+  }
+
+  const key = `${namespace}:${clientIp}`;
   const existing = rateLimitStore.get(key);
 
   if (!existing || now > existing.resetAt) {
+    // If new key, enforce hard cap on rateLimitStore
+    if (!existing) {
+      if (rateLimitStore.size >= MAX_STORE_SIZE) {
+        pruneExpired(now);
+      }
+      if (rateLimitStore.size >= MAX_STORE_SIZE) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetMs: config.windowMs,
+          retryAfterSec: Math.ceil(config.windowMs / 1000),
+        };
+      }
+    }
+
     // New window
     rateLimitStore.set(key, {
       count: 1,

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/security/rateLimit";
+import { ALLOWED_DOC_TYPES } from "@/app/api/v1/kyc/route";
 
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".webp"];
-const ALLOWED_DOC_TYPES = ["aadhaar", "pan", "driving_license", "driving_licence", "passport", "college_id"];
 
 export async function POST(req: Request) {
   try {
@@ -67,7 +67,11 @@ export async function POST(req: Request) {
     }
 
     // 2. Validate Document Type
-    const normType = String(documentType).toLowerCase().trim();
+    let normType = String(documentType).toLowerCase().trim();
+    if (normType === "driving_license") {
+      normType = "driving_licence";
+    }
+
     if (!ALLOWED_DOC_TYPES.includes(normType)) {
       return NextResponse.json(
         { error: `Invalid document type. Allowed types: ${ALLOWED_DOC_TYPES.join(", ")}` },
