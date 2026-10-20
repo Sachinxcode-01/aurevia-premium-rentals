@@ -1,5 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className="bg-[#070707] text-[#f5f1e8] antialiased selection:bg-[#d8b36a]/30 selection:text-[#d8b36a]">
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
