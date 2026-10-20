@@ -4,6 +4,7 @@
 node_modules/
 /node_modules
 admin/node_modules/
+*node_modules_old*
 /.pnp
 .pnp.*
 .yarn/*
