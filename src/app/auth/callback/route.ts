@@ -71,6 +71,15 @@ export async function GET(request: NextRequest) {
             role: "customer", // Enforce CUSTOMER role strictly
           },
         ] as never[]);
+
+        if (user.email) {
+          try {
+            const { sendWelcomeEmail } = await import("@/lib/email/mailer");
+            await sendWelcomeEmail(user.email, googleName);
+          } catch (welcomeErr) {
+            console.warn("[OAuth] Welcome email warning:", welcomeErr);
+          }
+        }
       } else {
         // Update avatar_url if missing, preserving existing profile information & role
         if (googleAvatar && !existingProfile.avatar_url) {

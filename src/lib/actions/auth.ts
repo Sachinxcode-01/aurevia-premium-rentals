@@ -145,6 +145,12 @@ export async function signUpAction(
   }
 
   if (data.session) {
+    try {
+      const { sendWelcomeEmail } = await import("@/lib/email/mailer");
+      await sendWelcomeEmail(cleanEmail, fullName);
+    } catch (welcomeErr) {
+      console.warn("[Auth] Welcome email send warning:", welcomeErr);
+    }
     revalidatePath("/");
     return { success: true, role: "customer" };
   }
@@ -294,6 +300,14 @@ export async function verifyOTPAndResetPasswordAction(
 
   // Clear used OTP
   resetOtpStore.delete(cleanEmail);
+
+  try {
+    const { sendPasswordChangedConfirmation } = await import("@/lib/email/mailer");
+    await sendPasswordChangedConfirmation(cleanEmail);
+  } catch (alertErr) {
+    console.warn("[Auth] Password changed security alert warning:", alertErr);
+  }
+
   revalidatePath("/");
   return { success: true };
 }

@@ -16,6 +16,12 @@ import {
 import { Logo } from "@/components/ui/Logo";
 
 export default function Footer() {
+  const adminUrl =
+    process.env.NEXT_PUBLIC_ADMIN_URL ||
+    (typeof window !== "undefined" && window.location.hostname.includes("localhost")
+      ? "http://localhost:3002"
+      : "https://aurevia-admin.vercel.app");
+
   const whatsappUrl = `https://wa.me/919686909048?text=${encodeURIComponent(
     "Hello Prem sir, Greetings! 👋✨\n\nI would like to enquire about equipment availability and book gear from AUREVIA Premium Rentals:\n\n🎬 *Project / Shoot Type:*\n📅 *Pickup Date:*\n🔄 *Return Date:*\n📍 *Location:*\n\n📷 *Requested Equipment:*\n• Camera Body / Lenses:\n\nCould you please share the quote and confirm reservation? Thank you! 🙏"
   )}`;
@@ -297,6 +303,17 @@ export default function Footer() {
                   Open-Source Licences
                 </Link>
               </li>
+              <li>
+                <a
+                  href={adminUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-gold-champagne/80 hover:text-gold-champagne transition pt-1 font-medium"
+                >
+                  <ShieldCheck size={12} className="text-gold-champagne" />
+                  <span>Staff &amp; Operations Portal ↗</span>
+                </a>
+              </li>
             </ul>
           </div>
         </div>
@@ -330,6 +347,17 @@ export default function Footer() {
               </button>
               <span>•</span>
               <a href="/sitemap.xml" className="hover:text-gold-champagne transition">Sitemap</a>
+              <span>•</span>
+              <a
+                href={adminUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:text-gold-champagne text-gold-champagne/75 transition"
+                title="Aurevia Fleet Operations"
+              >
+                <ShieldCheck size={11} className="text-gold-champagne" />
+                <span>Staff Portal</span>
+              </a>
               <span>•</span>
               <span className="text-muted-gray/70">
                 Dev: <a href="https://github.com/Sachinxcode-01" target="_blank" rel="noopener noreferrer" className="text-gold-champagne hover:underline">Sachin</a>

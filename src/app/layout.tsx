@@ -14,6 +14,7 @@ import AmbientParticles from "@/components/effects/AmbientParticles";
 import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
 import StickyMobileCTA from "@/components/ui/StickyMobileCTA";
 import CookieConsentBanner from "@/components/compliance/CookieConsentBanner";
+import AdminQuickBar from "@/components/admin/AdminQuickBar";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -162,6 +163,7 @@ export default function RootLayout({
         <ToastProvider>
           <CartProvider>
             <ChatbotProvider>
+              <AdminQuickBar />
               <OnlineStatusBanner />
               <PWARegister />
               <div className="flex-1 flex flex-col">

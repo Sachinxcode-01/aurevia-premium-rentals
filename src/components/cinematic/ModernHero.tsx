@@ -66,10 +66,35 @@ export default function ModernHero({ onExploreClick, onShowcaseClick }: ModernHe
   const router = useRouter();
   const [activeGearIndex, setActiveGearIndex] = useState(0);
 
+  const [heroBadge, setHeroBadge] = useState("AUREVIA VAULT • OFFICIAL CAMERA & CINEMA RENTALS");
+  const [heroTagline, setHeroTagline] = useState("By Prem Mundargi • Frame the Extraordinary");
+  const [heroSubtitle, setHeroSubtitle] = useState(
+    "South India's premier camera equipment concierge. Rent calibrated cinema cameras, full-frame mirrorless bodies, cinema lenses, and production stabilizers with zero-deposit options and doorstep Pelican flight cases."
+  );
+
   const [searchQuery, setSearchQuery] = useState("");
   const [pickupDate, setPickupDate] = useState(() => getTomorrowDate(1));
   const [returnDate, setReturnDate] = useState(() => getDefaultReturnDate(3));
   const [category, setCategory] = useState("all");
+
+  React.useEffect(() => {
+    let active = true;
+    import("@/lib/db/store").then(({ db }) => {
+      if (!active) return;
+      db.getWebsiteSetting("hero_badge_text").then((val) => {
+        if (val && active) setHeroBadge(val);
+      });
+      db.getWebsiteSetting("homepage_banner_title").then((val) => {
+        if (val && active) setHeroTagline(`By Prem Mundargi • ${val}`);
+      });
+      db.getWebsiteSetting("homepage_banner_subtitle").then((val) => {
+        if (val && active) setHeroSubtitle(val);
+      });
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const activeGear = HERO_FEATURED_GEAR[activeGearIndex];
 
@@ -106,7 +131,7 @@ export default function ModernHero({ onExploreClick, onShowcaseClick }: ModernHe
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold-champagne/10 border border-gold-border/30 backdrop-blur-md">
             <Sparkles size={13} className="text-gold-champagne" />
             <span className="text-[10px] sm:text-xs font-mono font-semibold uppercase tracking-widest text-gold-champagne">
-              AUREVIA VAULT • OFFICIAL CAMERA &amp; CINEMA RENTALS
+              {heroBadge}
             </span>
           </div>
 
@@ -129,7 +154,7 @@ export default function ModernHero({ onExploreClick, onShowcaseClick }: ModernHe
           <div className="lg:col-span-7 space-y-6 text-center md:text-left">
             <div className="space-y-3">
               <span className="text-xs uppercase font-mono tracking-[0.25em] text-gold-champagne/90 block font-semibold">
-                By Prem Mundargi • Frame the Extraordinary
+                {heroTagline}
               </span>
               <h1 className="serif-heading text-4xl sm:text-6xl lg:text-7xl font-light tracking-tight text-ivory leading-[1.06]">
                 AUREVIA <span className="text-gold-glow italic font-normal">Premium Rentals</span>
@@ -137,7 +162,7 @@ export default function ModernHero({ onExploreClick, onShowcaseClick }: ModernHe
             </div>
 
             <p className="text-sm sm:text-base text-muted-gray font-light max-w-2xl leading-relaxed mx-auto md:mx-0">
-              South India&apos;s premier camera equipment concierge. Rent calibrated cinema cameras, full-frame mirrorless bodies, cinema lenses, and production stabilizers with zero-deposit options and doorstep Pelican flight cases.
+              {heroSubtitle}
             </p>
 
             {/* Quick Action CTAs */}

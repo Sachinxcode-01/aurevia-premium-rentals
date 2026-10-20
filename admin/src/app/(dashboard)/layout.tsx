@@ -7,7 +7,7 @@ import {
   LayoutDashboard, CalendarCheck, Camera, Users, ShieldAlert,
   RotateCcw, CreditCard, RefreshCw, Ticket, BarChart3, FileSpreadsheet,
   Bell, Activity, UserCog, Settings, LogOut, ChevronLeft, ChevronRight,
-  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift, ArrowRight
+  Search, Command, Menu, X, Star, HelpCircle, LifeBuoy, Gift, ArrowRight, Globe
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminLogo } from "@/components/ui/AdminLogo";
@@ -45,8 +45,9 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "CUSTOMER ENGAGEMENT",
+    title: "MARKETING & CMS",
     items: [
+      { name: "Website CMS", href: "/cms", icon: Globe, badge: "LIVE", badgeColor: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
       { name: "Reviews Moderation", href: "/reviews", icon: Star, badge: "2", badgeColor: "bg-[#d8b36a]/20 text-[#d8b36a] border-[#d8b36a]/30" },
       { name: "Online Enquiries", href: "/enquiries", icon: HelpCircle, badge: "1", badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
       { name: "Support Tickets", href: "/tickets", icon: LifeBuoy, badge: "1", badgeColor: "bg-rose-500/20 text-rose-400 border-rose-500/30" },
@@ -293,6 +294,17 @@ export default function AdminDashboardLayout({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#d8b36a] animate-ping" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#d8b36a]" />
             </Link>
+
+            <a
+              href={process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-ivory hover:text-[#d8b36a] hover:border-[#d8b36a]/40 hover:bg-[#d8b36a]/10 transition font-mono"
+              title="Open Live Public Customer Website"
+            >
+              <Globe size={13} className="text-[#d8b36a]" />
+              <span>LIVE SITE ↗</span>
+            </a>
 
             <div className="h-4 w-px bg-white/10" />
 

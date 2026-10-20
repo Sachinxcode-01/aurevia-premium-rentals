@@ -310,4 +310,13 @@ export const adminApiClient = {
         body: JSON.stringify(payload),
       }),
   },
+
+  cms: {
+    get: () => fetchAdminApi<any>("/api/v1/admin/cms?admin=true"),
+    update: (payload: any) =>
+      fetchAdminApi<any>("/api/v1/admin/cms", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+  },
 };

@@ -91,22 +91,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Verify RBAC Privileges
-  let profile = null;
-  try {
-    const { data } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    profile = data;
-  } catch {
-    profile = null;
-  }
-
-  const role = profile?.role || user.user_metadata?.role || "customer";
-
-  if (!["admin", "staff", "super_admin"].includes(role)) {
+  // Helper to deny access and redirect to admin login
+  const denyAccess = async (errorReason = "insufficient_permissions") => {
     try {
       await supabase.auth.signOut();
     } catch {
@@ -114,8 +100,31 @@ export async function proxy(request: NextRequest) {
     }
     const url = request.nextUrl.clone();
     url.pathname = "/admin-login";
-    url.searchParams.set("error", "insufficient_permissions");
+    url.searchParams.set("error", errorReason);
     return NextResponse.redirect(url);
+  };
+
+  // Verify RBAC Privileges (fail-closed: require successfully loaded profile)
+  let profile: { role: string } | null = null;
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !data) {
+      return await denyAccess("insufficient_permissions");
+    }
+    profile = data;
+  } catch {
+    return await denyAccess("insufficient_permissions");
+  }
+
+  const role = profile.role;
+
+  if (!["admin", "staff", "super_admin"].includes(role)) {
+    return await denyAccess("insufficient_permissions");
   }
 
   return response;
