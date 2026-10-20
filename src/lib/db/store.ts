@@ -115,31 +115,13 @@ export interface Review {
 // In-Memory state for Server Side reviews & waitlists
 let serverReviews: Review[] = [
   {
-    id: "rev-1",
+    id: "42d101ea-59f2-4a8d-a86b-ca96ea6fc2d5",
     productId: "p1000000-0000-0000-0000-000000000001",
     authorName: "Aravind Sen",
     rating: 5,
     quote: "AUREVIA provides pristine equipment that meets exact set standards. Their service is truly elite, matching the quality of the glass they rent.",
     isApproved: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "rev-2",
-    productId: "p1000000-0000-0000-0000-000000000001",
-    authorName: "Rhea Kapoor",
-    rating: 5,
-    quote: "The Canon EOS R5 sequence was flawless. Renting from Aurevia feels like a bespoke luxury experience, from reservation to concierge pickup.",
-    isApproved: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "rev-3",
-    productId: "p1000000-0000-0000-0000-000000000003",
-    authorName: "Vikram Mehta",
-    rating: 5,
-    quote: "Having high-quality cinema gear ready on demand has simplified our production pipeline. Zero issues with custom booking setups.",
-    isApproved: true,
-    createdAt: new Date().toISOString()
+    createdAt: "2026-07-16T17:48:35.145583+00:00"
   }
 ];
 
@@ -2300,27 +2282,41 @@ export const db = {
 
   // ─── REVIEWS METHODS ───────────────────────────────────────────────────
   async getReviews(productId?: string, approvedOnly = true): Promise<Review[]> {
+    if (typeof window !== "undefined") {
+      try {
+        const queryParams = new URLSearchParams();
+        if (productId) queryParams.set("productId", productId);
+        const res = await fetch(`/api/reviews?${queryParams.toString()}`);
+        const json = await res.json();
+        if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          return json.data;
+        }
+      } catch {}
+    }
+
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      let query = supabase.from("reviews").select("*");
-      if (productId) {
-        query = query.eq("product_id", productId);
-      }
-      if (approvedOnly) {
-        query = query.eq("is_approved", true);
-      }
-      const { data, error } = await query;
-      if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          productId: d.product_id,
-          authorName: d.author_name,
-          rating: d.rating,
-          quote: d.quote,
-          isApproved: d.is_approved,
-          createdAt: d.created_at
-        }));
-      }
+      try {
+        const supabase = await getSupabase();
+        let query = supabase.from("reviews").select("*");
+        if (productId) {
+          query = query.eq("product_id", productId);
+        }
+        if (approvedOnly) {
+          query = query.eq("is_approved", true);
+        }
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data.map((d: any) => ({
+            id: d.id,
+            productId: d.product_id,
+            authorName: d.author_name,
+            rating: d.rating,
+            quote: d.quote,
+            isApproved: d.is_approved,
+            createdAt: d.created_at
+          }));
+        }
+      } catch {}
     }
 
     const reviews = getLocalReviews();
@@ -2345,29 +2341,57 @@ export const db = {
       createdAt: new Date().toISOString()
     };
 
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        });
+        const json = await res.json();
+        if (json && json.success && json.data) {
+          return {
+            id: json.data.id,
+            productId: entry.productId,
+            authorName: json.data.customerName || entry.authorName,
+            rating: json.data.rating || entry.rating,
+            quote: json.data.comment || entry.quote,
+            isApproved: false,
+            createdAt: json.data.createdAt || new Date().toISOString(),
+          };
+        }
+      } catch (e) {
+        console.warn("Client review submit via API failed, attempting direct Supabase:", e);
+      }
+    }
+
     if (isSupabaseConfigured()) {
-      const supabase = await getSupabase();
-      const { data, error } = await supabase
-        .from("reviews")
-        .insert({
-          product_id: entry.productId,
-          author_name: entry.authorName,
-          rating: entry.rating,
-          quote: entry.quote,
-          is_approved: false
-        })
-        .select()
-        .single();
-      if (!error && data) {
-        return {
-          id: data.id,
-          productId: data.product_id,
-          authorName: data.author_name,
-          rating: data.rating,
-          quote: data.quote,
-          isApproved: data.is_approved,
-          createdAt: data.created_at
-        };
+      try {
+        const supabase = await getSupabase();
+        const { data, error } = await supabase
+          .from("reviews")
+          .insert({
+            product_id: entry.productId,
+            author_name: entry.authorName,
+            rating: entry.rating,
+            quote: entry.quote,
+            is_approved: false
+          })
+          .select()
+          .single();
+        if (!error && data) {
+          return {
+            id: data.id,
+            productId: data.product_id,
+            authorName: data.author_name,
+            rating: data.rating,
+            quote: data.quote,
+            isApproved: data.is_approved,
+            createdAt: data.created_at
+          };
+        }
+      } catch (err) {
+        console.warn("Supabase direct insert fallback error:", err);
       }
     }
 

@@ -69,43 +69,18 @@ export default function HomeClient() {
     db.getFAQs().then(setFaqsList);
     db.getProducts().then(setProductsList);
 
-    const approved = engagementStore.getApprovedReviews();
-    if (approved.length > 0) {
-      setReviewsList(
-        approved.map((r: CustomerReview) => ({
-          id: r.id,
-          productId: r.productName,
-          authorName: r.customerName,
-          quote: r.comment,
-          rating: r.rating,
-          isApproved: true,
-          createdAt: r.createdAt,
-        }))
-      );
-    } else {
-      db.getReviews(undefined, true).then((fallbackReviews) => {
-        if (fallbackReviews.length > 0) {
-          setReviewsList(fallbackReviews);
+    const refreshReviews = () => {
+      db.getReviews(undefined, true).then((reviews) => {
+        if (reviews && reviews.length > 0) {
+          setReviewsList(reviews);
         }
       });
-    }
+    };
+    refreshReviews();
 
     // Live Real-Time Subscription: Updates public website immediately when Admin approves/rejects a review!
     const unsubReview = realtimeHub.subscribe("REVIEW_MODERATED", () => {
-      const liveApproved = engagementStore.getApprovedReviews();
-      if (liveApproved.length > 0) {
-        setReviewsList(
-          liveApproved.map((r: CustomerReview) => ({
-            id: r.id,
-            productId: r.productName,
-            authorName: r.customerName,
-            quote: r.comment,
-            rating: r.rating,
-            isApproved: true,
-            createdAt: r.createdAt,
-          }))
-        );
-      }
+      refreshReviews();
     });
 
     const unsubInventory = realtimeHub.subscribe("INVENTORY_UPDATED", () => {

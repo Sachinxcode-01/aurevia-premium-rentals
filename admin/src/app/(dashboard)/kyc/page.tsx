@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  ShieldCheck, ShieldAlert, Check, X, Eye, RefreshCw, User, Phone, Mail, Calendar, AlertCircle
+  ShieldCheck, X, Eye, RefreshCw
 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
@@ -20,33 +20,8 @@ interface KYCSubmission {
   submittedAt: string;
 }
 
-const MOCK_KYC: KYCSubmission[] = [
-  {
-    id: "KYC-881",
-    customerName: "Rahul Verma",
-    email: "rahul.v@gmail.com",
-    phone: "+91 98765 43210",
-    idType: "Aadhaar",
-    idNumber: "•••• •••• 4210",
-    documentUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=800",
-    status: "PENDING",
-    submittedAt: "12 Aug 2026, 09:30 AM",
-  },
-  {
-    id: "KYC-880",
-    customerName: "Ananya Sharma",
-    email: "ananya.sharma@yahoo.com",
-    phone: "+91 98123 45678",
-    idType: "PAN",
-    idNumber: "ABCDE1234F",
-    documentUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800",
-    status: "PENDING",
-    submittedAt: "11 Aug 2026, 06:15 PM",
-  },
-];
-
 export default function AdminKYCPage() {
-  const [kycList, setKycList] = useState<KYCSubmission[]>(MOCK_KYC);
+  const [kycList, setKycList] = useState<KYCSubmission[]>([]);
   const [activeTab, setActiveTab] = useState<string>("PENDING");
   const [selectedDoc, setSelectedDoc] = useState<KYCSubmission | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -104,11 +79,7 @@ export default function AdminKYCPage() {
       }
     } catch {}
 
-    if (combined.length > 0) {
-      setKycList(combined);
-    } else {
-      setKycList(MOCK_KYC);
-    }
+    setKycList(combined);
     setLoading(false);
   }, [activeTab]);
 

@@ -4,7 +4,9 @@
  */
 
 export type RealtimeEventType =
+  | "REVIEW_CREATED"
   | "REVIEW_MODERATED"
+  | "REVIEW_DELETED"
   | "ENQUIRY_UPDATED"
   | "TICKET_UPDATED"
   | "BOOKING_UPDATED"

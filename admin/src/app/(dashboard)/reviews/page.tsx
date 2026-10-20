@@ -27,44 +27,7 @@ export default function AdminReviewsPage() {
     const combined: CustomerReview[] = [];
     const idMap = new Set<string>();
 
-    // 1. Local engagement store reviews
-    const storeData = engagementStore.getReviews();
-    storeData.forEach((r) => {
-      if (!idMap.has(r.id)) {
-        idMap.add(r.id);
-        combined.push(r);
-      }
-    });
-
-    // 2. Public website localStorage ('aurevia_admin_reviews')
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem("aurevia_admin_reviews");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          parsed.forEach((r: any) => {
-            if (!idMap.has(r.id)) {
-              idMap.add(r.id);
-              combined.push({
-                id: r.id,
-                customerName: r.customerName || "Verified Renter",
-                customerEmail: r.customerEmail || "",
-                productName: r.productName || "Cinema Equipment",
-                rating: r.rating || 5,
-                title: r.title || "Customer Review",
-                comment: r.comment || "",
-                status: (r.status as any) || "pending",
-                verifiedRental: r.verifiedRental ?? true,
-                createdAt: r.createdAt || new Date().toISOString(),
-                adminNote: r.adminNote,
-              });
-            }
-          });
-        }
-      } catch {}
-    }
-
-    // 3. Server API reviews
+    // 1. Primary: Server API reviews (real database reviews table)
     try {
       const apiRes = await adminApiClient.reviews.list().catch(() => null);
       if (apiRes && apiRes.success && Array.isArray(apiRes.data)) {
@@ -73,47 +36,53 @@ export default function AdminReviewsPage() {
             idMap.add(r.id);
             combined.push({
               id: r.id,
-              customerName: r.customer_name || r.customerName || "Verified Renter",
-              customerEmail: r.customer_email || r.customerEmail || "",
-              productName: r.product_name || r.productName || "Cinema Equipment",
+              customerName: r.customerName || r.customer_name || "Verified Client",
+              customerEmail: r.customerEmail || r.customer_email || "",
+              productName: r.productName || r.product_name || "Cinema Camera / Optics",
               rating: r.rating || 5,
-              title: r.title || "Customer Review",
-              comment: r.comment || "",
-              status: (r.status as any) || "pending",
-              verifiedRental: r.verified_rental ?? true,
-              createdAt: r.created_at || r.createdAt || new Date().toISOString(),
-              adminNote: r.admin_note || r.adminNote,
+              title: r.title || "Client Feedback",
+              comment: r.comment || r.quote || "",
+              status: (r.status as any) || (r.is_approved ? "approved" : "pending"),
+              verifiedRental: r.verifiedRental ?? true,
+              createdAt: r.createdAt || r.created_at || new Date().toISOString(),
+              adminNote: r.adminNote || r.admin_note,
             });
           }
         });
       }
-    } catch {}
+    } catch (e) {
+      console.warn("adminApiClient.reviews.list failed:", e);
+    }
 
-    // 4. Direct Supabase DB reviews table query
-    try {
-      const supabase = createClient();
-      const { data: dbData } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
-      if (dbData && Array.isArray(dbData)) {
-        dbData.forEach((r: any) => {
-          if (!idMap.has(r.id)) {
-            idMap.add(r.id);
-            combined.push({
-              id: r.id,
-              customerName: r.customer_name || "Verified Renter",
-              customerEmail: r.customer_email || "",
-              productName: r.product_name || "Cinema Equipment",
-              rating: r.rating || 5,
-              title: r.title || "Customer Review",
-              comment: r.comment || "",
-              status: (r.status as any) || "pending",
-              verifiedRental: r.verified_rental ?? true,
-              createdAt: r.created_at || new Date().toISOString(),
-              adminNote: r.admin_note,
-            });
-          }
-        });
+    // 2. Direct Supabase Client fallback if API route was unreachable
+    if (combined.length === 0) {
+      try {
+        const supabase = createClient();
+        const { data: dbData } = await supabase.from("reviews").select("*").order("created_at", { ascending: false });
+        if (dbData && Array.isArray(dbData)) {
+          dbData.forEach((r: any) => {
+            if (!idMap.has(r.id)) {
+              idMap.add(r.id);
+              combined.push({
+                id: r.id,
+                customerName: r.author_name || "Verified Client",
+                customerEmail: "",
+                productName: "Cinema Equipment",
+                rating: r.rating || 5,
+                title: "Client Feedback",
+                comment: r.quote || "",
+                status: r.is_approved ? "approved" : "pending",
+                verifiedRental: true,
+                createdAt: r.created_at || new Date().toISOString(),
+                adminNote: undefined,
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Direct Supabase reviews fallback failed:", e);
       }
-    } catch {}
+    }
 
     setReviews(combined);
   };

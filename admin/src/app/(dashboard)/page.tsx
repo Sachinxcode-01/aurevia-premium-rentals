@@ -123,16 +123,8 @@ export default function AdminOverviewDashboard() {
             { id: "g2", name: "Sony FX6 Cinema", count: 14, revenue: 77000, utilization: 72, image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=400" },
             { id: "g3", name: "RED Komodo 6K", count: 9, revenue: 58500, utilization: 64, image: "https://images.unsplash.com/photo-1589872737418-202b8015e378?q=80&w=400" },
           ],
-          recentBookings: [
-            { id: "AUR-1042", customer: "Rahul Verma", gear: "Canon EOS R5 C Cinema Camera", dates: "13 Aug → 16 Aug", amount: 14997, paymentStatus: "PAID", status: "ready_for_pickup" },
-            { id: "AUR-1041", customer: "Ananya Sharma", gear: "Sony FX6 Full-Frame Package", dates: "14 Aug → 17 Aug", amount: 16500, paymentStatus: "PAID", status: "approval_pending" },
-            { id: "AUR-1040", customer: "Vikramaditya Rao", gear: "RED Komodo 6K Rig", dates: "12 Aug → 16 Aug", amount: 26000, paymentStatus: "PAID", status: "rented" },
-            { id: "AUR-1039", customer: "Priya Nair", gear: "Canon RF 70-200mm f/2.8L IS USM", dates: "10 Aug → 11 Aug", amount: 2499, paymentStatus: "PAID", status: "returned" },
-          ],
-          activityFeed: [
-            { id: "act-1", text: "New Booking Created for Canon EOS R5 C", time: "Just now" },
-            { id: "act-2", text: "Aadhaar KYC Verified for Rahul Verma", time: "10m ago" },
-          ],
+          recentBookings: [],
+          activityFeed: [],
         });
       }
     } catch {

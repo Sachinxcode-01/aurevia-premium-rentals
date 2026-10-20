@@ -18,46 +18,7 @@ export interface CustomerRecord {
   lastActive?: string;
 }
 
-const DEFAULT_CUSTOMERS: CustomerRecord[] = [
-  {
-    id: "CUST-001",
-    name: "Rahul Verma",
-    email: "rahul.v@gmail.com",
-    phone: "+91 98765 43210",
-    joined: "15 Jan 2026",
-    kycStatus: "VERIFIED",
-    bookingsCount: 8,
-    totalSpend: 112450,
-    status: "ACTIVE",
-    lastActive: "Today",
-  },
-  {
-    id: "CUST-002",
-    name: "Ananya Sharma",
-    email: "ananya.sharma@yahoo.com",
-    phone: "+91 98123 45678",
-    joined: "02 Feb 2026",
-    kycStatus: "PENDING",
-    bookingsCount: 3,
-    totalSpend: 42000,
-    status: "ACTIVE",
-    lastActive: "Yesterday",
-  },
-  {
-    id: "CUST-003",
-    name: "Vikramaditya Rao",
-    email: "vikram.rao@cinemafilms.in",
-    phone: "+91 99001 12233",
-    joined: "10 Mar 2026",
-    kycStatus: "VERIFIED",
-    bookingsCount: 14,
-    totalSpend: 289000,
-    status: "ACTIVE",
-    lastActive: "3 days ago",
-  },
-];
-
-const inMemoryCustomers: CustomerRecord[] = [...DEFAULT_CUSTOMERS];
+const inMemoryCustomers: CustomerRecord[] = [];
 
 export async function GET(req: NextRequest) {
   try {
@@ -72,28 +33,31 @@ export async function GET(req: NextRequest) {
       try {
         const supabase = await createServiceSupabaseClient();
 
-        // 1. Fetch customer profiles
+        // 1. Fetch real customer profiles (excluding admin/staff/super_admin)
         const { data: profiles, error: profileErr } = await supabase
           .from("profiles")
           .select("id, full_name, email, phone, role, created_at, updated_at")
-          .in("role", ["customer"])
+          .in("role", ["customer", "user"])
           .order("created_at", { ascending: false });
 
-        if (!profileErr && profiles && profiles.length > 0) {
+        if (!profileErr && profiles) {
           // 2. Fetch all bookings to calculate real spend & bookings count
           const { data: bookings } = await supabase
             .from("bookings")
             .select("id, profile_id, total_payable, payment_status, created_at");
 
-          // 3. Fetch all KYC records
-          const { data: kycDocs } = await supabase
-            .from("kyc_documents")
-            .select("profile_id, status");
-
+          // 3. Fetch KYC records if table exists
           const kycMap = new Map<string, string>();
-          (kycDocs || []).forEach((k: any) => {
-            if (k.profile_id) kycMap.set(k.profile_id, k.status);
-          });
+          try {
+            const { data: kycDocs } = await supabase
+              .from("kyc_documents")
+              .select("profile_id, status");
+            (kycDocs || []).forEach((k: any) => {
+              if (k.profile_id) kycMap.set(k.profile_id, k.status);
+            });
+          } catch {
+            // kyc_documents table might not exist yet
+          }
 
           const spendMap = new Map<string, number>();
           const countMap = new Map<string, number>();
