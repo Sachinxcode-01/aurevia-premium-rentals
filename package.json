@@ -14,7 +14,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "db:backup": "node scripts/backup-db.js"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
+import Image from "next/image";
 import Navbar from "@/components/navigation/Navbar";
 import { useCart } from "@/hooks/useCart";
 import { db } from "@/lib/db/store";
@@ -440,8 +441,13 @@ export default function BookingPage() {
                     className="glass-panel border-white/5 rounded-lg p-5 flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center"
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.product.imagePrimary} className="w-16 h-12 object-cover rounded bg-black/25 border border-white/5" alt="" />
+                      <Image
+                        src={item.product.imagePrimary}
+                        alt={`${item.product.name} rental unit`}
+                        width={64}
+                        height={48}
+                        className="w-16 h-12 object-cover rounded bg-black/25 border border-white/5"
+                      />
                       <div>
                         <h3 className="serif-heading text-base font-light text-ivory">{item.product.name}</h3>
                         <p className="text-[9px] text-gold-champagne uppercase tracking-widest font-mono mt-0.5">

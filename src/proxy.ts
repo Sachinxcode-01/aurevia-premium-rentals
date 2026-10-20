@@ -6,6 +6,16 @@ const PROTECTED_CUSTOMER = ["/dashboard", "/profile", "/checkout", "/kyc", "/not
 const AUTH_PAGES         = ["/login", "/register", "/forgot-password", "/reset-password"];
 
 export async function proxy(request: NextRequest) {
+  // ── Force HTTPS in production ──────────────────────────────────────────────
+  if (
+    process.env.NODE_ENV === "production" &&
+    request.headers.get("x-forwarded-proto") === "http"
+  ) {
+    const httpsUrl = new URL(request.url);
+    httpsUrl.protocol = "https:";
+    return NextResponse.redirect(httpsUrl, 301);
+  }
+
   const { pathname } = request.nextUrl;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

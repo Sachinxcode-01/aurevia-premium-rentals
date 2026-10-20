@@ -14,16 +14,52 @@ export default function ContactClient() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("rental");
   const [message, setMessage] = useState("");
+  const [honeypot, setHoneypot] = useState("");
+  const [formLoadedAt] = useState<number>(() => Date.now());
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // ── Anti-Spam Protection: Honeypot & Timing Checks ──────────────────────
+    if (honeypot) {
+      // Bot filled hidden trap field
+      setSent(true);
+      return;
+    }
+    if (Date.now() - formLoadedAt < 1000) {
+      // Automated bot submitted too quickly (< 1s)
+      setError("Please take a moment before submitting your enquiry.");
+      return;
+    }
+
+    // ── Input Validation ───────────────────────────────────────────────────
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setError("Please provide your full name (minimum 2 characters).");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Please provide a valid email address.");
+      return;
+    }
+    if (!trimmedMessage || trimmedMessage.length < 10) {
+      setError("Please provide a descriptive message (at least 10 characters).");
+      return;
+    }
+
     const result = submitOnlineEnquiry({
-      customerName: name,
-      customerEmail: email,
+      customerName: trimmedName,
+      customerEmail: trimmedEmail,
       subject,
-      message
+      message: trimmedMessage,
     });
 
     if (result.success && result.referenceNo) {
@@ -346,7 +382,27 @@ export default function ContactClient() {
               </div>
             )}
 
+            {error && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono rounded flex items-center gap-2">
+                <span>⚠</span>
+                <span>{error}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+              {/* Invisible anti-spam honeypot */}
+              <div aria-hidden="true" className="opacity-0 pointer-events-none absolute -left-[9999px] h-0 overflow-hidden">
+                <label htmlFor="website_url_check">Leave this field blank</label>
+                <input
+                  type="text"
+                  id="website_url_check"
+                  name="website_url_check"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-[10px] text-muted-gray uppercase font-mono tracking-wider block">
                   Your Name
