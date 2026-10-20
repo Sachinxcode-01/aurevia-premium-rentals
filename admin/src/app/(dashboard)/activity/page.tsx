@@ -21,41 +21,8 @@ interface AuditLog {
   category: "auth" | "booking" | "inventory" | "kyc" | "staff" | "finance" | "other";
 }
 
-const FALLBACK_AUDITS: AuditLog[] = [
-  {
-    id: "AUD-991",
-    actor: "Prem Mundargi",
-    role: "SUPER_ADMIN",
-    action: "BOOKING.STATUS_UPDATED",
-    target: "Booking #AUR-1042",
-    timestamp: "12 Aug 2026, 09:15 AM",
-    ip: "157.48.12.90",
-    category: "booking",
-  },
-  {
-    id: "AUD-990",
-    actor: "Sachin K",
-    role: "ADMIN",
-    action: "KYC.DOCUMENT_VERIFIED",
-    target: "Customer #CUST-001",
-    timestamp: "12 Aug 2026, 08:30 AM",
-    ip: "157.48.12.92",
-    category: "kyc",
-  },
-  {
-    id: "AUD-989",
-    actor: "Prem Mundargi",
-    role: "SUPER_ADMIN",
-    action: "INVENTORY.MAINTENANCE_SCHEDULED",
-    target: "Inventory Unit #SN-7482910",
-    timestamp: "11 Aug 2026, 05:40 PM",
-    ip: "157.48.12.90",
-    category: "inventory",
-  },
-];
-
 export default function AdminActivityPage() {
-  const [logs, setLogs] = useState<AuditLog[]>(FALLBACK_AUDITS);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -93,9 +60,11 @@ export default function AdminActivityPage() {
           };
         });
         setLogs(mapped);
+      } else {
+        setLogs([]);
       }
     } catch {
-      // Keep fallback
+      setLogs([]);
     } finally {
       if (showLoading) setLoading(false);
     }
@@ -216,29 +185,37 @@ export default function AdminActivityPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-[#f5f1e8] font-mono">
-                {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-white/5 transition">
-                    <td className="p-4 text-[#d8b36a] font-bold">{log.id}</td>
-                    <td className="p-4 font-sans font-medium">{log.actor}</td>
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full text-[9px] bg-white/5 border border-white/10 text-[#d8b36a]">
-                        {log.role}
-                      </span>
+                {logs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-10 text-center text-[#9a9995] font-sans text-xs">
+                      No audit events recorded yet. New actions across bookings, fleet, and authentication will appear here automatically.
                     </td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-sans border font-semibold ${getActionBadgeColor(
-                          log.category
-                        )}`}
-                      >
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="p-4 text-[#9a9995] font-sans">{log.target}</td>
-                    <td className="p-4 text-[11px] text-[#9a9995] font-sans">{log.timestamp}</td>
-                    <td className="p-4 text-[#9a9995] text-right font-mono text-[11px]">{log.ip}</td>
                   </tr>
-                ))}
+                ) : (
+                  logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-white/5 transition">
+                      <td className="p-4 text-[#d8b36a] font-bold">{log.id}</td>
+                      <td className="p-4 font-sans font-medium">{log.actor}</td>
+                      <td className="p-4">
+                        <span className="px-2 py-0.5 rounded-full text-[9px] bg-white/5 border border-white/10 text-[#d8b36a]">
+                          {log.role}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-sans border font-semibold ${getActionBadgeColor(
+                            log.category
+                          )}`}
+                        >
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="p-4 text-[#9a9995] font-sans">{log.target}</td>
+                      <td className="p-4 text-[11px] text-[#9a9995] font-sans">{log.timestamp}</td>
+                      <td className="p-4 text-[#9a9995] text-right font-mono text-[11px]">{log.ip}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

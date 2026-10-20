@@ -62,19 +62,22 @@ export async function GET(req: NextRequest) {
     }
 
     const supabase = await createServiceSupabaseClient();
+    const { data: regSetting } = await supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "aurevia_kyc_registry")
+      .maybeSingle();
 
-    const { data: docs, error } = await supabase
-      .from("kyc_documents")
-      .select("*")
-      .eq("profile_id", targetUserId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.warn("[KYC GET] Supabase query notice:", error.message);
-      return successResponse([], "KYC documents retrieved");
+    let allDocs: any[] = [];
+    if (regSetting?.value) {
+      try {
+        allDocs = JSON.parse(regSetting.value);
+        if (!Array.isArray(allDocs)) allDocs = [];
+      } catch {}
     }
 
-    return successResponse(docs || [], "KYC documents retrieved");
+    const userDocs = allDocs.filter((d) => d.profile_id === targetUserId);
+    return successResponse(userDocs, "KYC documents retrieved");
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to fetch KYC data";
     return errorResponse("SERVER_ERROR", errorMsg, 500);
@@ -251,45 +254,55 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServiceSupabaseClient();
 
-    // 5. Secure Insert Bound to Authenticated User ID
-    const { data: doc, error } = await supabase
-      .from("kyc_documents")
-      .insert({
-        profile_id: userId,
-        document_type: normalizedDocType,
-        document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
-        file_path: cleanFilePath,
-        file_size: finalFileSize,
-        mime_type: normalizedMimeType,
-        status: "pending",
-      })
-      .select()
-      .single();
+    // Fetch caller's profile info
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("full_name, email, phone")
+      .eq("id", userId)
+      .maybeSingle();
 
-    if (error || !doc) {
-      console.warn("[KYC POST] Supabase insert notice:", error?.message);
-      return successResponse(
-        {
-          id: `kyc-${Date.now()}`,
-          profile_id: userId,
-          document_type: normalizedDocType,
-          document_number: documentNumber || null,
-          file_path: cleanFilePath,
-          status: "pending",
-          created_at: new Date().toISOString(),
-        },
-        "KYC document submitted successfully. Verification pending.",
-        201
-      );
+    const newDoc = {
+      id: `kyc-${Date.now()}`,
+      profile_id: userId,
+      document_type: normalizedDocType,
+      document_number: documentNumber ? String(documentNumber).slice(0, 50) : null,
+      file_path: cleanFilePath,
+      file_size: finalFileSize,
+      mime_type: normalizedMimeType,
+      status: "pending",
+      profile: userProfile || { full_name: user.email, email: user.email },
+      created_at: new Date().toISOString(),
+    };
+
+    // Save into website_settings aurevia_kyc_registry
+    const { data: regSetting } = await supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "aurevia_kyc_registry")
+      .maybeSingle();
+
+    let allDocs: any[] = [];
+    if (regSetting?.value) {
+      try {
+        allDocs = JSON.parse(regSetting.value);
+        if (!Array.isArray(allDocs)) allDocs = [];
+      } catch {}
     }
+
+    allDocs.unshift(newDoc);
+
+    await supabase.from("website_settings").upsert({
+      key: "aurevia_kyc_registry",
+      value: JSON.stringify(allDocs),
+    });
 
     // 6. Immutable Audit Log
     await recordAuditLog({
       actorId: userId,
       actorEmail: userEmail,
       action: "kyc.submitted",
-      resource: "kyc_documents",
-      resourceId: doc.id,
+      resource: "kyc_registry",
+      resourceId: newDoc.id,
       metadata: { documentType: normalizedDocType, status: "pending" },
       ipAddress: req.headers.get("x-forwarded-for") || "0.0.0.0",
     }).catch(() => {});
@@ -297,10 +310,13 @@ export async function POST(req: NextRequest) {
     await supabase.from("notifications").insert({
       profile_id: userId,
       title: "KYC Verification Submitted",
-      message: "Your identity verification document has been securely submitted and is pending admin approval.",
+      message: `Your ${normalizedDocType.toUpperCase()} document has been securely submitted and is pending admin approval.`,
     }).catch(() => {});
 
-    return successResponse(doc, "KYC document submitted successfully. Verification pending.", 201);
+    const { realtimeHub } = await import("@/lib/realtime/realtimeHub");
+    realtimeHub.broadcast("KYC_STATUS_UPDATED", { id: newDoc.id, status: "pending" }, "public_website");
+
+    return successResponse(newDoc, "KYC document submitted successfully. Verification pending.", 201);
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to submit KYC document";
     return errorResponse("SUBMIT_KYC_FAILED", errorMsg, 500);

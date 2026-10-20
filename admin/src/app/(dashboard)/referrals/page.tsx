@@ -43,51 +43,10 @@ export default function AdminReferralsPage() {
   const fetchReferrals = useCallback(async () => {
     try {
       const res = await getAdminReferralsAction();
-      if (res.success && res.referrals) {
+      if (res && res.success && Array.isArray(res.referrals)) {
         setReferrals(res.referrals);
       } else {
-        // Fallback data if table is fresh
-        setReferrals([
-          {
-            id: "ref-101",
-            referrer_id: "usr-prem",
-            referred_name: "Rahul Sharma (Cinematographer)",
-            referred_email: "rahul.sharma@cinema.in",
-            code_used: "AUREVIA-REF-PREM",
-            status: "completed",
-            reward_amount: 500,
-            friend_discount: 200,
-            booking_id: "BK-84920",
-            created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-            updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-          },
-          {
-            id: "ref-102",
-            referrer_id: "usr-prem",
-            referred_name: "Priya Verma (Director)",
-            referred_email: "priya.v@studio.in",
-            code_used: "AUREVIA-REF-PREM",
-            status: "pending",
-            reward_amount: 500,
-            friend_discount: 200,
-            booking_id: "BK-84921",
-            created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-            updated_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-          },
-          {
-            id: "ref-103",
-            referrer_id: "usr-sachin",
-            referred_name: "Vikramaditya (DOP)",
-            referred_email: "vikram@dopfilms.com",
-            code_used: "AUREVIA-REF-SACHIN",
-            status: "rewarded",
-            reward_amount: 500,
-            friend_discount: 200,
-            booking_id: "BK-84915",
-            created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-            updated_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-          },
-        ]);
+        setReferrals([]);
       }
     } catch {
       showToast("Failed to load referrals manifest");

@@ -46,26 +46,10 @@ export default function AdminRefundsPage() {
 
     try {
       const res = await adminApiClient.refunds.list();
-      if (res.success && Array.isArray(res.data)) {
+      if (res && res.success && Array.isArray(res.data)) {
         setRefunds(res.data);
       } else {
-        // Fallback default sample if empty
-        setRefunds([
-          {
-            id: "rfd_mock_1",
-            booking_id: "AUR-1035",
-            amount: 14997,
-            status: "requested",
-            reason: "Shoot cancelled due to weather emergency",
-            created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-            booking: {
-              reference_code: "AUR-1035",
-              contact_name: "Deepak Mehta",
-              total_payable: 14997,
-              payment_status: "paid",
-            },
-          },
-        ]);
+        setRefunds([]);
       }
     } catch {
       setFeedback({ type: "error", text: "Failed to connect to refunds service." });

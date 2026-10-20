@@ -53,83 +53,11 @@ interface InspectionCase {
   notes?: string;
 }
 
-const FALLBACK_CASES: InspectionCase[] = [
-  {
-    id: "PEL-R5-108",
-    bookingId: "AUR-1039",
-    customerName: "Priya Nair",
-    phone: "+91 97444 55667",
-    equipmentName: "Canon EOS R5 Cinema Vault Pack",
-    dispatchDate: "10 Aug 2026, 09:00 AM",
-    expectedReturn: "12 Aug 2026, 10:00 AM",
-    actualReturn: "12 Aug 2026, 09:45 AM",
-    securityDeposit: 15000,
-    hoursOverdue: 0,
-    status: "INSPECTION_PENDING",
-    sensorSanitized: true,
-    physicalCondition: "MINT",
-    damageCharge: 0,
-    items: [
-      { id: "i1", name: "Canon EOS R5 Camera Body", serialNumber: "SN-7482910", isVerified: true },
-      { id: "i2", name: "Canon RF 24-70mm f/2.8L IS USM", serialNumber: "SN-9182746", isVerified: true },
-      { id: "i3", name: "Canon LP-E6NH Battery Pack (x2)", serialNumber: "SN-BAT-04A / 04B", isVerified: true },
-      { id: "i4", name: "ProGrade 512GB CFexpress Type B Card", serialNumber: "SN-CFX-512B", isVerified: true },
-      { id: "i5", name: "Pelican 1510 Air Flight Case (Custom Foam)", serialNumber: "PEL-AIR-1510-08", isVerified: true },
-      { id: "i6", name: "Canon Dual Battery Charger & AC Cable", serialNumber: "SN-CHG-99", isVerified: true },
-    ],
-  },
-  {
-    id: "PEL-ALEXA-001",
-    bookingId: "AUR-1035",
-    customerName: "Deepak Mehta",
-    phone: "+91 97111 22233",
-    equipmentName: "ARRI Alexa Mini LF Production System",
-    dispatchDate: "08 Aug 2026, 08:00 AM",
-    expectedReturn: "12 Aug 2026, 08:00 AM",
-    securityDeposit: 50000,
-    hoursOverdue: 4,
-    status: "OVERDUE",
-    sensorSanitized: false,
-    physicalCondition: "MINOR_WEAR",
-    damageCharge: 2400,
-    notes: "Late return charges calculated for 4 hours overdue @ ₹600/hr.",
-    items: [
-      { id: "i1", name: "ARRI Alexa Mini LF Body", serialNumber: "ARRI-LF-3920", isVerified: true },
-      { id: "i2", name: "ARRI LPL Lens Mount", serialNumber: "ARRI-LPL-01", isVerified: true },
-      { id: "i3", name: "Codex Compact Drive 1TB (x2)", serialNumber: "CDX-1TB-01 / 02", isVerified: true },
-      { id: "i4", name: "B-Mount Battery 290Wh (x4)", serialNumber: "BAT-BM-01..04", isVerified: true },
-      { id: "i5", name: "Pelican Protector 1650 Heavy Flight Case", serialNumber: "PEL-1650-ARRI", isVerified: true },
-    ],
-  },
-  {
-    id: "PEL-RED-042",
-    bookingId: "AUR-1044",
-    customerName: "Ananya Roy",
-    phone: "+91 98222 11009",
-    equipmentName: "RED V-Raptor 8K VV Cinema Package",
-    dispatchDate: "12 Aug 2026, 02:00 PM",
-    expectedReturn: "15 Aug 2026, 02:00 PM",
-    securityDeposit: 40000,
-    hoursOverdue: 0,
-    status: "DISPATCH_READY",
-    sensorSanitized: true,
-    physicalCondition: "MINT",
-    damageCharge: 0,
-    items: [
-      { id: "i1", name: "RED V-Raptor 8K VV Body", serialNumber: "RED-VR-8821", isVerified: true },
-      { id: "i2", name: "RED PRO CFexpress 2TB Card", serialNumber: "RED-2TB-99", isVerified: true },
-      { id: "i3", name: "DSMC3 RED Touch 7.0\" LCD", serialNumber: "RED-LCD-07", isVerified: true },
-      { id: "i4", name: "RED Compact Dual V-Lock Charger", serialNumber: "RED-CHG-02", isVerified: true },
-      { id: "i5", name: "Pelican 1535 Air Flight Case", serialNumber: "PEL-1535-RED", isVerified: true },
-    ],
-  },
-];
-
 export default function AdminReturnsPage() {
-  const [cases, setCases] = useState<InspectionCase[]>(FALLBACK_CASES);
+  const [cases, setCases] = useState<InspectionCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCaseId, setSelectedCaseId] = useState<string>("PEL-R5-108");
+  const [selectedCaseId, setSelectedCaseId] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [generatingLink, setGeneratingLink] = useState(false);
   const [penaltyLinkCopied, setPenaltyLinkCopied] = useState(false);

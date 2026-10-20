@@ -20,7 +20,7 @@ export default function ContactClient() {
   const [error, setError] = useState<string | null>(null);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -55,7 +55,7 @@ export default function ContactClient() {
       return;
     }
 
-    const result = submitOnlineEnquiry({
+    const result = await submitOnlineEnquiry({
       customerName: trimmedName,
       customerEmail: trimmedEmail,
       subject,

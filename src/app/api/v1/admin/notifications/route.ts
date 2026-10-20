@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { verifyApiAuth } from "@/lib/auth/rbac";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
-import { db, isSupabaseConfigured } from "@/lib/db/store";
 
 export interface SystemNotification {
   id: string;
@@ -15,9 +14,6 @@ export interface SystemNotification {
   read: boolean;
 }
 
-// In-memory set of read notification IDs
-const readNotificationIds = new Set<string>();
-
 export async function GET(req: NextRequest) {
   try {
     const { user, response } = await verifyApiAuth(req, ["admin", "staff", "super_admin"]);
@@ -27,176 +23,128 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") || "all";
 
     const notifications: SystemNotification[] = [];
+    const seenIds = new Set<string>();
 
-    if (isSupabaseConfigured()) {
-      try {
-        const supabase = await createServiceSupabaseClient();
+    const supabase = await createServiceSupabaseClient();
 
-        // 1. Pending Refunds
-        const { data: refunds } = await supabase
-          .from("refunds")
-          .select("id, amount, reason, created_at, booking_id")
-          .eq("status", "requested")
-          .order("created_at", { ascending: false })
-          .limit(10);
+    // 1. Fetch real Supabase notifications from `notifications` table
+    try {
+      const { data: dbNotifs, error: nErr } = await supabase
+        .from("notifications")
+        .select("id, profile_id, title, message, is_read, created_at, profile:profiles(full_name, email)")
+        .order("created_at", { ascending: false })
+        .limit(40);
 
-        if (refunds) {
-          refunds.forEach((r: any) => {
+      if (!nErr && dbNotifs) {
+        dbNotifs.forEach((n: any) => {
+          if (!seenIds.has(n.id)) {
+            seenIds.add(n.id);
+
+            // Infer notification type & action URL from title & message
+            const titleLower = (n.title || "").toLowerCase();
+            const msgLower = (n.message || "").toLowerCase();
+            let type: SystemNotification["type"] = "booking";
+            let actionUrl = "/bookings";
+            let severity: SystemNotification["severity"] = "info";
+
+            if (titleLower.includes("refund") || msgLower.includes("refund")) {
+              type = "refund";
+              actionUrl = "/refunds";
+              severity = "urgent";
+            } else if (titleLower.includes("kyc") || msgLower.includes("kyc") || titleLower.includes("identity")) {
+              type = "kyc";
+              actionUrl = "/kyc";
+              severity = "warning";
+            } else if (titleLower.includes("ticket") || msgLower.includes("ticket") || titleLower.includes("support")) {
+              type = "ticket";
+              actionUrl = "/tickets";
+              severity = "urgent";
+            } else if (titleLower.includes("enquiry") || titleLower.includes("inquiry")) {
+              type = "ticket";
+              actionUrl = "/enquiries";
+              severity = "info";
+            } else if (titleLower.includes("payment") || msgLower.includes("payment")) {
+              type = "payment";
+              actionUrl = "/payments";
+              severity = "info";
+            }
+
             notifications.push({
-              id: `notif-rfd-${r.id}`,
+              id: n.id,
+              type,
+              title: n.title || "Notification",
+              desc: n.message || "",
+              time: n.created_at || new Date().toISOString(),
+              actionUrl,
+              severity,
+              read: Boolean(n.is_read),
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.warn("[Notifications GET] Error querying notifications table:", err);
+    }
+
+    // 2. Fetch Pending Refunds
+    try {
+      const { data: refunds } = await supabase
+        .from("refunds")
+        .select("id, amount, reason, created_at, booking_id")
+        .eq("status", "requested")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (refunds) {
+        refunds.forEach((r: any) => {
+          const id = `notif-rfd-${r.id}`;
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
+            notifications.push({
+              id,
               type: "refund",
               title: "Refund Approval Required",
               desc: `Claim of ₹${Number(r.amount).toLocaleString("en-IN")} requested for reservation #${r.booking_id}. Reason: ${r.reason || "Customer cancellation"}`,
               time: r.created_at,
               actionUrl: "/refunds",
               severity: "urgent",
-              read: readNotificationIds.has(`notif-rfd-${r.id}`),
+              read: false,
             });
-          });
-        }
+          }
+        });
+      }
+    } catch {}
 
-        // 2. Pending KYC documents
-        const { data: kycDocs } = await supabase
-          .from("kyc_documents")
-          .select("id, document_type, created_at, profiles(full_name)")
-          .eq("status", "submitted")
-          .order("created_at", { ascending: false })
-          .limit(10);
+    // 3. Fetch Open Support Tickets
+    try {
+      const { data: tickets } = await supabase
+        .from("support_tickets")
+        .select("id, subject, priority, created_at")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-        if (kycDocs) {
-          kycDocs.forEach((k: any) => {
+      if (tickets) {
+        tickets.forEach((t: any) => {
+          const id = `notif-tkt-${t.id}`;
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
             notifications.push({
-              id: `notif-kyc-${k.id}`,
-              type: "kyc",
-              title: "KYC Verification Pending",
-              desc: `${k.profiles?.full_name || "Customer"} submitted a ${k.document_type || "Government ID"} for rental identity clearance.`,
-              time: k.created_at,
-              actionUrl: "/kyc",
-              severity: "warning",
-              read: readNotificationIds.has(`notif-kyc-${k.id}`),
-            });
-          });
-        }
-
-        // 3. Open Support Tickets
-        const { data: tickets } = await supabase
-          .from("support_tickets")
-          .select("id, subject, priority, created_at")
-          .eq("status", "open")
-          .order("created_at", { ascending: false })
-          .limit(10);
-
-        if (tickets) {
-          tickets.forEach((t: any) => {
-            notifications.push({
-              id: `notif-tkt-${t.id}`,
+              id,
               type: "ticket",
-              title: `New Support Ticket (${t.priority.toUpperCase()})`,
+              title: `New Support Ticket (${(t.priority || "normal").toUpperCase()})`,
               desc: `Ticket #${t.id.slice(0, 8)}: "${t.subject}" awaits concierge response.`,
               time: t.created_at,
               actionUrl: "/tickets",
               severity: t.priority === "high" || t.priority === "urgent" ? "urgent" : "info",
-              read: readNotificationIds.has(`notif-tkt-${t.id}`),
+              read: false,
             });
-          });
-        }
-
-        // 4. Recent Bookings
-        const { data: recentBookings } = await supabase
-          .from("bookings")
-          .select("id, reference_code, contact_name, total_payable, created_at, payment_status")
-          .order("created_at", { ascending: false })
-          .limit(10);
-
-        if (recentBookings) {
-          recentBookings.forEach((b: any) => {
-            const isPaid = b.payment_status === "paid";
-            notifications.push({
-              id: `notif-bk-${b.id}`,
-              type: isPaid ? "payment" : "booking",
-              title: isPaid ? "Payment Received" : "Reservation Created",
-              desc: `₹${Number(b.total_payable || 0).toLocaleString("en-IN")} for #${b.reference_code || b.id} by ${b.contact_name || "Customer"}.`,
-              time: b.created_at,
-              actionUrl: "/bookings",
-              severity: "info",
-              read: readNotificationIds.has(`notif-bk-${b.id}`),
-            });
-          });
-        }
-
-        // 5. Security & Audit logs
-        const { data: auditEvents } = await supabase
-          .from("audit_logs")
-          .select("id, action, details, created_at")
-          .ilike("action", "%FAILED%")
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (auditEvents) {
-          auditEvents.forEach((a: any) => {
-            notifications.push({
-              id: `notif-audit-${a.id}`,
-              type: "security",
-              title: "Security & Auth Alert",
-              desc: a.details || a.action,
-              time: a.created_at,
-              actionUrl: "/activity",
-              severity: "urgent",
-              read: readNotificationIds.has(`notif-audit-${a.id}`),
-            });
-          });
-        }
-      } catch (err) {
-        console.warn("[Notifications GET] Supabase query error, falling back to local store:", err);
+          }
+        });
       }
-    }
+    } catch {}
 
-    // If notifications are empty (local store or fallback)
-    if (notifications.length === 0) {
-      try {
-        const localBookings = await db.getBookings().catch(() => []);
-        localBookings.slice(0, 5).forEach((b: any) => {
-          notifications.push({
-            id: `notif-bk-local-${b.id}`,
-            type: b.paymentStatus === "paid" ? "payment" : "booking",
-            title: b.paymentStatus === "paid" ? "Payment Received" : "New Reservation",
-            desc: `₹${Number(b.totalPayable || 0).toLocaleString("en-IN")} received for Booking #${b.referenceCode || b.id}.`,
-            time: b.createdAt || new Date().toISOString(),
-            actionUrl: "/bookings",
-            severity: "info",
-            read: readNotificationIds.has(`notif-bk-local-${b.id}`),
-          });
-        });
-
-        const localRefunds = await db.getRefunds().catch(() => []);
-        localRefunds.filter((r) => r.status === "requested").forEach((r: any) => {
-          notifications.push({
-            id: `notif-rfd-local-${r.id}`,
-            type: "refund",
-            title: "Refund Approval Requested",
-            desc: `Refund claim of ₹${Number(r.amount).toLocaleString("en-IN")} awaiting review for #${r.booking_id}.`,
-            time: r.created_at || new Date().toISOString(),
-            actionUrl: "/refunds",
-            severity: "urgent",
-            read: readNotificationIds.has(`notif-rfd-local-${r.id}`),
-          });
-        });
-      } catch {}
-
-      // Default baseline system health notification
-      notifications.push({
-        id: "notif-sys-ok",
-        type: "security",
-        title: "AUREVIA Security Shield Active",
-        desc: "All RBAC firewalls, cryptographic cookie verification, and Razorpay webhook signatures are active.",
-        time: new Date().toISOString(),
-        actionUrl: "/activity",
-        severity: "info",
-        read: readNotificationIds.has("notif-sys-ok"),
-      });
-    }
-
-    // Sort by time descending
+    // 4. Sort strictly descending by timestamp
     notifications.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
     // Filter by category if requested
@@ -219,13 +167,27 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { id, clearAll } = body;
 
+    const supabase = await createServiceSupabaseClient();
+
     if (clearAll) {
-      readNotificationIds.clear();
-      return successResponse({ cleared: true }, "All notifications cleared");
+      await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .eq("is_read", false);
+
+      return successResponse({ cleared: true }, "All notifications marked as read");
     }
 
     if (id) {
-      readNotificationIds.add(id);
+      // If it's a UUID matching notifications table
+      const isUUID = /^[0-9a-fA-F-]{36}$/.test(id);
+      if (isUUID) {
+        await supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("id", id);
+      }
+
       return successResponse({ id, read: true }, "Notification marked as read");
     }
 

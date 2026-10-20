@@ -9,6 +9,7 @@ import FloatingChatLauncher from "@/components/chatbot/FloatingChatLauncher";
 import ChatWindow from "@/components/chatbot/ChatWindow";
 import { PWARegister } from "@/components/pwa/PWARegister";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Spotlight from "@/components/effects/Spotlight";
 import AmbientParticles from "@/components/effects/AmbientParticles";
 import FloatingWhatsApp from "@/components/ui/FloatingWhatsApp";
@@ -181,6 +182,7 @@ export default function RootLayout({
           </CartProvider>
         </ToastProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

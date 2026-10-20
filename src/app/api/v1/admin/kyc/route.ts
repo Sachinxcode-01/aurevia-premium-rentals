@@ -2,6 +2,30 @@ import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api/response";
 import { verifyApiAuth, recordAuditLog } from "@/lib/auth/rbac";
 import { createServiceSupabaseClient } from "@/lib/supabase/server";
+import { realtimeHub } from "@/lib/realtime/realtimeHub";
+
+async function getKycRegistry(supabase: any): Promise<any[]> {
+  try {
+    const { data } = await supabase
+      .from("website_settings")
+      .select("value")
+      .eq("key", "aurevia_kyc_registry")
+      .maybeSingle();
+
+    if (data?.value) {
+      const parsed = JSON.parse(data.value);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+async function saveKycRegistry(supabase: any, docs: any[]) {
+  await supabase.from("website_settings").upsert({
+    key: "aurevia_kyc_registry",
+    value: JSON.stringify(docs),
+  });
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,23 +36,13 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status");
 
     const supabase = await createServiceSupabaseClient();
-
-    let query = supabase
-      .from("kyc_documents")
-      .select("*, profile:profiles(full_name, email, phone, role)")
-      .order("created_at", { ascending: false });
+    let docs = await getKycRegistry(supabase);
 
     if (status && status !== "ALL") {
-      query = query.eq("status", status.toLowerCase());
+      docs = docs.filter((d) => (d.status || "").toLowerCase() === status.toLowerCase());
     }
 
-    const { data: docs, error } = await query;
-
-    if (error) {
-      return errorResponse("FETCH_ADMIN_KYC_FAILED", error.message, 500);
-    }
-
-    return successResponse(docs || [], "Admin KYC submissions loaded");
+    return successResponse(docs, "Admin KYC submissions loaded");
   } catch (err: any) {
     return errorResponse("ADMIN_KYC_ERROR", err.message || "Failed to load admin KYC list", 500);
   }
@@ -46,52 +60,54 @@ export async function PATCH(req: NextRequest) {
       return errorResponse("INVALID_KYC_ACTION", "document id and target status are required", 400);
     }
 
-    if (!["approved", "rejected", "reupload_required"].includes(status.toLowerCase())) {
+    const normStatus = status.toLowerCase();
+    if (!["approved", "rejected", "reupload_required"].includes(normStatus)) {
       return errorResponse("INVALID_KYC_STATUS", `Status '${status}' is invalid for KYC review`, 400);
     }
 
     const supabase = await createServiceSupabaseClient();
+    const docs = await getKycRegistry(supabase);
+    const idx = docs.findIndex((d) => d.id === id);
 
-    const { data: updatedDoc, error } = await supabase
-      .from("kyc_documents")
-      .update({
-        status: status.toLowerCase(),
-        rejection_reason: rejectionReason || null,
-        reviewed_by: user.id,
-        reviewed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error || !updatedDoc) {
-      return errorResponse("UPDATE_KYC_FAILED", error?.message || "Failed to update KYC status", 500);
+    if (idx === -1) {
+      return errorResponse("KYC_NOT_FOUND", "KYC submission not found", 404);
     }
+
+    docs[idx] = {
+      ...docs[idx],
+      status: normStatus,
+      rejection_reason: rejectionReason || null,
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await saveKycRegistry(supabase, docs);
 
     // Record Audit Trail
     await recordAuditLog({
       actorId: user.id,
       actorEmail: user.email,
-      action: `kyc.${status.toLowerCase()}`,
-      resource: "kyc_documents",
+      action: `kyc.${normStatus}`,
+      resource: "kyc_registry",
       resourceId: id,
-      metadata: { profileId: updatedDoc.profile_id, rejectionReason },
-    });
+      metadata: { profileId: docs[idx].profile_id, rejectionReason },
+    }).catch(() => {});
 
-    // Notify Customer
-    if (updatedDoc.profile_id) {
+    // Notify Customer in Supabase notifications table
+    if (docs[idx].profile_id) {
       await supabase.from("notifications").insert({
-        profile_id: updatedDoc.profile_id,
-        title: status === "approved" ? "KYC Approved! 🎉" : "KYC Document Verification Status",
+        profile_id: docs[idx].profile_id,
+        title: normStatus === "approved" ? "KYC Approved! 🎉" : "KYC Document Verification Status",
         message:
-          status === "approved"
+          normStatus === "approved"
             ? "Your identity verification has been approved. You are now verified for premium gear rentals."
             : `Your KYC document verification status is: ${status.toUpperCase()}. ${rejectionReason ? `Reason: ${rejectionReason}` : ""}`,
-      });
+      }).catch(() => {});
     }
 
-    return successResponse(updatedDoc, `KYC submission successfully updated to '${status}'`);
+    realtimeHub.broadcast("KYC_STATUS_UPDATED", { id, status: normStatus }, "admin");
+    return successResponse(docs[idx], `KYC submission successfully updated to '${status}'`);
   } catch (err: any) {
     return errorResponse("ADMIN_KYC_UPDATE_FAILED", err.message || "Failed to process KYC review", 500);
   }
