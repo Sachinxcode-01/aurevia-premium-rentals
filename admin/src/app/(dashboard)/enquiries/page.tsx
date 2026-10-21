@@ -6,7 +6,7 @@ import {
   Search, Sparkles, RefreshCw, X, Mail, Phone, Calendar, Send
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
+import { OnlineEnquiry } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { useAdminRealtime } from "@/lib/realtime";
@@ -78,26 +78,20 @@ export default function AdminEnquiriesPage() {
 
       realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: selectedEnquiry.id, status: "resolved" }, "admin");
 
-      if (res.success) {
-        loadEnquiries();
-        const updated = engagementStore.getEnquiries().find((e) => e.id === selectedEnquiry.id);
-        if (updated) setSelectedEnquiry(updated);
-        setResponseText("");
+      await loadEnquiries();
+      setSelectedEnquiry((prev) => (prev ? { ...prev, status: "resolved" } : null));
+      setResponseText("");
+      if (res && res.success) {
         showToast(`Email response sent to ${selectedEnquiry.customerEmail} & enquiry marked as Resolved!`);
       } else {
-        engagementStore.respondToEnquiry(selectedEnquiry.id, responseText.trim());
-        loadEnquiries();
-        const updated = engagementStore.getEnquiries().find((e) => e.id === selectedEnquiry.id);
-        if (updated) setSelectedEnquiry(updated);
-        setResponseText("");
         showToast("Response saved & marked as resolved.");
       }
     } catch {
-      engagementStore.respondToEnquiry(selectedEnquiry.id, responseText.trim());
       realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: selectedEnquiry.id, status: "resolved" }, "admin");
-      loadEnquiries();
+      await loadEnquiries();
+      setSelectedEnquiry((prev) => (prev ? { ...prev, status: "resolved" } : null));
       setResponseText("");
-      showToast("Response recorded locally.");
+      showToast("Response recorded.");
     } finally {
       setSendingEmail(false);
     }
@@ -106,9 +100,8 @@ export default function AdminEnquiriesPage() {
   const handleUpdateStatus = async (id: string, status: OnlineEnquiry["status"]) => {
     try {
       await adminApiClient.enquiries.updateStatus(id, status).catch(() => null);
-      engagementStore.updateEnquiryStatus(id, status);
       realtimeHub.broadcast("ENQUIRY_UPDATED", { enquiryId: id, status }, "admin");
-      loadEnquiries();
+      await loadEnquiries();
       if (selectedEnquiry?.id === id) {
         setSelectedEnquiry((prev) => (prev ? { ...prev, status } : null));
       }

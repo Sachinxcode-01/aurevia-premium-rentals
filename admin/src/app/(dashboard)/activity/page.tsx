@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Activity,
   RefreshCw,
   Search,
   Loader2,
+  Download,
+  ShieldCheck,
+  CreditCard,
+  Box,
+  FileText,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
 import { adminApiClient } from "@/lib/api-client";
 import { useAdminRealtime } from "@/lib/realtime";
@@ -26,6 +33,12 @@ export default function AdminActivityPage() {
   const [loading, setLoading] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   const loadLogs = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -85,6 +98,112 @@ export default function AdminActivityPage() {
     )
   );
 
+  const stats = useMemo(() => {
+    return {
+      total: logs.length,
+      security: logs.filter((l) => l.category === "auth" || l.category === "staff").length,
+      bookings: logs.filter((l) => l.category === "booking").length,
+      inventory: logs.filter((l) => l.category === "inventory").length,
+      finance: logs.filter((l) => l.category === "finance").length,
+    };
+  }, [logs]);
+
+  // Secure CSV export with formula injection protection (=, +, -, @ sanitized)
+  const exportCsv = () => {
+    if (logs.length === 0) {
+      showToast("No audit logs available to export.");
+      return;
+    }
+
+    const sanitizeCell = (val: string) => {
+      let str = String(val ?? "").replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+      }
+      return `"${str}"`;
+    };
+
+    const headers = ["Log Ref", "Actor Email", "Role Tier", "Category", "Operation Event", "Target Entity", "Timestamp", "IP Address"];
+    const rows = logs.map((log) => [
+      sanitizeCell(log.id),
+      sanitizeCell(log.actor),
+      sanitizeCell(log.role),
+      sanitizeCell(log.category.toUpperCase()),
+      sanitizeCell(log.action),
+      sanitizeCell(log.target),
+      sanitizeCell(log.timestamp),
+      sanitizeCell(log.ip),
+    ]);
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `aurevia-audit-trail-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${logs.length} audit records to CSV.`);
+  };
+
+  const exportJson = () => {
+    if (logs.length === 0) {
+      showToast("No audit logs available to export.");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(logs, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `aurevia-audit-trail-${new Date().toISOString().split("T")[0]}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${logs.length} audit records to JSON.`);
+  };
+
+  const simulateAuditEvent = () => {
+    const mockEvents: AuditLog[] = [
+      {
+        id: `AUD-SIM-${Math.floor(1000 + Math.random() * 9000)}`,
+        actor: "prem.mundargi@aurevia.luxury",
+        role: "SUPER_ADMIN",
+        action: "FLEET.CALIBRATION.CERTIFIED",
+        target: "Unit #AV-UNIT-04 (Arri Alexa Mini LF)",
+        timestamp: new Date().toLocaleString("en-IN"),
+        ip: "157.48.12.90",
+        category: "inventory",
+      },
+      {
+        id: `AUD-SIM-${Math.floor(1000 + Math.random() * 9000)}`,
+        actor: "sachin@aurevia.luxury",
+        role: "STAFF",
+        action: "KYC.IDENTITY.VERIFIED",
+        target: "Customer Profile #USR-8492",
+        timestamp: new Date().toLocaleString("en-IN"),
+        ip: "157.48.14.22",
+        category: "kyc",
+      },
+      {
+        id: `AUD-SIM-${Math.floor(1000 + Math.random() * 9000)}`,
+        actor: "system.gateway@aurevia.luxury",
+        role: "SUPER_ADMIN",
+        action: "DEPOSIT.REFUND.SETTLED",
+        target: "Booking #AUR-2026-8819",
+        timestamp: new Date().toLocaleString("en-IN"),
+        ip: "13.235.11.88",
+        category: "finance",
+      },
+    ];
+
+    const pick = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+    setLogs((prev) => [pick, ...prev]);
+    showToast(`Simulated event: ${pick.action}`);
+  };
+
   const getActionBadgeColor = (category: AuditLog["category"]) => {
     switch (category) {
       case "booking":
@@ -105,6 +224,15 @@ export default function AdminActivityPage() {
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#121212] border border-[#d8b36a]/40 text-[#f5f1e8] text-xs font-mono shadow-2xl animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 size={16} className="text-[#d8b36a] shrink-0" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
+
+      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
         <div>
           <h1 className="text-2xl font-light text-[#f5f1e8] font-serif flex items-center gap-3">
@@ -116,14 +244,86 @@ export default function AdminActivityPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => loadLogs(true)}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50 cursor-pointer self-start md:self-auto"
-        >
-          <RefreshCw size={14} className={`text-[#d8b36a] ${loading ? "animate-spin" : ""}`} />
-          <span>Sync Audit Trail</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={simulateAuditEvent}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#d8b36a]/10 border border-[#d8b36a]/30 text-xs text-[#d8b36a] hover:bg-[#d8b36a]/20 transition cursor-pointer"
+            title="Simulate a real-time event for verification"
+          >
+            <Sparkles size={14} />
+            <span>Simulate Event</span>
+          </button>
+
+          <button
+            onClick={exportCsv}
+            disabled={logs.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50 cursor-pointer"
+          >
+            <Download size={14} className="text-[#d8b36a]" />
+            <span>Export CSV</span>
+          </button>
+
+          <button
+            onClick={exportJson}
+            disabled={logs.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50 cursor-pointer"
+          >
+            <FileText size={14} className="text-[#d8b36a]" />
+            <span>Export JSON</span>
+          </button>
+
+          <button
+            onClick={() => loadLogs(true)}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-[#f5f1e8] hover:border-[#d8b36a]/40 transition disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw size={14} className={`text-[#d8b36a] ${loading ? "animate-spin" : ""}`} />
+            <span>Sync</span>
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/10 space-y-1">
+          <div className="flex items-center justify-between text-[#9a9995] text-[10px] uppercase font-mono">
+            <span>Total Events</span>
+            <Activity size={13} className="text-[#d8b36a]" />
+          </div>
+          <p className="text-xl font-light text-[#f5f1e8] font-mono">{stats.total}</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/10 space-y-1">
+          <div className="flex items-center justify-between text-[#9a9995] text-[10px] uppercase font-mono">
+            <span>Security &amp; Auth</span>
+            <ShieldCheck size={13} className="text-purple-400" />
+          </div>
+          <p className="text-xl font-light text-[#f5f1e8] font-mono">{stats.security}</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/10 space-y-1">
+          <div className="flex items-center justify-between text-[#9a9995] text-[10px] uppercase font-mono">
+            <span>Bookings</span>
+            <FileText size={13} className="text-[#d8b36a]" />
+          </div>
+          <p className="text-xl font-light text-[#f5f1e8] font-mono">{stats.bookings}</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/10 space-y-1">
+          <div className="flex items-center justify-between text-[#9a9995] text-[10px] uppercase font-mono">
+            <span>Fleet &amp; Inventory</span>
+            <Box size={13} className="text-amber-400" />
+          </div>
+          <p className="text-xl font-light text-[#f5f1e8] font-mono">{stats.inventory}</p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-[#0c0c0c] border border-white/10 space-y-1 col-span-2 md:col-span-1">
+          <div className="flex items-center justify-between text-[#9a9995] text-[10px] uppercase font-mono">
+            <span>Financial</span>
+            <CreditCard size={13} className="text-emerald-400" />
+          </div>
+          <p className="text-xl font-light text-[#f5f1e8] font-mono">{stats.finance}</p>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -188,7 +388,7 @@ export default function AdminActivityPage() {
                 {logs.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="p-10 text-center text-[#9a9995] font-sans text-xs">
-                      No audit events recorded yet. New actions across bookings, fleet, and authentication will appear here automatically.
+                      No audit events recorded yet. Click &quot;Simulate Event&quot; or trigger actions across bookings, fleet, and authentication to see them appear automatically.
                     </td>
                   </tr>
                 ) : (

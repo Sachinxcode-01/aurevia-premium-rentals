@@ -34,7 +34,8 @@
 [📖 Platform Architecture](#platform-architecture) &nbsp;·&nbsp;
 [🗄️ Database & User Details](#database-schema--user-details-deep-dive) &nbsp;·&nbsp;
 [🚀 Roadmap of Improvements](#platform-improvements--audit-roadmap) &nbsp;·&nbsp;
-[📞 Founders & Credits](#founders--credits)
+[📷 Camera Rentals & Contact](#camera-rentals--concierge-contact) &nbsp;·&nbsp;
+[👥 Founders & Credits](#founders--credits)
 
 </div>
 
@@ -71,7 +72,8 @@
 10. [Installation & Local Development](#installation--local-development)
 11. [Verification & Production Build](#verification--production-build)
 12. [Security & Concurrency Protections](#security--concurrency-protections)
-13. [Founders & Credits](#founders--credits)
+13. [Camera Rentals & Concierge Contact](#camera-rentals--concierge-contact)
+14. [Founders & Credits](#founders--credits)
 
 ---
 
@@ -548,18 +550,99 @@ npm run build
 
 ---
 
+## Camera Rentals & Concierge Contact
+
+For all cinema camera rentals, lens packages, gear availability checks, custom shoot quotations, and studio visits, our concierge team is available to assist production crews, DoPs, and independent filmmakers.
+
+### 🎥 Direct Camera Rental & Booking Enquiries
+
+Contact **Prem Mundargi**, owner and operations director, for all rental reservations, quotes, and gear dispatch:
+
+<div align="center">
+
+| Channel | Contact Details | Action / Direct Link |
+|---|---|---|
+| **📞 Direct Phone** | `+91 96869 09048` | [Call +91 96869 09048](tel:+919686909048) |
+| **💬 WhatsApp Booking** | `+91 96869 09048` | [Chat on WhatsApp](https://wa.me/919686909048?text=Hello%20Prem%20sir%2C%20I%20would%20like%20to%20enquire%20about%20camera%20and%20equipment%20rentals%20from%20AUREVIA.) |
+| **✉️ Direct Email** | `premmundargi135@gmail.com` | [Send Email](mailto:premmundargi135@gmail.com) |
+| **📸 Instagram** | `@mr__prem___.135` | [View Instagram Profile](https://www.instagram.com/mr__prem___.135) |
+| **📍 Studio & Depot** | Javalli Galli, Gadag, Karnataka - 582101, India | [View on Google Maps](https://maps.google.com/?q=Javalli+Galli,+Gadag,+Karnataka+582101) |
+
+</div>
+
+#### What to Contact Prem For:
+- **Equipment Availability & Real-Time Booking**: Check date availability for camera bodies, cinema primes, and gimbals.
+- **Custom Production Packages**: Tailored packages for feature films, commercials, music videos, destination weddings, and documentary shoots.
+- **Flexible Rental Durations**: Single-day, weekend, weekly, and extended monthly production terms with preferential rates.
+- **Studio Pickup & Return Appointments**: Scheduled equipment handovers and returns at our Gadag depot.
+- **On-Set Technical Support**: Emergency equipment backup and operational advice during active shoots.
+
+---
+
+### 📦 Available Camera & Cinema Fleet
+
+AUREVIA maintains an immaculate, sensor-inspected fleet of cinema gear ready for immediate dispatch:
+
+- **Cinema & Mirrorless Bodies**: Sony FX3 Full-Frame Cinema Line, Sony Alpha A7S III (4K 120fps 10-bit 4:2:2, Dual Base ISO).
+- **Cinema Primes & Zoom Lenses**: Sony G-Master Series (16-35mm f/2.8 GM, 24-70mm f/2.8 GM II, 70-200mm f/2.8 GM OSS II, 50mm f/1.2 GM, 85mm f/1.4 GM).
+- **3-Axis Stabilization & Grip**: DJI RS 3 Pro / RS 4 Pro Gimbals, Carbon-Fiber Sliders, Heavy-Duty Fluid Head Tripod Systems.
+- **Monitoring & Video Transmission**: Atomos Ninja V / V+ 4K HDR Monitor-Recorders, Wireless Video Transmitters.
+- **Cinema Audio**: Sennheiser / DJI Mic 2 Wireless Dual Lavalier Systems, Shotgun Mics with Deadcats & Boom Poles.
+- **Lighting & Continuous Power**: Bi-Color High-CRI LED Spotlights, Softboxes, C-Stands, V-Mount High-Capacity Battery Bricks.
+- **Protection & Transport**: Custom waterproof, shockproof Pelican flight-cases for all camera kits.
+
+---
+
+### 📋 Rental Booking & Verification Workflow
+
+To guarantee zero double-booking and protect cinema-grade assets, rentals follow a streamlined 4-step protocol:
+
+```mermaid
+flowchart LR
+    A["1. Select Equipment\n& Shoot Dates"] --> B["2. Instant KYC\nAadhaar / DL / Passport"]
+    B --> C["3. Digital Contract\n& Security Deposit"]
+    C --> D["4. Pelican Case\nInspection & Dispatch"]
+```
+
+1. **Inquiry & Quote**: Contact Prem via [WhatsApp](https://wa.me/919686909048) or submit your reservation through the [AUREVIA Customer Portal](https://aurevia-app.vercel.app).
+2. **KYC Verification**: Submit mandatory government-issued photo ID (Aadhaar Card, Driving License, or Passport).
+3. **Confirmation & Deposit**: Confirm dates with transparent rental terms and refundable security deposit.
+4. **Dispatch & Handover**: Collect equipment in sealed Pelican cases with certified sensor cleanliness checklist.
+
+---
+
+### 💻 Website, Technical Management & Bespoke Development
+
+For technical issues, bug reports, feature requests, or if you would like a custom modern website designed for your business:
+
+<div align="center">
+
+| Contact | Details | Link |
+|---|---|---|
+| **Lead Architect & Developer** | **Sachin** | [GitHub Profile](https://github.com/Sachinxcode-01) |
+| **📞 Phone** | `+91 98807 62623` | [Call +91 98807 62623](tel:+919880762623) |
+| **✉️ Email** | `sachiii8827@gmail.com` | [Send Email](mailto:sachiii8827@gmail.com) |
+| **📸 Instagram** | `@ohh_itz_sachin_` | [View Instagram Profile](https://www.instagram.com/ohh_itz_sachin_) |
+| **💼 Custom Web Development** | Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase | Inquire for custom business websites |
+
+</div>
+
+---
+
 ## Founders & Credits
 
 <div align="center">
 
-| Name | Role | Contact |
-|---|---|---|
-| **Prem Mundargi** | Founder & Fleet Operations Director | `+91 96869 09048` |
-| **Sachin** | Lead Systems Architect & Full-Stack Engineer | `sachiii8827@gmail.com` |
+| Name | Role | Primary Responsibility | Contact |
+|---|---|---|---|
+| **Prem Mundargi** | **Founder & Fleet Operations Director** | Camera Rentals, Equipment Dispatch, Customer Bookings & Fleet Operations | `+91 96869 09048`<br/>`premmundargi135@gmail.com` |
+| **Sachin** | **Lead Systems Architect & Full-Stack Engineer** | Platform Design, Full-Stack Architecture, Database & Security Engineering | `+91 98807 62623`<br/>`sachiii8827@gmail.com` |
 
 <br/>
 
 **AUREVIA — Frame the Extraordinary.**  
-*Luxury Cinema Camera & Optics Rentals.*
+*Luxury Cinema Camera & Optics Rentals · Gadag, Karnataka, India.*
+
+[🌐 aurevia-app.vercel.app](https://aurevia-app.vercel.app) &nbsp;·&nbsp; [💬 WhatsApp Concierge](https://wa.me/919686909048) &nbsp;·&nbsp; [✉️ rental@aurevia.com](mailto:premmundargi135@gmail.com)
 
 </div>
