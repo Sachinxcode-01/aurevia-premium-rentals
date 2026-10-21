@@ -6,7 +6,7 @@ import {
   Search, Sparkles, RefreshCw, X, Mail, Phone, Calendar, Send
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { OnlineEnquiry } from "@/lib/db/engagementStore";
+import { engagementStore, OnlineEnquiry } from "@/lib/db/engagementStore";
 import { adminApiClient } from "@/lib/api-client";
 import { realtimeHub } from "@/lib/realtime/realtimeHub";
 import { useAdminRealtime } from "@/lib/realtime";

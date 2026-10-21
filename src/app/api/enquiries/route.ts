@@ -88,6 +88,18 @@ export async function POST(req: NextRequest) {
       to: ownerEmail,
       subject: `[AUREVIA Enquiry #${refNo}] ${customerName} - ${subject}`,
       text: `New online inquiry #${refNo} from ${customerName} (${customerEmail}, ${customerPhone || "N/A"}):\n\nGear: ${equipmentInterest || "General"}\nDates: ${rentalDates || "N/A"}\n\nMessage:\n${message}`,
+      html: `
+        <div style="font-family: -apple-system, sans-serif; padding: 24px; color: #18181b;">
+          <h2 style="color: #0a0a0a;">New Online Inquiry #${refNo}</h2>
+          <p><strong>Customer:</strong> ${customerName} (${customerEmail}, ${customerPhone || "N/A"})</p>
+          <p><strong>Gear Interest:</strong> ${equipmentInterest || "General"}</p>
+          <p><strong>Dates:</strong> ${rentalDates || "N/A"}</p>
+          <p><strong>Subject:</strong> ${subject}</p>
+          <blockquote style="background: #f4f4f5; padding: 12px; border-left: 3px solid #d8b36a; margin: 16px 0;">
+            ${message.replace(/\n/g, "<br>")}
+          </blockquote>
+        </div>
+      `,
       notificationType: "general",
     }).catch(() => {});
 

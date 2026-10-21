@@ -498,7 +498,7 @@ export default function AdminCmsPage() {
             <div className="space-y-3.5 pt-2">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#d8b36a]/15 border border-[#d8b36a]/30 text-[9px] font-mono text-[#d8b36a] font-semibold">
                 <Sparkles size={11} />
-                <span className="truncate max-w-[280px]">
+                <span className="truncate max-w-70">
                   {form.hero_badge_text || "BADGE PREVIEW"}
                 </span>
               </div>
